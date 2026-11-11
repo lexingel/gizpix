@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0
+- `pix_snap` recognises exact whole-number upscales first (they come back pixel for pixel); `speck_fix` reports pixels it kept and suggests a `--rare` value; `pixel_lint` has `odd_px` and an "odd-coloured pixels" flag (advisory); README notes on `--rare` and Windows globs.
 - Fixed GIF flicker in `pixdraw` animations: transparency index 0 was forced, so on scenes with an opaque ground colour the ground was flagged transparent and colours flashed between frames. All frames now share one palette and transparency is used only when a frame has transparent pixels; `pixdraw selftest` decodes the GIFs and compares them with their source frames. The README village GIF was rebuilt (its per-frame 64-colour palettes also flashed).
 - `ABOUT.md`: a plain-language overview with pictures (`images/about/`, rebuilt by `experiments/evidence/make_about.py`).
 - Licensing made explicit: code AGPL-3.0-or-later with a commercial licence on request, documentation CC BY 4.0, evidence pictures CC0 (`LICENSE-DOCS`); `CONTRIBUTING.md` (contributions under MIT so the code can be dual-licensed), a pull-request template, SPDX headers on every Python file.

@@ -31,7 +31,7 @@ python gizpix.py ui                # the local web interface (for people; see se
 4. **Work on copies.** Pass `--out` whenever a tool has it (section 4 lists the in-place tools). Never run a cleaner over the user's only copy.
 5. **Cleaners can delete real pixels.** Measured costs are in section 7. Compare before and after at zoom.
 6. **Do not optimise a number over the picture.** A lint score can be gamed by flattening shading.
-7. **A measuring tool's "FLAGS: none" is not a clean bill.** `pixel_lint` counted 1-2 of 5 injected specks per frame (it only counts a speck whose four neighbours agree with each other) and raised no flag. Look.
+7. **A measuring tool's "FLAGS: none" is not a clean bill.** `pixel_lint` flags stray colours (`odd_px`, 4 or more), but a speck in a textured area or one that touches a pixel of its own colour can pass. Look.
 8. **Tell the user the limits** (section 7) when you hand over a layer, a cleaned set or a snapped image: one generator, one character; dark on dark leaves holes.
 9. If a tool is not in `python gizpix.py list`, it is not part of the kit (`experiments/`, `draw/`, `page_build/` are harnesses and history).
 10. After changing any tool, run `python gizpix.py doctor`; for `pixdraw` also `python gizpix.py pixdraw golden` (a changed render fails on purpose; `--update` only for an intended change; prints SKIPPED when the Pillow version differs from the one that made the hashes).
@@ -40,12 +40,12 @@ python gizpix.py ui                # the local web interface (for people; see se
 
 | You want to | Tool | Measures or changes | Notes |
 |---|---|---|---|
-| Quality numbers for a sprite (specks, thick outline, stair steps, blurry alpha, colour count) | `pixel_lint a.png [b.png ...] [--json] [--strict]` | measures | Native size only: a 3x upscale is flagged "thick outline" (thick_line 0.996 on a clean sample). More than 40 colours is flagged. |
+| Quality numbers for a sprite (specks, thick outline, stair steps, blurry alpha, colour count) | `pixel_lint a.png [b.png ...] [--json] [--strict]` | measures | Native size only: a 3x upscale is flagged "thick outline" (thick_line 0.996 on a clean sample). More than 40 colours is flagged. `odd_px` counts pixels whose colour never forms a touching pair and that differ from all neighbours; 4 or more is flagged "odd-coloured pixels" (advisory: 5 injected same-colour specks were flagged in 38 of 40 trials, 7 of 80 clean real frames were flagged too). |
 | Colour drift between frames, directions or states | `palette_diff REF.png OTHER.png ... [--tol 24] [--strict PCT] [--json]` | measures | Per file: % exact, % near (within `--tol`), % NEW, and the biggest new colours with their nearest reference colour. |
 | Batch sanity before a human looks (empty, cropped at edge, off-palette, flashes) | `qa FILES [--anim] [--opaque] [--anchor approved.png] [--sheet flagged.png] [--strict]` | measures | Accepts a quoted glob. `--anim` also flags flashes and size changes between frames. |
 | Does a tile repeat without a seam | `tile_check tile.png` or `tile_check atlas.png --grid 16` | measures | seam about 1 = invisible, above 2 = visible. Only for tiles meant to wrap. |
 | Check an 8-direction set (stills, walk, compass preview, mirror, light) | `check_8dir stills DIR` / `walk DIR` / `compass DIR out.png` / `mirror SRC DST` / `light DIR` | measures (mirror writes new files) | `walk DIR` expects `DIR/<direction>/0.png ...`; it runs with fewer than 8 directions and prints flags. |
-| Fix lone wrong-coloured pixels | `speck_fix IN.png OUT.png [--tol 120] [--rare 2]` | changes (one file at a time) | Only fixes a speck whose exact colour is used by at most `--rare` pixels. Five specks of one colour in a frame: 0 fixed at the default, 5 fixed with `--rare 5`. A folder is not accepted (exit 2): loop over files. |
+| Fix lone wrong-coloured pixels | `speck_fix IN.png OUT.png [--tol 120] [--rare 2]` | changes (one file at a time) | Only fixes a speck whose exact colour is used by at most `--rare` pixels. Five specks of one colour in a frame: 0 fixed at the default, 5 fixed with `--rare 5`. When it keeps pixels that look like specks it says so on stderr and suggests a `--rare` value. A folder is not accepted (exit 2): loop over files. |
 | Fix many lone pixels in noisy generator frames | `despeckle FRAMES... [--out DIR] [--tol 90]` | changes | Caught 5 of 5 same-colour specks where `speck_fix` caught 0, but on real frames it also changed about 10 natural lone pixels (eye glints) per set. Use on frames that have the defect. |
 | Close one-pixel holes inside a sprite | `fill_pinholes PATH... --out DIR` | changes | PATH = file, folder, or root of folders. 24 of 24 injected pinholes closed on the samples. 2-3 px slivers between limbs are left alone. |
 | Close breaks in a dark 1 px outline | `repair_outline fix IN_DIR OUT_DIR [--min-dark 2] [--y-min ROW]` | changes colours only | Only on noisy generator output; on clean sprites it made things worse. |
@@ -62,7 +62,7 @@ python gizpix.py ui                # the local web interface (for people; see se
 | Sprite sheet + JSON | `make_sheet OUT_BASE FRAMES... (--fps 12 \| --durations ms,ms,... \| --beat light\|swing) [--cols N] [--godot]` | new files | Aseprite "array" JSON (`frames[].frame`, `duration`, `meta`); `--godot` also writes a `.tres`. |
 | Preview GIF | `preview_gif out.gif - FRAMES... --faithful --fps 12 [--scale 3]` | new file | `--faithful` = exactly your frames, transparent, 1:1 unless `--scale`. Without it the GIF adds a standing beat and holds meant for attack swings and needs a still as the second argument. |
 | Contact sheet for review | `contact_sheet out.png a.png b.png c.png [--row d.png e.png] [--scale 3] [--cols 10]` | new file | `--scale 3` gives a 3x nearest-neighbour sheet (864x576 for six 96 px frames). One `--row` per row. |
-| Turn an upscaled or off-grid picture into real pixels | `pix_snap in.png out.png --cells W H` or `--candidates` | new file | Give the cell count when you know it: exact result on a 3x upscale (100% colours match). Auto size got the width wrong (87x96 for a 96x96 sprite) on that same clean upscale: do not trust auto; use `--candidates` and pick by eye. |
+| Turn an upscaled or off-grid picture into real pixels | `pix_snap in.png out.png --cells W H` or `--candidates` | new file | A clean whole-number nearest-neighbour upscale (x2 to x6 tried) is recognised exactly and comes back identical to the original; the report shows `exact_upscale: (True, True)`. Anything noisy, blurred or warped falls back to a guess: give `--cells W H` when you know it, else `--candidates` and pick by eye. |
 | Cut an outfit or armour layer from base vs base+outfit frames | `pix_layer cut BASE_DIR OUTFIT_DIR OUT_DIR --name robe --solid --drop-skin auto --bits --drop-parts` | new files | Recipe B. |
 | One base/edit pair, with checks; stack layers on a base | `paperdoll extract BASE.png EDIT.png --out DIR --name hat [--region x0,y0,x1,y1] [--tol 18]` / `paperdoll compose BASE.png LAYER.png [LAYER2.png ...] --out final.png` | new files | `extract` writes `NAME.layer.png`, `NAME.check.png`, `NAME.report.json` and exits 1 when a check fails. `compose` prints nothing on success. |
 | Recolour by turning the hue (all colours or one hue range) | `hue_shift FRAMES... --out DIR --hue DEG [--range LO,HI] [--sat M] [--val M] [--keep-dark V]` | new files | Same colour -> same result in every frame. `--hue` is degrees (-180..180); `--range` is 0..1 on the wheel (red 0, yellow .17, green .33, cyan .5, blue .67) and wraps when LO > HI (`0.9,0.05` = reds). Outline (value below 0.12) untouched. |
@@ -182,7 +182,7 @@ python gizpix.py palette_diff robe/0.png green/0.png                            
 - **`--drop-skin auto` is off on dark skin** (it prints the WARNING); `--drop-hue` eats an outfit of the hair's hue.
 - **`align_frames --y feet` flattens a walk's natural 1-2 px bob.** Only for drifted frames.
 - **`pixel_lint` on an upscale** flags "thick outline" by design; it under-counts specks on edges and raises no flag for them.
-- **`pix_snap` auto size is unreliable** even on a clean 3x upscale in this check (87x96 instead of 96x96): pass `--cells`, else `--candidates` and pick by eye. On 240 real images auto recovered the true size on 57 of 120 regular-grid images.
+- **`pix_snap` auto size is a guess unless the input is an exact upscale** (`exact_upscale` in the report). On noisy input the guess can be off (a noisy 3x upscale of a 90x70 crop gave 88x70); pass `--cells`, else `--candidates` and pick by eye. On 240 real images the dip rule recovered the true size on 57 of 120 regular-grid images.
 - **`extract-style`** groups by hue only; it is a starting point to edit.
 - **`top`-view buildings with a wing** read less clearly than `iso`.
 - **Windows only so far.** The code is plain Python and should run elsewhere, but nothing else was tested.
@@ -199,7 +199,7 @@ python gizpix.py palette_diff robe/0.png green/0.png                            
 | Symptom | Cause / fix |
 |---|---|
 | `speck_fix: no such file: <folder>` | It takes one file in, one file out. Loop over the frames. |
-| `speck_fix` prints `0 pixels fixed` but specks are visible | The same wrong colour is used more than 2 times: `--rare 5` (or more), or `despeckle` for noisy output. |
+| `speck_fix` prints `0 pixels fixed` but specks are visible | The same wrong colour is used more than 2 times. It now prints which `--rare` to try on stderr; or use `despeckle` for noisy output. |
 | `recolor_groups.py: error: give --out DIR` | `--out` is required for `--swap`. |
 | `pixdraw: no such scene file: pixdraw/examples/village.json` | Repo-relative path from another folder. Use `$(gizpix path)/pixdraw/examples/village.json`. |
 | `two inputs share the file name '0.png'` (exit 2) | Run once per folder, or rename. |

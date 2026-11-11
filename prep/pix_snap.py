@@ -12,6 +12,8 @@ How it works (one idea, per axis, written from scratch):
   3. n is chosen by "gain": the score on the real profile minus the score on the same profile shifted by half a cell
      (what the path could capture by luck). With --cells W H the counts are fixed (or +-tol).
   4. Each cell becomes the median colour of its centre; a cell is opaque when most of its centre is.
+A clean whole-number nearest-neighbour upscale (every k-wide group of columns and rows identical) is recognised exactly first and comes back pixel for pixel;
+noisy, blurred or warped input goes through the dip rule below, which is a guess.
 Returns the small image plus a report (cells, gain, ratio to the runner-up) so callers can tell sure from unsure.
 """
 import sys, argparse
@@ -119,6 +121,17 @@ def fit_axis(E, lam, n_fixed=None, tol=0, n_min=4, drift=0.1, n_auto=None, auto_
     cuts = _path(E, best, lam, True, drift)[1]
     return best, cuts, gains[best], sorted(gains.items(), key=lambda kv: -kv[1])[:3]
 
+def exact_cells(a, axis):
+    """cell count when this axis is an exact whole-number nearest-neighbour upscale (every k-wide group of columns/rows identical,
+    the largest such k >= 2); None otherwise. A noisy, blurred or warped image is never exact, so it falls through to the dip rule."""
+    L = a.shape[axis]
+    for k in range(L // 2, 1, -1):
+        if L % k: continue
+        g = a.reshape(a.shape[0], L // k, k, a.shape[2]) if axis == 1 else a.reshape(L // k, k, a.shape[1], a.shape[2])
+        first = g[:, :, :1] if axis == 1 else g[:, :1]
+        if (g == first).all(): return L // k
+    return None
+
 def sample(a, cx, cy):
     out = np.zeros((len(cy) - 1, len(cx) - 1, 4), np.uint8)
     for j in range(len(cy) - 1):
@@ -133,14 +146,15 @@ def sample(a, cx, cy):
 
 def snap(img, cells=None, tol=0, lam=8.0, drift=0.1, min_depth=1.1, auto_tol=0):
     a = np.array(img.convert("RGBA")); H, W = a.shape[:2]
-    dx = dy = None; ax = ay = None
+    dx = dy = None; ax = ay = None; ex = ey = None
     if not cells:
+        ex, ey = exact_cells(a, 1), exact_cells(a, 0)           # a clean whole-number upscale is recognised exactly, before any guessing
         ax, dx = dip_pick(a, 1); ay, dy = dip_pick(a, 0)
         if dx < min_depth: ax = None
         if dy < min_depth: ay = None
-    nx, cx, gx, rx = fit_axis(edge_profile(a, 1), lam, cells[0] if cells else None, tol, drift=drift, n_auto=ax, auto_tol=auto_tol)
-    ny, cy, gy, ry = fit_axis(edge_profile(a, 0), lam, cells[1] if cells else None, tol, drift=drift, n_auto=ay, auto_tol=auto_tol)
-    rep = {"cells": (nx, ny), "dip_depth": (dx and round(dx, 2), dy and round(dy, 2)), "score": (round(float(gx), 2), round(float(gy), 2)),
+    nx, cx, gx, rx = fit_axis(edge_profile(a, 1), lam, cells[0] if cells else ex, tol, drift=drift, n_auto=ax, auto_tol=auto_tol)
+    ny, cy, gy, ry = fit_axis(edge_profile(a, 0), lam, cells[1] if cells else ey, tol, drift=drift, n_auto=ay, auto_tol=auto_tol)
+    rep = {"cells": (nx, ny), "exact_upscale": (ex is not None, ey is not None), "dip_depth": (dx and round(dx, 2), dy and round(dy, 2)), "score": (round(float(gx), 2), round(float(gy), 2)),
            "candidates": ([(n, round(float(g), 2)) for n, g in rx], [(n, round(float(g), 2)) for n, g in ry])}
     return Image.fromarray(sample(a, cx, cy), "RGBA"), rep
 
@@ -152,6 +166,9 @@ def selftest():
     out, rep = snap(Image.fromarray(np.clip(big, 0, 255).astype(np.uint8), "RGBA"))
     assert out.size == (20, 24), (out.size, rep)
     assert np.array(out)[..., 3].astype(bool).tolist() == (pal[s][..., 3] > 0).tolist(), "transparency wrong"
+    ex_img = Image.fromarray(pal[s], "RGBA").resize((20 * 3, 24 * 3), Image.NEAREST)          # a clean 3x upscale is found exactly
+    out2, rep2 = snap(ex_img); assert out2.size == (20, 24) and rep2["exact_upscale"] == (True, True), rep2
+    assert np.array_equal(np.array(out2), pal[s]), "exact upscale must come back pixel for pixel"
     print("selftest ok", rep)
 
 if __name__ == "__main__":

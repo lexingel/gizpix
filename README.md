@@ -84,6 +84,8 @@ python gizpix.py fill_pinholes step1.png --out fixed/
 
 ![Repair](images/repair.png)
 
+Notes that save time: `speck_fix` takes one file in and one file out, and only fixes a colour used by at most `--rare` pixels (default 2); if it says some pixels look like specks but were kept, run it again with the `--rare` value it suggests. On Windows `*.png` is not expanded by the shell: `despeckle`, `qa`, `hue_shift` and `make_sheet` expand it themselves, for the other tools list the files. Coding agents: read [HANDOUT.md](HANDOUT.md).
+
 ## The tools
 
 Run `python gizpix.py list` for the live list; `python gizpix.py help TOOL` for details.

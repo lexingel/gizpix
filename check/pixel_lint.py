@@ -3,6 +3,9 @@
   python pixel_lint.py sprite.png [more.png ...] [--json] [--strict]   (--strict: exit 1 if any sprite has a flag; no file -> usage, exit 2)      python pixel_lint.py selftest
 Checks (rules of thumb from the pixel-art craft, our own code):
   lone_px      opaque pixels with no opaque neighbour at all, plus 1-pixel colour specks (differ from all 4 neighbours, which agree with each other)
+  odd_px       pixels that differ from every opaque neighbour by a lot AND whose colour is never used by two touching pixels anywhere in the sprite: wrong-coloured
+               specks, also when several share one colour. Measured on 80 clean generated frames: mean 1.3 (eye glints and single highlights count), 14 frames had 3 or more and 7 had 4 or more;
+               5 injected same-colour specks gave about 6 and were flagged in 38 of 40 trials. Advisory: flagged at 4 or more.
   thick_line   share of dark outline pixels that sit in 2x2 dark blocks (a 1 px outline is the usual goal)
   stair_break  silhouette edge steps: how often neighbouring step lengths differ by more than 1 (even, or two alternating lengths, is clean)
   soft_alpha   pixels with alpha not 0 or 255 (blurry edge: too much anti-alias, or a resized image)
@@ -28,6 +31,16 @@ def lint(a):
     same = lambda x, y: np.abs(x - y).sum(-1) < 12
     speck = op & np.all([o for o in nbo], 0) & ~np.any([same(c, x) for x in nbs], 0) & same(nbs[0], nbs[1]) & same(nbs[2], nbs[3]) & same(nbs[0], nbs[2])
     r["isolated_px"] = lone; r["speck_px"] = int(speck.sum()); r["lone_px"] = lone + int(speck.sum())
+    keys = np.where(op, (a[..., 0].astype(int) << 16) | (a[..., 1].astype(int) << 8) | a[..., 2].astype(int), -1)
+    pk = np.pad(keys, 1, constant_values=-1); pa = np.pad(rgb, ((1, 1), (1, 1), (0, 0))); pop = np.pad(op, 1)
+    mind = np.full(op.shape, np.inf); nbc = np.zeros(op.shape, int); same = np.zeros(op.shape, bool)
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            if not (dy or dx): continue
+            o = pop[1 + dy:H + 1 + dy, 1 + dx:W + 1 + dx]; dd = np.abs(pa[1 + dy:H + 1 + dy, 1 + dx:W + 1 + dx] - rgb).sum(-1)
+            mind = np.where(o, np.minimum(mind, dd), mind); nbc += o; same |= (pk[1 + dy:H + 1 + dy, 1 + dx:W + 1 + dx] == keys) & o
+    grouped = set(np.unique(keys[op & same]).tolist())        # colours that form at least one pair of touching pixels somewhere
+    r["odd_px"] = int(sum(1 for k in keys[op & (nbc >= 2) & (mind > 120)] if k not in grouped))
     sat, val = _hsv(rgb); dark = op & (val < 0.2)
     r["thick_line"] = round(float((dark & np.roll(dark, 1, 0) & np.roll(dark, 1, 1) & np.roll(dark, (1, 1), (0, 1)) | dark & np.roll(dark, -1, 0) & np.roll(dark, -1, 1) & np.roll(dark, (-1, -1), (0, 1))).sum() / max(dark.sum(), 1)), 3) if dark.sum() > 10 else 0.0
     steps = []
@@ -52,6 +65,7 @@ def lint(a):
     r["light_x"] = round(float((np.sum(xs * w) / w.sum() - cx) / half), 2)
     flags = []
     if r["isolated_px"] >= 1: flags.append("lone pixels")   # speck_px is information only: injected specks were not reliably separable from textured shading
+    if r["odd_px"] >= 4: flags.append("odd-coloured pixels")
     if r["thick_line"] > 0.35: flags.append("thick outline")
     if r["stair_break"] > 0.5: flags.append("irregular edge steps")
     if r["soft_alpha"] > 0.02 * n: flags.append("soft alpha / blurry edge")
@@ -70,6 +84,9 @@ def selftest():
     img[edge] = (10, 10, 12, 255)
     r, f = lint(img); assert "lone pixels" not in f and "soft alpha / blurry edge" not in f, (r, f)
     d = img.copy(); d[1, 1] = (255, 0, 0, 255); assert "lone pixels" in lint(d)[1]                                # lone pixel
+    o = img.copy(); inner_ = np.argwhere(body & (xx > 7) & (xx < 17) & (yy > 7) & (yy < 17))
+    for k, (yq, xq) in enumerate(inner_[[0, 20, 40, 60]]): o[yq, xq, :3] = (255, 0, 200)                           # four specks of ONE colour, inside the body
+    assert lint(img)[0]["odd_px"] == 0 and lint(o)[0]["odd_px"] == 4 and "odd-coloured pixels" in lint(o)[1], (lint(img)[0]["odd_px"], lint(o)[0]["odd_px"])
     b = np.array(Image.fromarray(img).resize((96, 96), Image.BICUBIC).resize((24, 24), Image.BILINEAR)); assert lint(b)[0]["soft_alpha"] > r["soft_alpha"], "blur not seen"
     t = img.copy(); t[~body & np.roll(body, 1, 0) | ~body & np.roll(body, -1, 1)] = (10, 10, 12, 255); assert lint(t)[0]["thick_line"] > r["thick_line"], "thick line not seen"
     pil = base.copy(); dist = np.sqrt((xx - 12) ** 2 + (yy - 12) ** 2); pil[body] = np.stack([np.clip(255 - 12 * dist[body] * 2, 20, 255)] * 3 + [np.full(body.sum(), 255)], -1).astype(np.uint8)   # brightest in the centre

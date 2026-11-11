@@ -64,10 +64,11 @@ Defects injected into the walk frames (`experiments/anim_chain/tools_real_test.p
 
 ## Checks run on the bundled code-drawn samples
 
-`experiments/anim_chain/chain_test.py` and `tools_real_test.py` (run by `doctor`) now read `samples/walk_frames`, which are drawn from code, so they test that the tools run and behave on clean frames. The costs quoted above for `scrub` and `despeckle` were measured on the AI-generated frames. Two things found on the bundled samples on 2026-11-11:
+`experiments/anim_chain/chain_test.py` and `tools_real_test.py` (run by `doctor`) now read `samples/walk_frames`, which are drawn from code, so they test that the tools run and behave on clean frames. The costs quoted above for `scrub` and `despeckle` were measured on the AI-generated frames. Three things found on the bundled samples on 2026-11-11, and what was changed:
 
-- `speck_fix` at its defaults fixed 0 of 5 injected specks that all had the same colour (it only fixes a colour used by at most `--rare` pixels, default 2); `--rare 5` fixed all 5.
-- `pix_snap` without `--cells` found 87×96 for a clean 3× upscale of a 96×96 sprite; `--cells 96 96` was exact.
+- `speck_fix` at its defaults fixed 0 of 5 injected specks that all had the same colour (it only fixes a colour used by at most `--rare` pixels, default 2); `--rare 5` fixed all 5. It now reports the pixels it kept and suggests a `--rare` value.
+- `pix_snap` without `--cells` found 87×96 for a clean 3× upscale of a 96×96 sprite. It now recognises exact whole-number upscales first (×2, ×3, ×4, ×6 and a 90×70 crop at ×3 and ×5 came back identical to the original); noisy input still gets the dip rule's guess.
+- `pixel_lint` counted 1 or 2 of 5 injected specks and raised no flag. It now has `odd_px` (pixels that differ from all neighbours and whose colour never forms a touching pair): 5 injected same-colour specks were flagged in 38 of 40 trials; on 80 clean real frames the mean was 1.3 and 7 frames (9%) reached the flag level of 4, so the flag is advisory.
 
 ## Snapping (`pix_snap`)
 
