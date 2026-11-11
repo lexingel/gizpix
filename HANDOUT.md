@@ -172,7 +172,7 @@ python gizpix.py pixfx render ice/frost-nova -o radius=52 -o spikes=18 --bg none
 python gizpix.py pixfx check                      # all effects; exit 1 on a failure
 ```
 
-- Options: `palette` (a name from `pixfx list`, or hex colours dark to bright: `-o palette='#102,#215,#43a'`), `seed`, `light` (glow strength), `flip` (face left), plus each effect's own (`show`). An unknown option or palette is a one-line error, exit 2.
+- Options: `palette` (a name from `pixfx list`, or hex colours dark to bright: `-o palette='#102,#215,#43a'`), `seed`, `light` (glow strength), `flip` (face left), `colors` (default 24: one shared palette for the whole animation, 0 = off; the glow otherwise makes hundreds of shades), `hard` (true = glow is dithered on/off, no half-transparent pixels; use only if the engine cannot blend alpha), plus each effect's own (`show`). An unknown option or palette is a one-line error, exit 2.
 - Loops (`loop`) are seamless: the last frame leads into the first. One-shots end on an empty frame; the GIF holds four blank frames before it restarts.
 - Always open `NAME_contact.png` (a labelled grid of frames) and judge at the given zoom, as for any art. Glow is baked into the sheet as translucent pixels: it reads as additive over dark scenes; render with another `palette` or `light=0.3` for bright ones.
 - Rain and snow are tiles that wrap on both axes (they touch the edges on purpose).
@@ -212,7 +212,8 @@ Rules that save rounds:
 - Windows: a layer draws only inside `t: [start, end]` (fractions of the duration). A one-shot is a few overlapping windows: flash 0 to 0.25, body 0 to 0.8, aftermath to 1. **Everything must shrink or fade to nothing by t = 1** (`thick: [3, 0]`, `size: [x, 0]`, `strength: [k, 0]`, `scale: [1, 0]`), or `check` says "does not end empty".
 - When one body continues in a second layer (a blob that grows, then shrinks), give both layers the same `"seed"` or they draw different shapes.
 - Loops: use only `{"wave": [lo, hi, whole_cycles]}`, particles `stream` with whole `cycles`, orbits with whole `turns`.
-- `blob` bands: `depth` about 1.3 times the radius gives layered colour; a small depth gives a flat pale blob. `cover` below 0.3 looks like a mesh at 1x: prefer thin layers to dithered fills.
+- `blob` bands: `depth` about 1.3 times the radius gives layered colour; a small depth gives a flat pale blob. `cover` below 0.3 looks like a mesh at 1x: prefer thin layers, a stepped `glow` or a `ring` to dithered fills.
+- A value can have more than two keys: `"size": [0, 20, 0]` grows then shrinks in ONE layer (no second layer needed). `"$reach*0.5"` scales an option. `blob` takes `lit: [-1, -1]` for sphere-like shading, `bolt` takes `rim: "#hex"` (cracks on dark ground), `beam` takes `shade: flat` (no stripes).
 - Options make a recipe reusable: `"options": {"radius": 24}` and `"radius": "$radius"` inside; the user then runs `-o radius=40`. `-o palette=NAME` recolours the whole thing.
 - Mistakes come back as one line naming the layer, the wrong key and the closest right one (exit 2).
 - Honest limit: layers draw clean, readable game-sprite effects, not hand-painted detail. Judge `_contact.png` as you would any art, change numbers (counts, sizes, windows, bias), render again; two or three rounds is normal.

@@ -33,12 +33,12 @@ SCHEMA = {
                   "stagger": "burst: spread the births over this fraction of the window", "gravity": "px of downward pull at end of life (negative = rises)", "sway": "px of side wobble",
                   "size": "[start, end] px", "shape": "dot | streak", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life"},
     "blob": {"count": "int discs merged into one body", "spread": "[w, h] px", "radius": "[lo, hi] px", "scale": "0..1+ animatable: grow and shrink the whole body", "rise": "px upward, animatable",
-             "depth": "band width px (bigger = bands further in)", "bias": "dark(-)..bright(+) animatable: cool a fireball with [0.2, -0.6]", "cover": "0..1 dither"},
+             "depth": "band width px (bigger = bands further in)", "lit": "[dx, dy] direction of the light, e.g. [-1, -1] = top-left (sphere-like shading)", "lit_strength": "0..1, default 0.3", "bias": "dark(-)..bright(+) animatable: cool a fireball with [0.2, -0.6]", "cover": "0..1 dither"},
     "bolt": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "grow": "fraction of the window spent striking from `from` to `to`", "flicker": "reshapes per window (default 6)",
-             "rough": "0.1..0.5 zigzag (default 0.28)", "depth": "subdivisions (default 4)", "branches": "int side forks", "glow": "radius of the light along the bolt"},
+             "rough": "0.1..0.5 zigzag (default 0.28)", "depth": "subdivisions (default 4)", "branches": "int side forks", "glow": "radius of the light along the bolt", "rim": "'#rrggbb' lighter edge under the stroke (cracks on dark ground)"},
     "rays": {"count": "int", "inner": "px from centre, animatable", "length": "px, animatable", "width": "px at the root", "rotate": "degrees over the window", "jitter": "0..1 random length"},
     "orbit": {"count": "int", "radius": "px, animatable", "squash": "1 = circle", "turns": "whole turns over the window (whole number for loops)", "size": "px, animatable", "trail": "dots behind each one", "shade": "flat | core"},
-    "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`"},
+    "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`", "shade": "flat = one colour, no stripes"},
     "arc": {"radius": "px", "thick": "px, animatable", "sweep": "[a0, a1] degrees the head travels", "trail": "length of the tail as a fraction of the sweep (default 0.6)"},
 }
 
@@ -46,8 +46,9 @@ SCHEMA = {
 def sub(x, o):
     """replace "$name" strings by the option's value, recursively"""
     if isinstance(x, str) and x.startswith("$"):
-        if x[1:] not in o: raise KeyError(f"'{x}' is not an option of this recipe (options: {', '.join(sorted(o))})")
-        return o[x[1:]]
+        name, _, mul = x[1:].partition("*")                                            # "$reach" or "$reach*0.55"
+        if name not in o: raise KeyError(f"'{x}' is not an option of this recipe (options: {', '.join(sorted(o))})")
+        return o[name] * float(mul) if mul else o[name]
     if isinstance(x, list): return [sub(i, o) for i in x]
     if isinstance(x, dict): return {k: sub(v, o) for k, v in x.items()}
     return x
@@ -56,7 +57,8 @@ def sub(x, o):
 def val(x, p, t=0.0):
     if isinstance(x, dict):
         w = (list(x["wave"]) + [1, 0])[:4]; return lerp(w[0], w[1], 0.5 + 0.5 * math.sin(TAU * (t * w[2] + w[3])))
-    if isinstance(x, (list, tuple)): return lerp(x[0], x[1], p)
+    if isinstance(x, (list, tuple)):                                                   # [a, b] or [a, b, c, ...]: evenly spaced keys over the window
+        n = len(x) - 1; pos = clamp(p) * n; i = min(int(pos), n - 1); return lerp(x[i], x[i + 1], pos - i)
     return x
 
 
@@ -87,7 +89,8 @@ def L_disc(f, d, c):
 
 def L_ring(f, d, c):
     r = val(d.get("radius", 20), c.e); th = val(d.get("thick", 2), c.e); sq = d.get("squash", 1); cv = val(d.get("cover", 1), c.e)
-    if r <= 0 or th <= 0: return
+    if r <= 0 or th < 0.5: return
+    th = max(th, 1.0)                                                                  # a ring thinner than a pixel would draw as dots
     if sq == 1:
         arc = d.get("arc"); f.ring(c.ox, c.oy, r, th, c.ramp, v=c.v(0.8) if "v" in d else None, cover=cv, arc=None if arc is None else (math.radians(arc[0]), math.radians(arc[1]))); return
     g = f._grid(c.ox, c.oy, r + th)                                                    # a flat ring: distance measured on the squashed plane
@@ -129,7 +132,11 @@ def L_blob(f, d, c):
     for i in range(n):
         dx, dy, rr = r.u(-1, 1), r.u(-1, 1), r.u(lo, hi)
         disc_mask(m, c.ox + dx * sx * sc, c.oy + dy * sy * sc - rise, rr * sc)
-    f.fill(m, c.ramp, depth=d.get("depth", 5), bias=val(d.get("bias", 0), c.e), cover=val(d.get("cover", 1), c.e))
+    grad = None
+    if d.get("lit"):                                                                   # light from this side: brighter that way, darker the other
+        lx, ly = d["lit"]; k = d.get("lit_strength", 0.3); yy, xx = np.mgrid[0:f.h, 0:f.w]; R = max(sx, sy, hi) * max(sc, 0.2) + hi
+        grad = k * ((xx + 0.5 - c.ox) * lx + (yy + 0.5 - c.oy) * ly) / (math.hypot(lx, ly) * R)
+    f.fill(m, c.ramp, depth=d.get("depth", 5), grad=grad, bias=val(d.get("bias", 0), c.e), cover=val(d.get("cover", 1), c.e))
 
 
 def L_bolt(f, d, c):
@@ -142,10 +149,14 @@ def L_bolt(f, d, c):
         bx, by = pts[r.i(len(pts) // 4, len(pts) * 3 // 4)]; ln = math.hypot(x1 - x0, y1 - y0) * r.u(0.2, 0.4); a = math.atan2(y1 - y0, x1 - x0) + r.u(-1.0, 1.0)
         paths.append((jagged(r, bx, by, bx + math.cos(a) * ln, by + math.sin(a) * ln, depth=3), max(1, w / 2)))
     if d.get("glow"): f.glow(c.ox + lerp(x0, x1, 0.5), c.oy + lerp(y0, y1, 0.5), d["glow"], ramp_at(c.ramp, 0.7), 0.5)
+    if d.get("rim"):                                                                   # a lighter edge under the stroke: cracks read on dark ground
+        rc = hex2rgb(d["rim"])
+        for pl, ww in paths:
+            for a, b in zip(pl, pl[1:]): f.line(a[0], a[1], b[0], b[1], rc, width=max(1, int(ww)) + 2)
     for pl, ww in paths:
         for a, b in zip(pl, pl[1:]): f.line(a[0], a[1], b[0], b[1], ramp_at(c.ramp, c.v(0.65)), width=max(1, int(ww)))
     for pl, ww in paths:
-        if ww >= 2:                                                                    # a bright 1 px core down the thick strokes
+        if ww >= 2 and not d.get("rim") and not d.get("color"):                         # a bright 1 px core down the thick strokes
             for a, b in zip(pl, pl[1:]): f.line(a[0], a[1], b[0], b[1], c.ramp[-1], width=1)
 
 
@@ -171,7 +182,8 @@ def L_orbit(f, d, c):
 
 def L_beam(f, d, c):
     x0, y0 = pt(d.get("from", [0, 0]), c.e); x1, y1 = pt(d.get("to", [30, 0]), c.e); w = val(d.get("width", 4), c.e); ex = d.get("extend", 0); g = out_expo(seg(c.p, 0, ex)) if ex > 0 else 1.0
-    if w > 0.4: f.tapered(c.ox + x0, c.oy + y0, c.ox + lerp(x0, x1, g), c.oy + lerp(y0, y1, g), w, val(d.get("tip", w), c.e), c.ramp, v=c.v(0.8))
+    rp = [ramp_at(c.ramp, c.v(0.8))] if d.get("shade") == "flat" else c.ramp           # flat: one colour, no banding
+    if w > 0.4: f.tapered(c.ox + x0, c.oy + y0, c.ox + lerp(x0, x1, g), c.oy + lerp(y0, y1, g), w, val(d.get("tip", w), c.e), rp, v=c.v(0.8))
 
 
 def L_arc(f, d, c):
@@ -241,5 +253,5 @@ def schema_text(ty=None):
     for name in ([ty] if ty else LAYERS):
         if name not in LAYERS: raise ValueError(f"unknown layer type '{name}'. Types: {', '.join(LAYERS)}")
         out.append(f"layer \"{name}\":"); out += [f"  {k:9s} {v}" for k, v in SCHEMA[name].items()]; out.append("")
-    out.append("Values: 3 | [from, to] | {\"wave\":[lo,hi,cycles]} | \"$option\". Loops: use `wave`, particles mode stream with whole `cycles`, orbit with whole `turns`.")
+    out.append("Values: 3 | [from, to] | [a, b, c, ...] (evenly spaced keys: rise, hold, fade in ONE layer) | \"$option*0.5\" | {\"wave\":[lo,hi,cycles]} | \"$option\". Loops: use `wave`, particles mode stream with whole `cycles`, orbit with whole `turns`.")
     return "\n".join(out)

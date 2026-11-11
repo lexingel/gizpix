@@ -146,12 +146,15 @@ class Frame:
         self.light[y0:y1, x0:x1] += f[..., None] * np.array(c, np.float32) / 255.0 * k
 
     # ---- output ----------------------------------------------------------------------------------------------------
-    def image(self, bg=None, light=1.0):
+    def image(self, bg=None, light=1.0, hard=False):
         """RGBA image: pixels, plus the light added on top of them; light that falls on empty space becomes a translucent glow.
         bg = (r, g, b) composites onto that colour instead (what a GIF needs)."""
         a = self.a.astype(np.float32) / 255.0; rgb = self.rgb.astype(np.float32); L = self.light * light * 255.0
         has = a > 0; out_rgb = np.where(has[..., None], np.clip(rgb + L, 0, 255), np.clip(L, 0, 255))
         gl = np.clip(L.max(-1) / 255.0, 0, 1) * 0.85; out_a = np.where(has, a, np.where(gl > 0.06, gl, 0))
+        if hard:                                                                       # no half-transparent pixels: glow is dithered on or off, translucent pixels snap
+            tile = np.tile(BAYER, (self.h // 4 + 1, self.w // 4 + 1))[:self.h, :self.w]
+            out_a = np.where(has, (a >= 0.5).astype(np.float32), (gl > tile).astype(np.float32))
         res = np.dstack([out_rgb, out_a * 255]).astype(np.uint8)
         if bg is not None:
             al = out_a[..., None]; res = np.dstack([out_rgb * al + np.array(bg, np.float32) * (1 - al), np.full(a.shape, 255)]).astype(np.uint8)

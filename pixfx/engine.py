@@ -15,7 +15,7 @@ class Opts(dict):
     __getattr__ = dict.get
 
 
-COMMON = {"palette": None, "seed": 1, "light": 1.0, "flip": False}
+COMMON = {"palette": None, "seed": 1, "light": 1.0, "flip": False, "hard": False, "colors": 24}
 
 
 def _modules():
@@ -68,8 +68,22 @@ def render(eid, given=None, frames=None, fps=None, bg=None):
     mod, meta = get(eid); o = options(meta, given); o.palette = o.palette; n = n_frames(meta, frames, fps); out = []
     for i in range(n):
         t = i / n if meta["loop"] else i / (n - 1)
-        im = render_frame(mod, meta, o, t).image(bg=bg, light=float(o.light))
+        im = render_frame(mod, meta, o, t).image(bg=None if o.colors else bg, light=float(o.light), hard=bool(o.hard))
         out.append(im.transpose(Image.FLIP_LEFT_RIGHT) if o.flip else im)
+    if not o.colors: return out
+    out = limit_colors(out, int(o.colors))                                               # the palette is made from the effect alone, the background is laid under it afterwards
+    if bg is None: return out
+    return [Image.alpha_composite(Image.new("RGBA", f.size, tuple(bg) + (255,)), f) for f in out]
+
+
+def limit_colors(frames, n):
+    """one shared palette of at most n colours for the whole animation (alpha untouched): the glow no longer makes hundreds of near-duplicate shades"""
+    px = np.concatenate([np.array(f)[np.array(f)[..., 3] > 0][:, :3] for f in frames]) if frames else np.zeros((0, 3), np.uint8)
+    if len(px) == 0: return frames
+    strip = Image.fromarray(px.reshape(-1, 1, 3).astype(np.uint8), "RGB"); pal = strip.quantize(colors=max(2, n), method=0, dither=0)
+    out = []
+    for f in frames:
+        a = f.getchannel("A"); q = f.convert("RGB").quantize(palette=pal, dither=0).convert("RGB"); q.putalpha(a); out.append(q)
     return out
 
 
