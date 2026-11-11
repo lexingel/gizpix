@@ -25,3 +25,5 @@ gizpix_out/
 .impeccable/decision-payload.json
 .impeccable/review/
 .impeccable/build/
+build/
+*.egg-info/
