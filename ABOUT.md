@@ -27,6 +27,14 @@ Fixing this by hand across hundreds of frames is slow. Gizpix does it in one run
 
 *Each row is one frame. From the left: the bare character, the character in the robe, the robe cut out on its own, and the cut-out robe placed back on the bare character.*
 
+**Dressing characters in layers.** This way of working is called paperdolling: one bare character, and clothes that lie on top of it like paper cut-outs. Once you have cut your layers, Gizpix can stack any of them on the bare character, from bottom to top, and save the result as an ordinary picture. The layers are copied pixel by pixel from the generator's own picture and never repainted, so the clothes keep the look they were generated with. You can also restrict a cut to one part of the picture, such as the shoulders, set how different a pixel must be from the bare character to count as clothing, and keep only the colours that do not appear on the bare character. When one of these checks fails, the tool says so and stops with an error code, so a script can stop too.
+
+![A bare character, then with a robe layer, with a pauldron layer and with both, in two poses](images/about/dressup.png)
+
+*One bare character and two cut layers, combined in every way. The top row is one frame of the walk, the bottom row another. The layers follow the pose because each frame gets its own cut.*
+
+You cut each outfit once and then mix them, instead of generating every character and outfit combination again. Two further tools try to carry a layer along with a moving character from a single still picture: one follows the character's own motion (it needs the optional OpenCV package) and one builds a simple walk from the parts of a still picture. Both are experimental, and their results are rougher than layers cut from real walking frames.
+
 **Measuring.** These tools only report and never change a file. They count stray dots, check that lines are clean, and compare colours between frames or walking directions. They also test whether a tile repeats without a visible seam and whether a set of eight walking directions is consistent. Think of them as a checklist before you accept generated art.
 
 **Recolouring.** Gizpix can turn the hue of every frame by the same amount, so a given colour always becomes the same new colour in every frame. It can also make colour variants by group, such as skin or grey tones, or squeeze a picture into a fixed palette.

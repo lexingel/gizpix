@@ -6,6 +6,7 @@ Writes to images/about/ (CC0, like images/evidence/):
   recolour_real.png   a robe frame: original | whole picture turned | only the blue robe turned | only the robe, other way
   walk_sheet.png      the 8 frames of a walk packed by make_sheet (4 columns) and the JSON size line
   walk_robe.gif       preview_gif of the same walk
+  dressup.png         paperdoll: bare character | + robe layer | + pauldron layer | + both (frames 0 and 4, south)
   styles.png          one inn drawn by pixdraw in the five bundled styles (needs no frames)
 Run:  python experiments/evidence/make_about.py PATH/TO/frames"""
 import json, os, shutil, subprocess, sys, tempfile
@@ -59,6 +60,26 @@ def sheet(src, out, work):
     gz("preview_gif", f"{out}/walk_robe.gif", frames[0], *frames, "--beat", "even", "--fps", "10", "--scale", "3"); print("wrote", f"{out}/walk_robe.gif")
 
 
+def dressup(src, out, work):
+    lay = os.path.join(work, "L")
+    for name in ("robe", "pauld"): gz("pix_layer", "cut", f"{src}/base/south", f"{src}/{name}/south", lay, "--name", name, "--solid", "--drop-skin", "auto", "--bits", "--drop-parts")
+    frames = (0, 4); box = None; rows = []
+    ims = [load(f"{src}/base/south/{i}.png") for i in frames]; bb = [im.getchannel("A").getbbox() for im in ims]
+    box = (min(b[0] for b in bb) - 10, min(b[1] for b in bb) - 6, max(b[2] for b in bb) + 10, max(b[3] for b in bb) + 6)
+    for i in frames:
+        b = f"{src}/base/south/{i}.png"; r = f"{lay}/robe/{i}.png"; q = f"{lay}/pauld/{i}.png"; combos = [[], [r], [q], [r, q]]; tiles = []
+        for k, ls in enumerate(combos):
+            if not ls: tiles.append(tile(load(b), 4, box)); continue
+            o = os.path.join(work, f"dress_{i}_{k}.png"); gz("paperdoll", "compose", b, *ls, "--out", o); tiles.append(tile(load(o), 4, box))
+        rows.append(tiles)
+    w, h = rows[0][0].size; pad = 10; top = 46; labels = ["bare character", "+ robe layer", "+ pauldron layer", "+ both layers"]
+    im = Image.new("RGB", (4 * (w + pad) + pad, top + 2 * (h + pad) + pad - 10), PAPER[:3]); d = ImageDraw.Draw(im); d.text((pad, 8), "paperdoll compose: one bare character, layers stacked bottom to top", fill=INK[:3])
+    for c, lab in enumerate(labels): d.text((pad + c * (w + pad), 28), lab, fill=INK[:3])
+    for r_, row_ in enumerate(rows):
+        for c, t in enumerate(row_): im.paste(t.convert("RGB"), (pad + c * (w + pad), top + r_ * (h + pad)))
+    im.save(f"{out}/dressup.png"); print("wrote", f"{out}/dressup.png")
+
+
 def styles(out, work):
     names = ["dark_fantasy", "bright_cartoon", "desert", "frost", "retro16"]; tiles = []
     for n in names:
@@ -76,7 +97,7 @@ def main(argv):
     if not argv: raise SystemExit(__doc__)
     src = os.path.abspath(argv[0]); out = os.path.abspath(argv[1]) if len(argv) > 1 else os.path.join(ROOT, "images", "about")
     os.makedirs(out, exist_ok=True); work = tempfile.mkdtemp(prefix="about_")
-    try: recolour(src, out, work); sheet(src, out, work); styles(out, work)
+    try: recolour(src, out, work); sheet(src, out, work); dressup(src, out, work); styles(out, work)
     finally: shutil.rmtree(work, ignore_errors=True)
 
 
