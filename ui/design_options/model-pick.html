@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Gizpix - Cut outfit layer</title>
+<!-- SIGNATURE MOVE: the 8 frames (0-7) run as COLUMNS of an exposure sheet: frame number head, thumbnail, rows Layer px / Leak px / Checked; frame 3 highlighted in blue pencil, problem frame circled in red pencil. -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--sheet:#d9e8d6;--paper:#e8f1e5;--rail:#1c2a22;--ink:#1c2a22;--red:#d03b2f;--blue:#2d6cdf;--line:#a9c0a4;--mut:#3f5547}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.4 Barlow,sans-serif;color:var(--ink);background:var(--sheet);display:grid;grid-template-columns:240px 1fr}
+.num,th,.cond{font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em}
+code,.mono{font-family:'JetBrains Mono',monospace}
+aside{background:var(--rail);color:#cfe0cf;padding:24px 16px;display:flex;flex-direction:column}
+aside h1{font:700 26px 'Barlow Condensed';color:#fff;letter-spacing:.08em;margin-bottom:28px}
+aside a{display:block;padding:10px 12px;border-radius:4px;margin-bottom:4px;color:#cfe0cf}
+aside a.on{background:#d9e8d6;color:var(--ink);font-weight:600}
+aside small{margin-top:auto;color:#8fa896;font-size:12px}
+main{padding:20px 28px;display:grid;grid-template-rows:auto auto auto 1fr;gap:14px;min-width:0}
+ol{display:flex;gap:26px;list-style:none;padding:0;font:600 15px 'Barlow Condensed';letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+ol li b{display:inline-grid;place-items:center;width:22px;height:22px;border:1.5px solid var(--mut);border-radius:50%;margin-right:7px;font-size:12px}
+ol .done{color:var(--ink)}ol .cur{color:#1b4fb0}ol .cur b{background:var(--blue);border-color:var(--blue);color:#fff}
+.prev{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--paper);border:1px solid var(--line);padding:8px 12px 10px;display:flex;align-items:center;gap:14px}
+.card h3{font:600 15px 'Barlow Condensed';letter-spacing:.06em;text-transform:uppercase;writing-mode:vertical-rl;transform:rotate(180deg);color:var(--mut)}
+.card svg{width:180px;height:180px;image-rendering:pixelated;background:repeating-conic-gradient(#cfdfcb 0 25%,#e1ecde 0 50%) 0 0/16px 16px}
+.card .n{font-size:12px;color:var(--mut)}
+.row{display:flex;gap:10px;align-items:center}
+.tab{padding:5px 14px;border:1px solid var(--line);background:var(--paper);border-radius:4px;font-weight:500}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sheet{background:var(--paper);border:1px solid var(--line);margin-left:0}
+table{border-collapse:collapse;width:100%;table-layout:fixed}
+th,td{border:1px solid var(--line);text-align:center;padding:4px 2px;font-size:13px}
+th{background:#cfe0cb;font-weight:600;font-size:17px;cursor:pointer}
+th.rh,td.rh{width:104px;text-align:left;padding-left:10px;font:500 13px Barlow;color:var(--mut)}
+th.rh::after{content:" \21C5";font-size:11px}
+td svg{width:44px;height:44px;image-rendering:pixelated;background:#dbe8d8;display:block;margin:2px auto}
+td.sel,th.sel{background:#dfe9fb;box-shadow:inset 3px 0 0 var(--blue),inset -3px 0 0 var(--blue);color:#1b4fb0}
+th.sel{background:var(--blue);color:#fff}
+.mono{font-size:13px}
+.circ{display:inline-block;position:relative;padding:1px 10px;color:#a82a1f;font-weight:600}
+.circ::after{content:"";position:absolute;inset:-5px -3px;border:2px solid var(--red);border-radius:50% 46% 52% 48%/55% 45% 55% 45%;transform:rotate(-3deg)}
+th.bad{color:var(--red)}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-content:start}
+fieldset{border:0;padding:0;display:grid;gap:6px}
+legend{font:600 15px 'Barlow Condensed';letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+label{display:flex;gap:8px;align-items:center}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue)}
+.warn{border-left:4px solid var(--red);background:#f6e3df;padding:8px 12px;margin-top:8px;color:#7a1f17}
+.stats{display:flex;gap:22px;margin:0 0 10px}
+.stats b{font:700 24px 'Barlow Condensed'}
+.cmd{background:var(--rail);color:#d9e8d6;padding:10px 12px;border-radius:4px;font-size:12px;line-height:1.5;word-break:break-all}
+.btn{border:1px solid var(--ink);background:var(--paper);padding:6px 14px;border-radius:4px;font:500 14px Barlow}
+.btn.p{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;padding:10px 18px;font-size:15px}
+</style></head><body>
+<aside><h1>GIZPIX</h1>
+<a>Clean &amp; measure</a><a class="on">Cut outfit layer</a><a>Draw buildings</a><a>Recolour &amp; pack</a>
+<small>Runs offline. Originals are never changed.</small></aside>
+<main>
+<ol><li class="done"><b>1</b>Load frames - Base 8, Outfit 8, 96x96 px</li><li class="cur"><b>2</b>Options</li><li><b>3</b>Review</li><li><b>4</b>Save copies</li></ol>
+<div class="prev">
+<div class="card"><h3>Base</h3><svg viewBox="0 0 16 16"><g fill="#1c2a22"><rect x="6" y="2" width="4" height="4"/><rect x="5" y="6" width="6" height="5"/><rect x="5" y="11" width="2" height="4"/><rect x="9" y="11" width="2" height="4"/></g><rect x="6" y="3" width="4" height="2" fill="#d8a47a"/></svg><span class="n">3x, east, frame 3</span></div>
+<div class="card"><h3>Outfit (generated)</h3><svg viewBox="0 0 16 16"><g fill="#1c2a22"><rect x="6" y="2" width="4" height="4"/><rect x="4" y="6" width="8" height="7"/><rect x="5" y="13" width="2" height="2"/><rect x="9" y="13" width="2" height="2"/></g><rect x="6" y="3" width="4" height="2" fill="#d8a47a"/><rect x="5" y="7" width="6" height="5" fill="#8a3a52"/></svg><span class="n">3x, east, frame 3</span></div>
+<div class="card"><h3>Layer worn on base</h3><svg viewBox="0 0 16 16"><g fill="#1c2a22"><rect x="6" y="2" width="4" height="4"/><rect x="5" y="11" width="2" height="4"/><rect x="9" y="11" width="2" height="4"/></g><rect x="6" y="3" width="4" height="2" fill="#d8a47a"/><rect x="4" y="6" width="8" height="6" fill="#8a3a52"/><rect x="7" y="11" width="2" height="1" fill="#d9e8d6"/></svg><span class="n">3x, east, frame 3</span></div>
+</div>
+<div class="row"><span class="tab on">east</span><span class="tab">south</span><span style="margin-left:auto;color:var(--mut)">Frame scrubber 0-7, frame 3 selected</span></div>
+<div class="bottom" style="grid-template-columns:1.55fr 1fr">
+<div>
+<div class="sheet"><table>
+<tr><th class="rh">Frame</th><th>0</th><th>1</th><th>2</th><th class="sel">3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr>
+<tr><td class="rh">Thumbnail</td>
+<td><svg viewBox="0 0 16 16"><rect x="5" y="3" width="6" height="10" fill="#8a3a52"/></svg></td><td><svg viewBox="0 0 16 16"><rect x="5" y="3" width="6" height="10" fill="#8a3a52"/></svg></td><td><svg viewBox="0 0 16 16"><rect x="5" y="3" width="6" height="10" fill="#8a3a52"/></svg></td><td class="sel"><svg viewBox="0 0 16 16"><rect x="4" y="3" width="8" height="9" fill="#8a3a52"/><rect x="7" y="9" width="2" height="2" fill="#dbe8d8"/></svg></td><td><svg viewBox="0 0 16 16"><rect x="5" y="3" width="6" height="10" fill="#8a3a52"/></svg></td><td><svg viewBox="0 0 16 16"><rect x="5" y="3" width="6" height="10" fill="#8a3a52"/></svg></td><td><svg viewBox="0 0 16 16"><rect x="5" y="3" width="6" height="10" fill="#8a3a52"/></svg></td><td><svg viewBox="0 0 16 16"><rect x="5" y="3" width="6" height="10" fill="#8a3a52"/></svg></td></tr>
+<tr><td class="rh">Layer px</td><td class="mono">438</td><td class="mono">431</td><td class="mono">440</td><td class="mono sel">402</td><td class="mono">436</td><td class="mono">433</td><td class="mono">441</td><td class="mono">458</td></tr>
+<tr><td class="rh">Leak px</td><td class="mono">1</td><td class="mono">0</td><td class="mono">2</td><td class="mono sel"><span class="circ">4</span></td><td class="mono">1</td><td class="mono">0</td><td class="mono">3</td><td class="mono">2</td></tr>
+<tr><td class="rh">Checked</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td class="sel" style="color:#a82a1f;font-weight:600">by eye</td><td></td><td></td><td></td><td></td></tr>
+</table></div>
+<div class="warn" style="margin-top:10px"><b>Dark-skin pair, east:</b> the layer has holes where the robe lies over dark trousers. Check frame 3 by eye.</div>
+</div>
+<div>
+<fieldset><legend>Options</legend>
+<label><input type="checkbox" checked> Drop skin colours (auto)</label>
+<label><input type="checkbox" checked> Remove small specks (--bits)</label>
+<label><input type="checkbox" checked> Hair tips and boots (--drop-parts)</label>
+<label><input type="checkbox"> Keep dark outline</label></fieldset>
+<div class="stats" style="margin-top:12px"><div><b>3,479 px</b><br><span class="n">Layer (was 5,386)</span></div><div><b>0-4 px</b><br><span class="n">Hair/boot leak</span></div><div><b>51</b><br><span class="n">colours</span></div></div>
+<div class="cmd mono">python gizpix.py pix_layer cut base/east robe/east layers --name robe --solid --drop-skin auto --bits --drop-parts</div>
+<div class="row" style="margin-top:10px"><button class="btn">Copy</button><button class="btn p">Save copies to layers/robe</button></div>
+<div style="margin-top:4px;color:var(--mut)">Originals stay untouched.</div>
+</div></div>
+</main></body></html>

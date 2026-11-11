@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Gizpix - Orienteering</title>
+<!-- SIGNATURE MOVE: the Base is the fixed terrain (contour ground, olive tint) beneath; the outfit Layer is the purple course drawn over it with numbered control circles 1-4 linking the steps (Load, Options, Review, Save). A ranked legend table maps Base=terrain, Layer=purple course, Leak=brown cross, Warning=hatched yellow. Purple is used ONLY for the active step / layer. -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--g:#fff;--ol:#c8d25a;--ye:#ffd23f;--br:#a0522d;--bl:#2e86de;--pu:#b0309c;--ink:#3a2a20;--mut:#7a6558}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--g);color:var(--ink);font:14px/1.4 'Source Sans 3',sans-serif;display:grid;grid-template-columns:232px 1fr;
+background-image:repeating-radial-gradient(circle at 70% 40%,transparent 0 38px,rgba(160,82,45,.07) 38px 39px)}
+.num{font-family:'Barlow Condensed',sans-serif;font-weight:600}
+nav{background:#faf8ee;border-right:1px solid var(--br);padding:24px 16px;display:flex;flex-direction:column}
+nav h1{font:700 26px 'Barlow Condensed';letter-spacing:.04em;margin-bottom:24px}
+nav a{display:block;padding:10px 12px;border-left:3px solid transparent;margin-bottom:4px;color:var(--ink)}
+nav a.on{border-color:var(--pu);color:var(--pu);font-weight:600;background:#fff}
+nav p{margin-top:auto;font-size:12px;color:var(--mut)}
+main{padding:20px 28px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.course{display:flex;align-items:center;padding:4px 0}
+.ctl{display:flex;align-items:center;gap:8px;font-weight:600}
+.c{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--br);display:grid;place-items:center;font:600 19px 'Barlow Condensed';background:#fff;color:var(--br)}
+.done .c{background:var(--ol);border-color:var(--br)}
+.cur .c{border-color:var(--pu);color:var(--pu);border-width:3.5px}.cur{color:var(--pu)}
+.leg{flex:1;height:0;border-top:3px solid var(--br);margin:0 10px;opacity:.5}.leg.p{border-color:var(--pu);opacity:1}
+.row{display:flex;gap:20px;align-items:flex-start}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--br)}
+.tabs span{padding:6px 16px;border:1px solid transparent}.tabs .on{border:1px solid var(--br);border-bottom:1px solid #fff;margin-bottom:-1px;font-weight:600;background:#fff}
+.prev{display:flex;gap:16px}
+.pv figcaption{font-weight:600;margin-bottom:6px}
+.map{width:288px;height:288px;position:relative;border:1px solid var(--br);background:var(--ol)}
+.map.b{background:repeating-radial-gradient(circle at 60% 45%,#d4dc78 0 14px,#c8d25a 14px 15px)}
+.map.o{background:#fff}
+.map.w{background:repeating-radial-gradient(circle at 60% 45%,#d4dc78 0 14px,#c8d25a 14px 15px)}
+.map svg{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.scrub{display:flex;gap:6px;align-items:center}.scrub b{width:30px;height:28px;border:1px solid var(--br);display:grid;place-items:center;background:#fff;font-weight:400}
+.scrub b.s{border:2px solid var(--pu);color:var(--pu);font-weight:600}
+aside{width:360px;display:flex;flex-direction:column;gap:12px;flex:none}
+h2{font:600 18px 'Barlow Condensed';letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--br);padding-bottom:3px;color:var(--br)}
+label{display:flex;gap:8px;align-items:center;padding:3px 0}input{accent-color:var(--pu);width:16px;height:16px}
+code{font:12.5px 'Source Code Pro',monospace;background:#faf8ee;border:1px solid var(--br);padding:8px 10px;display:block;word-break:break-all}
+.warn{background:repeating-linear-gradient(135deg,var(--ye) 0 6px,#fff0a8 6px 12px);border:1px solid var(--br);padding:8px 10px;font-weight:600}
+table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:4px 8px;border-bottom:1px solid rgba(160,82,45,.35);font-size:13px}th{font:600 13px 'Barlow Condensed';letter-spacing:.06em;color:var(--br)}
+.sw{display:inline-block;width:16px;height:12px;vertical-align:-1px;margin-right:6px;border:1px solid var(--br)}
+.btn{background:var(--pu);color:#fff;border:0;padding:12px 18px;font:600 15px 'Source Sans 3';width:100%;text-align:left}
+.cp{float:right;border:1px solid var(--br);background:#fff;padding:0 8px;font-size:12px;color:var(--br)}
+.stats{display:flex;gap:18px}.stats div{font-size:12px;color:var(--mut)}.stats strong{display:block;font:600 24px 'Barlow Condensed';color:var(--ink)}
+</style></head><body>
+<nav><h1>GIZPIX</h1>
+<a>Clean &amp; measure</a><a class="on">Cut outfit layer</a><a>Draw buildings</a><a>Recolour &amp; pack</a>
+<p>Runs offline. Originals are never changed.</p></nav>
+<main>
+<div class="course">
+<div class="ctl done"><span class="c">1</span>Load frames</div><i class="leg p"></i>
+<div class="ctl cur"><span class="c">2</span>Options</div><i class="leg"></i>
+<div class="ctl"><span class="c">3</span>Review</div><i class="leg"></i>
+<div class="ctl"><span class="c">4</span>Save copies</div></div>
+<div class="row"><div style="flex:1;display:flex;flex-direction:column;gap:12px">
+<div class="tabs"><span class="on">east</span><span>south</span></div>
+<div class="prev">
+<figure class="pv"><figcaption>Base <span style="font-weight:400;color:var(--mut)">terrain, 8 frames</span></figcaption><div class="map b"><svg viewBox="0 0 24 24"><g fill="#6b4a2e"><rect x="9" y="4" width="6" height="5"/><rect x="8" y="9" width="8" height="8"/><rect x="9" y="17" width="2" height="4"/><rect x="13" y="17" width="2" height="4"/></g></svg></div></figure>
+<figure class="pv"><figcaption>Outfit (generated)</figcaption><div class="map o"><svg viewBox="0 0 24 24"><g fill="#7a3a8a"><rect x="9" y="4" width="6" height="5" fill="#c8a07a"/><rect x="8" y="9" width="8" height="9"/><rect x="9" y="18" width="2" height="3" fill="#333"/><rect x="13" y="18" width="2" height="3" fill="#333"/></g></svg></div></figure>
+<figure class="pv"><figcaption style="color:var(--pu)">Layer worn on base</figcaption><div class="map w" style="border:2px solid var(--pu)"><svg viewBox="0 0 24 24"><g fill="#6b4a2e"><rect x="9" y="4" width="6" height="5"/><rect x="8" y="9" width="8" height="8"/><rect x="9" y="17" width="2" height="4"/><rect x="13" y="17" width="2" height="4"/></g><g fill="#b0309c"><rect x="8" y="9" width="8" height="9"/><rect x="8" y="12" width="2" height="2" fill="#6b4a2e"/></g><g stroke="#a0522d" stroke-width=".4"><path d="M8.5 20l1 1M9.5 20l-1 1"/></g></svg></div></figure>
+</div>
+<div class="scrub"><span style="margin-right:6px">Frame</span><b>0</b><b>1</b><b>2</b><b class="s">3</b><b>4</b><b>5</b><b>6</b><b>7</b><span style="margin-left:12px;color:var(--mut)">3x nearest-neighbour, 96x96 px</span></div>
+<div class="warn">Dark-skin pair, east: the layer has holes where the robe lies over dark trousers. Check frame 3 by eye.</div>
+<div><h2>Command <button class="cp">Copy</button></h2><code style="margin-top:8px">python gizpix.py pix_layer cut base/east robe/east layers --name robe --solid --drop-skin auto --bits --drop-parts</code></div>
+</div>
+<aside>
+<div><h2>Options</h2>
+<label><input type="checkbox" checked>Drop skin colours (auto)</label>
+<label><input type="checkbox" checked>Remove small specks (--bits)</label>
+<label><input type="checkbox" checked>Hair tips and boots (--drop-parts)</label>
+<label><input type="checkbox">Keep dark outline</label></div>
+<div><h2>Result</h2><div class="stats"><div><strong>3,479 px</strong>Layer (was 5,386)</div><div><strong>0-4 px</strong>Hair/boot leak</div><div><strong>51</strong>colours</div></div></div>
+<div><h2>Legend</h2><table><tr><th>#</th><th>Symbol</th><th>Meaning</th></tr>
+<tr><td class="num">1</td><td><i class="sw" style="background:var(--ol)"></i>Base</td><td>fixed terrain, never changed</td></tr>
+<tr><td class="num">2</td><td><i class="sw" style="background:var(--pu);border-color:var(--pu)"></i>Layer</td><td>purple course, the outfit</td></tr>
+<tr><td class="num">3</td><td><i class="sw" style="background:#fff"></i>Leak</td><td style="color:var(--br)">brown cross, stray pixels</td></tr>
+<tr><td class="num">4</td><td><i class="sw" style="background:repeating-linear-gradient(135deg,var(--ye) 0 3px,#fff 3px 6px)"></i>Warning</td><td>hatched yellow, check by eye</td></tr></table></div>
+<div style="margin-top:auto"><button class="btn">Save copies to layers/robe</button><p style="margin-top:6px;color:var(--mut)">Originals stay untouched.</p></div>
+</aside></div>
+</main></body></html>

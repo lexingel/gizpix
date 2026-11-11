@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Gizpix - Cut outfit layer</title>
+<!-- Signature move: none. The category standard (Squoosh / Linear / Figma panels) played straight. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--text:#111827;--mut:#6b7280;--blue:#2563eb;--blue-d:#1d4ed8;--tint:#eff6ff;--amb-bg:#fffbeb;--amb-line:#fcd34d;--amb-t:#92400e}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;display:grid;grid-template-columns:208px 1fr 304px;grid-template-rows:60px 1fr;font:14px/1.45 Geist,system-ui,sans-serif;color:var(--text);background:var(--bg)}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+nav{grid-row:1/3;background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px}
+.brand{font-weight:600;font-size:16px;padding:4px 8px 20px;display:flex;align-items:center;gap:8px}
+.brand i{width:20px;height:20px;border-radius:5px;background:var(--blue)}
+.lab{font-size:11px;font-weight:500;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;padding:0 8px 6px}
+nav a{display:flex;align-items:center;gap:10px;height:36px;padding:0 8px;border-radius:6px;color:#374151;font-weight:500;text-decoration:none}
+nav a b{width:18px;height:18px;border-radius:4px;border:1.5px solid #9ca3af}
+nav a.on{background:var(--tint);color:var(--blue-d)}nav a.on b{border-color:var(--blue);background:var(--blue)}
+nav p{margin-top:auto;font-size:12px;color:var(--mut);padding:12px 8px 0;border-top:1px solid var(--line)}
+header{background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:8px}
+.step{display:flex;align-items:center;gap:10px;color:var(--mut)}
+.step .n{width:24px;height:24px;border-radius:50%;border:1.5px solid #d1d5db;display:grid;place-items:center;font-size:12px;font-weight:600}
+.step small{display:block;font-size:11px;font-weight:400;color:var(--mut);line-height:1.2}
+.step span{font-weight:500;font-size:13px;line-height:1.2}
+.step.done .n{background:var(--blue);border-color:var(--blue);color:#fff}.step.done span{color:var(--text)}
+.step.cur .n{border-color:var(--blue);color:var(--blue);box-shadow:0 0 0 3px #dbeafe}.step.cur span{color:var(--text);font-weight:600}
+.bar{width:28px;height:1.5px;background:#d1d5db;margin:0 4px}.bar.done{background:var(--blue)}
+main{padding:20px 24px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.top{display:flex;align-items:center;justify-content:space-between}
+h1{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.ctl{display:flex;align-items:center;gap:20px}
+.seg{display:flex;background:#e5e7eb;border-radius:8px;padding:2px}
+.seg span{padding:4px 14px;border-radius:6px;font-weight:500;font-size:13px;color:#4b5563}
+.seg .on{background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.frames{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut)}
+.frames span.f{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:500;color:#374151}
+.frames .f.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px}
+.card h3{font-size:13px;font-weight:600;padding:4px 4px 8px;display:flex;justify-content:space-between}
+.card h3 em{font-style:normal;font-weight:400;color:var(--mut);font-size:12px}
+.pv{height:264px;border-radius:6px;border:1px solid var(--line);background:repeating-conic-gradient(#f3f4f6 0 25%,#fff 0 50%) 0 0/16px 16px;overflow:hidden}
+.pv svg{display:block;width:264px;height:264px;margin:0 auto;image-rendering:pixelated;shape-rendering:crispEdges}
+.warn{display:flex;gap:10px;background:var(--amb-bg);border:1px solid var(--amb-line);color:var(--amb-t);border-radius:8px;padding:10px 14px;font-size:13px}
+.warn b{font-weight:600}
+.warn i{flex:none;width:18px;height:18px;border-radius:50%;background:#f59e0b;color:#fff;font:600 12px/18px Geist;text-align:center}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{text-align:left;font-size:12px;font-weight:500;color:var(--mut);padding:8px 14px;background:#f9fafb;border-bottom:1px solid var(--line)}
+th:after{content:" \2195";color:#d1d5db}
+td{padding:9px 14px;border-bottom:1px solid var(--line)}tr:last-child td{border:0}
+td.r,th.r{text-align:right}td.mono{font-size:13px}.mut{color:var(--mut)}
+aside{background:var(--card);border-left:1px solid var(--line);grid-row:2;padding:20px;display:flex;flex-direction:column;gap:12px}
+aside h2{font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:2px 0}
+.cb{flex:none;width:16px;height:16px;margin-top:2px;border:1.5px solid #9ca3af;border-radius:4px;background:#fff}
+.cb.on{background:var(--blue);border-color:var(--blue);position:relative}
+.cb.on:after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.opt span{font-weight:500}.opt small{display:block;font-size:12px;color:var(--mut);font-weight:400}
+hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.cmd{position:relative;background:#f9fafb;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;color:#1f2937;word-break:break-all}
+.cp{align-self:flex-end;margin-top:-4px;height:28px;padding:0 12px;border:1px solid #d1d5db;background:#fff;border-radius:6px;font:500 12px Geist;color:#374151}
+.save{margin-top:auto;height:44px;border:0;border-radius:8px;background:var(--blue);color:#fff;font:600 14px Geist}
+.note{text-align:center;font-size:12px;color:var(--mut);margin-top:-4px}
+</style></head><body>
+<nav><div class="brand"><i></i>Gizpix</div><div class="lab">Jobs</div>
+<a href="#"><b></b>Clean &amp; measure</a><a class="on" href="#"><b></b>Cut outfit layer</a><a href="#"><b></b>Draw buildings</a><a href="#"><b></b>Recolour &amp; pack</a>
+<p>Runs offline. Originals are never changed.</p></nav>
+
+<header>
+<div class="step done"><div class="n">&#10003;</div><div><span>Load frames</span><small>Base 8, Outfit 8, 96&times;96 px</small></div></div><div class="bar done"></div>
+<div class="step cur"><div class="n">2</div><div><span>Options</span></div></div><div class="bar"></div>
+<div class="step"><div class="n">3</div><div><span>Review</span></div></div><div class="bar"></div>
+<div class="step"><div class="n">4</div><div><span>Save copies</span></div></div>
+</header>
+
+<main>
+<div class="top"><h1>Cut outfit layer</h1>
+<div class="ctl"><div class="seg"><span class="on">east</span><span>south</span></div>
+<div class="frames">Frame <span class="f">0</span><span class="f">1</span><span class="f">2</span><span class="f on">3</span><span class="f">4</span><span class="f">5</span><span class="f">6</span><span class="f">7</span></div></div></div>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+<g id="body"><rect x="38" y="20" width="12" height="5" fill="#4b3621"/><rect x="39" y="25" width="10" height="9" fill="#e0ac82"/><rect x="35" y="34" width="18" height="18" fill="#e0ac82"/><rect x="38" y="52" width="5" height="17" fill="#374151"/><rect x="45" y="52" width="5" height="17" fill="#374151"/><rect x="37" y="69" width="7" height="5" fill="#1f2937"/><rect x="44" y="69" width="7" height="5" fill="#1f2937"/></g>
+<g id="robe"><rect x="33" y="34" width="22" height="30" fill="#0f766e"/><rect x="33" y="46" width="22" height="3" fill="#134e4a"/><rect x="29" y="36" width="5" height="16" fill="#0f766e"/><rect x="54" y="36" width="5" height="16" fill="#0f766e"/></g>
+</defs></svg>
+
+<div class="cards">
+<div class="card"><h3>Base <em>3x &middot; frame 3</em></h3><div class="pv"><svg viewBox="0 0 88 88"><use href="#body"/></svg></div></div>
+<div class="card"><h3>Outfit (generated) <em>3x &middot; frame 3</em></h3><div class="pv"><svg viewBox="0 0 88 88"><use href="#robe"/></svg></div></div>
+<div class="card"><h3>Layer worn on base <em>3x &middot; frame 3</em></h3><div class="pv"><svg viewBox="0 0 88 88"><use href="#body"/><use href="#robe"/></svg></div></div>
+</div>
+
+<div class="warn"><i>!</i><div><b>Dark-skin pair, east:</b> the layer has holes where the robe lies over dark trousers. Check frame 3 by eye.</div></div>
+
+<table><thead><tr><th>Measure</th><th class="r">Value</th><th>Detail</th></tr></thead><tbody>
+<tr><td>Layer</td><td class="r mono">3,479 px</td><td class="mut">was 5,386</td></tr>
+<tr><td>Hair/boot leak</td><td class="r mono">0-4 px</td><td class="mut">across 8 frames</td></tr>
+<tr><td>Palette</td><td class="r mono">51 colours</td><td class="mut">layer, frame 3</td></tr>
+</tbody></table>
+</main>
+
+<aside>
+<h2>Options</h2>
+<label class="opt"><i class="cb on"></i><div><span>Drop skin colours</span><small>auto</small></div></label>
+<label class="opt"><i class="cb on"></i><div><span>Remove small specks</span><small class="mono">--bits</small></div></label>
+<label class="opt"><i class="cb on"></i><div><span>Hair tips and boots</span><small class="mono">--drop-parts</small></div></label>
+<label class="opt"><i class="cb"></i><div><span>Keep dark outline</span></div></label>
+<hr><h2>Command</h2>
+<div class="cmd mono">python gizpix.py pix_layer cut base/east robe/east layers --name robe --solid --drop-skin auto --bits --drop-parts</div>
+<button class="cp">Copy</button>
+<button class="save">Save copies to layers/robe</button>
+<div class="note">Originals stay untouched.</div>
+</aside>
+</body></html>

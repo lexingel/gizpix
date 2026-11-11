@@ -1,0 +1,8 @@
+{"size": [220, 134], "items": [
+ {"path": [[0, 100], [60, 106], [120, 100], [220, 108]], "w": 9},
+ {"building": {"type": "inn", "floors": 2}, "x": 62, "y": 92},
+ {"building": {"type": "house"}, "x": 150, "y": 90},
+ {"building": {"type": "stall", "lantern": true}, "x": 122, "y": 126},
+ {"tree": 20, "x": 15, "y": 84}, {"tree": 16, "x": 196, "y": 88}, {"bush": true, "x": 100, "y": 90},
+ {"well": true, "x": 200, "y": 124}, {"fence": [10, 70], "y": 124}, {"tree": 14, "x": 30, "y": 122}
+]}

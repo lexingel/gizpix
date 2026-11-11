@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T00:00:00Z",
+  "title": "Design System: Gizpix",
+  "extensions": {
+    "colorMeta": {
+      "sheet": { "role": "neutral", "displayName": "Sheet Stock", "canonical": "#d9e8d6", "tonalRamp": ["#1c2a22", "#3a4e41", "#5f7765", "#8fa690", "#b0c6ae", "#c3d6bf", "#d9e8d6", "#eef5ec"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#1c2a22", "tonalRamp": ["#0e1612", "#1c2a22", "#2a3e32", "#3a4e41", "#5f7765", "#8fa690", "#a9bfaa", "#e3eee0"] },
+      "plate": { "role": "neutral", "displayName": "Plate Green", "canonical": "#c3d6bf", "tonalRamp": ["#2a3e32", "#4f6a58", "#728d78", "#97b09a", "#aec5ab", "#c3d6bf", "#d9e8d6", "#e8f1e5"] },
+      "blue-pencil": { "role": "primary", "displayName": "Blue Pencil", "canonical": "#2d6cdf", "tonalRamp": ["#0f2a5c", "#153f8f", "#1d54c0", "#2d6cdf", "#5b8fe8", "#8fb2ee", "#c9dcf5", "#e8f0fb"] },
+      "red-pencil": { "role": "secondary", "displayName": "Red Pencil", "canonical": "#c4352a", "tonalRamp": ["#3d0f0b", "#6e1d16", "#a42a20", "#c4352a", "#d86a60", "#e69b93", "#f3d9d4", "#fbeeec"] }
+    },
+    "typographyMeta": {
+      "head": { "displayName": "Head", "purpose": "One page title per job, Barlow Condensed 700." },
+      "section": { "displayName": "Section", "purpose": "Uppercase tracked headings for panels and sections." },
+      "body": { "displayName": "Body", "purpose": "Reading text in Barlow, intros capped near 62ch." },
+      "note": { "displayName": "Note", "purpose": "Hints, legends and footnotes." },
+      "figure": { "displayName": "Figure", "purpose": "JetBrains Mono for counts, frame numbers and commands." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "All state transitions, 160ms on button and rail hovers." },
+      { "name": "sweep", "value": "1.4s linear infinite", "purpose": "Busy block gradient sweep; disabled under prefers-reduced-motion along with all transitions." }
+    ],
+    "breakpoints": [
+      { "name": "side-drops", "value": "1180px" },
+      { "name": "rail-to-topbar", "value": "820px" },
+      { "name": "side-sticky", "value": "min-width 1181px and min-height 1000px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Default action; inverts to ink on hover.",
+      "html": "<button class=\"ds-btn\">Cut layer</button>",
+      "css": ".ds-btn { appearance: none; border: 1px solid #1c2a22; background: transparent; color: #1c2a22; border-radius: 3px; min-height: 40px; padding: 0 16px; font: 600 0.9375rem/1 Barlow, system-ui, sans-serif; cursor: pointer; transition: background 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-btn:hover { background: #1c2a22; color: #d9e8d6; } .ds-btn:focus-visible { outline: 2px solid #2d6cdf; outline-offset: 2px; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single save action per screen, in blue pencil.",
+      "html": "<button class=\"ds-btn-primary\">Save copies</button>",
+      "css": ".ds-btn-primary { appearance: none; border: 1px solid #2d6cdf; background: #2d6cdf; color: #fff; border-radius: 3px; min-height: 40px; padding: 0 16px; font: 600 0.9375rem/1 Barlow, system-ui, sans-serif; cursor: pointer; transition: background 160ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: #1d54c0; border-color: #1d54c0; } .ds-btn-primary:focus-visible { outline: 2px solid #2d6cdf; outline-offset: 2px; }"
+    },
+    {
+      "name": "Segmented Tabs",
+      "kind": "chip",
+      "refersTo": "button",
+      "description": "Joined condensed buttons; selected segment fills blue pencil.",
+      "html": "<div class=\"ds-seg\"><button aria-pressed=\"true\">Sheet</button><button aria-pressed=\"false\">GIF</button></div>",
+      "css": ".ds-seg { display: inline-flex; border: 1px solid #1c2a22; border-radius: 3px; overflow: hidden; } .ds-seg button { appearance: none; border: 0; border-right: 1px solid #1c2a22; background: transparent; color: #1c2a22; min-height: 36px; padding: 0 16px; font: 600 0.9375rem/1 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: 0.04em; cursor: pointer; } .ds-seg button:last-child { border-right: 0; } .ds-seg button[aria-pressed=true] { background: #2d6cdf; color: #fff; } .ds-seg button:focus-visible { outline: 2px solid #2d6cdf; outline-offset: -2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Field paper input with a soft-ink border that darkens on hover.",
+      "html": "<input class=\"ds-input\" type=\"text\" value=\"robe\" aria-label=\"Name the result\">",
+      "css": ".ds-input { width: 100%; padding: 9px 11px; background: #f6faf4; color: #1c2a22; border: 1px solid #3a4e41; border-radius: 3px; min-height: 40px; font: 400 0.9375rem/1.45 Barlow, system-ui, sans-serif; } .ds-input:hover { border-color: #1c2a22; } .ds-input:focus-visible { outline: 2px solid #2d6cdf; outline-offset: 2px; }"
+    },
+    {
+      "name": "Rail Job",
+      "kind": "nav",
+      "refersTo": "rail-job",
+      "description": "Numbered job in the dark rail; the current job inverts to sheet stock.",
+      "html": "<div class=\"ds-rail\"><button class=\"ds-job\"><span class=\"ds-n\">1</span>Clean &amp; measure</button><button class=\"ds-job\" aria-current=\"page\"><span class=\"ds-n\">2</span>Cut outfit layer</button></div>",
+      "css": ".ds-rail { background: #1c2a22; padding: 16px 12px; display: grid; gap: 4px; width: 168px; } .ds-job { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: center; width: 100%; padding: 12px 8px; border-radius: 3px; cursor: pointer; font: 500 1.0625rem/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: 0.02em; color: #e3eee0; transition: background 160ms cubic-bezier(0.16,1,0.3,1); } .ds-job:hover { background: #2a3e32; } .ds-job:focus-visible { outline: 2px solid #9fc3ff; outline-offset: -2px; } .ds-job[aria-current=page] { background: #d9e8d6; color: #1c2a22; font-weight: 700; } .ds-n { font: 500 0.9375rem/1 'JetBrains Mono', ui-monospace, Consolas, monospace; color: #a9bfaa; } .ds-job[aria-current=page] .ds-n { color: #1d54c0; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat bordered raised-sheet container with a section heading.",
+      "html": "<section class=\"ds-panel\"><h2>Result</h2><dl class=\"ds-stats\"><dt>Layer pixels</dt><dd>3,479</dd></dl></section>",
+      "css": ".ds-panel { background: #e8f1e5; border: 1px solid #8fa690; border-radius: 3px; padding: 12px 16px; color: #1c2a22; font: 400 0.9375rem/1.45 Barlow, system-ui, sans-serif; } .ds-panel h2 { margin: 0 0 12px; font: 700 1.0625rem/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; } .ds-stats { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; margin: 0; } .ds-stats dt { color: #3a4e41; } .ds-stats dd { margin: 0; text-align: right; font: 500 1.0625rem/1.2 'JetBrains Mono', ui-monospace, Consolas, monospace; }"
+    },
+    {
+      "name": "Exposure Sheet",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "Signature table: frames as columns, named row heads, selected frame in blue wash, a red oval on the frame to check.",
+      "html": "<div class=\"ds-sheetwrap\"><table class=\"ds-sheet\"><thead><tr><th>Frame</th><th class=\"sel\">0</th><th>1</th><th>2</th></tr></thead><tbody><tr><th scope=\"row\">Layer px</th><td class=\"sel ds-num\">431</td><td class=\"ds-num\">468</td><td class=\"ds-num\">212</td></tr><tr><th scope=\"row\">Look at</th><td class=\"sel\">Fine</td><td>Fine</td><td><span class=\"ds-pencil\">Check</span></td></tr></tbody></table></div>",
+      "css": ".ds-sheetwrap { overflow-x: auto; border: 1px solid #8fa690; background: #e8f1e5; color: #1c2a22; } .ds-sheet { border-collapse: collapse; width: 100%; font: 400 0.9375rem/1.45 Barlow, system-ui, sans-serif; font-variant-numeric: tabular-nums; } .ds-sheet th, .ds-sheet td { padding: 8px 10px; text-align: center; border-bottom: 1px solid rgba(28,42,34,0.22); border-right: 1px solid rgba(28,42,34,0.22); white-space: nowrap; } .ds-sheet thead th { font: 700 1.0625rem/1 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: 0.04em; background: #d9e8d6; } .ds-sheet th[scope=row] { text-align: left; font: 600 0.8125rem/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: #3a4e41; background: #d9e8d6; border-right: 1px solid #3a4e41; } .ds-sheet td.sel, .ds-sheet thead th.sel { background: #c9dcf5; box-shadow: inset 0 2px 0 #2d6cdf; } .ds-num { font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace; font-weight: 500; } .ds-pencil { display: inline-block; border: 2px solid #c4352a; border-radius: 999px; padding: 1px 10px; color: #a42a20; font-weight: 600; }"
+    },
+    {
+      "name": "Warning Notice",
+      "kind": "custom",
+      "refersTo": "notice",
+      "description": "Honest-limits message in red wash; never used for success.",
+      "html": "<div class=\"ds-notice\" role=\"note\"><h3>Look at these frames</h3><p>Dark skin with a dark outfit: the layer can have holes. Check the marked frames by eye.</p></div>",
+      "css": ".ds-notice { border: 1px solid #c4352a; background: #f3d9d4; border-radius: 3px; padding: 12px 16px; color: #5a1913; font: 400 0.9375rem/1.45 Barlow, system-ui, sans-serif; } .ds-notice h3 { margin: 0 0 4px; font: 600 0.9375rem/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: #a42a20; } .ds-notice p { margin: 0; }"
+    },
+    {
+      "name": "Command Block",
+      "kind": "custom",
+      "refersTo": "command",
+      "description": "The exact command the click runs, in ink with rail-ink mono text.",
+      "html": "<pre class=\"ds-cmd\">python gizpix.py layer base/east robe/east</pre>",
+      "css": ".ds-cmd { margin: 0; padding: 12px; background: #1c2a22; color: #e3eee0; border-radius: 3px; font: 400 0.8125rem/1.55 'JetBrains Mono', ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Exposure Sheet",
+    "overview": "Gizpix looks like the timing sheet an animator keeps beside the light table. Frames are columns with their numbers above them. A checker's pencil does the marking: blue for the frame you are on, red for the frame that needs a look. The screen sits on pale green sheet stock, with a deep green-grey rail down the left edge for the four jobs. Everything else is hairline ruling, plain type and the user's own pixels.\n\nThe mood is calm, exact and a little stationery-like. It is dense enough to show eight frames and their numbers without scrolling, and quiet enough that the 3x sprite previews carry the page. The build rejects the category-default tool shell (grey sidebar, floating cards, a single blue accent on white). The only ornament is the sheet tint itself.",
+    "keyCharacteristics": [
+      "Pale green sheet ground and a dark green rail, light theme only (`color-scheme: light`).",
+      "Frames as table columns; every job reuses the sheet: Clean shows repair counts, Cut shows layer pixels and \"Look at\", Recolour shows before/after columns.",
+      "Two pencils only. Blue means selection, focus and the primary action. Red means a mark or warning and nothing else.",
+      "Condensed grotesque for heads, labels and column numbers; plain sans for reading; mono for numbers and commands.",
+      "Flat. Hairline 1px rules and tonal steps do all the depth work.",
+      "Previews are real pixels: nearest-neighbour, whole-number zoom, never resampled."
+    ],
+    "rules": [
+      { "name": "The Two Pencils Rule", "body": "Blue marks where you are and what you can do; red marks what is wrong. Neither colours a surface decoratively, and neither is ever the only signal: the red oval carries the words \"Needs a look\" and the blue column carries the frame number.", "section": "colors" },
+      { "name": "The Green Neutral Rule", "body": "Every neutral is tinted toward the sheet green. A grey or pure white surface is off-system; the field white (#f6faf4) is the lightest value.", "section": "colors" },
+      { "name": "The Mono-For-Numbers Rule", "body": "Counts, frame indices and commands are mono; labels for them are condensed. A number in the body sans is a slip.", "section": "typography" },
+      { "name": "The Heading Is A Heading Rule", "body": "Uppercase tracked condensed type is used only on real section, subsection and row headings. It is not a decorative label above other headings.", "section": "typography" },
+      { "name": "The Whole-Zoom Rule", "body": "Sprites are shown at integer zoom, `image-rendering: pixelated`, with no resampling. Sheet thumbnails are cropped to the content box at true size.", "section": "layout" },
+      { "name": "The Flat-Sheet Rule", "body": "Nothing floats. A new surface is a bordered, tinted rectangle, never a shadowed card or a modal; even the folder picker opens inline.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Blue Pencil (#2d6cdf) only for selection, focus, the one primary action and checked controls.",
+      "Do mark a frame that needs attention with the red oval plus words; keep red for marks and warnings.",
+      "Do show every preview as true pixels at integer zoom on Plate Green, and pair it with measured counts in mono.",
+      "Do build new results as columns in the exposure sheet with named row heads before inventing a new layout.",
+      "Do keep depth to tone and 1px rules; open pickers and details inline.",
+      "Do give every control a visible 2px blue focus ring and a 40px (or 32px small) target.",
+      "Do keep all UI text in strings.js and the three fonts self-hosted."
+    ],
+    "donts": [
+      "Don't use a grey or white neutral, a drop shadow, a modal, or a floating card; the world is flat green sheet stock.",
+      "Don't use red decoratively, or as the only signal of a problem.",
+      "Don't resample, smooth or fractionally scale a sprite preview.",
+      "Don't use the red oval as a generic tag or pill, or add pills elsewhere.",
+      "Don't set a number in the body sans, or set a decorative uppercase label above a heading.",
+      "Don't claim a result is perfect; show the limit in a notice where the user decides."
+    ]
+  }
+}

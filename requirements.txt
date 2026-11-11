@@ -1,0 +1,5 @@
+numpy>=1.23
+Pillow>=9.5
+scipy>=1.9
+# optional: only rig/warp_layer.py needs it
+opencv-python>=4.7

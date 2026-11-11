@@ -1,0 +1,36 @@
+# Project metadata, packaging and test configuration.
+# From a clone:  python gizpix.py ...      After  pip install .  :  gizpix ...
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gizpix"
+version = "0.2.0"
+description = "Local, free, offline pixel-art toolkit: clean frames, cut outfit layers, measure quality, recolour, pack sheets, draw buildings from code."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0-or-later" }
+dependencies = ["numpy>=1.23", "Pillow>=9.5", "scipy>=1.9"]
+
+[project.optional-dependencies]
+warp = ["opencv-python>=4.7"]
+
+[project.scripts]
+gizpix = "gizpix_toolkit.gizpix:cli"
+
+# The tools stay plain scripts in their folders (so a clone works unchanged); pip installs the same
+# tree as the package `gizpix_toolkit` and `gizpix` finds the tools next to itself.
+[tool.setuptools.package-dir]
+gizpix_toolkit = "."
+
+[tool.setuptools]
+packages = ["gizpix_toolkit", "gizpix_toolkit.layers", "gizpix_toolkit.prep", "gizpix_toolkit.check", "gizpix_toolkit.clean",
+            "gizpix_toolkit.color", "gizpix_toolkit.sheets", "gizpix_toolkit.rig", "gizpix_toolkit.pixdraw",
+            "gizpix_toolkit.ui", "gizpix_toolkit.experiments.anim_chain"]
+
+[tool.setuptools.package-data]
+gizpix_toolkit = ["samples/make_samples.py", "samples/walk_frames/**/*.png", "ui/web/*", "ui/web/fonts/*", "pixdraw/*.json", "pixdraw/styles/*.json", "pixdraw/examples/*", "experiments/anim_chain/*.py", "*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["pixdraw"]

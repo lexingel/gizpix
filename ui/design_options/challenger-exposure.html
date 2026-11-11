@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Gizpix - Exposure Record</title>
+<!-- SIGNATURE MOVE: previews sit under stacked translucent tracing-paper sheets (Base, Layer, Result) at slight angles, an eleven-step zone wedge heads the work area, and regions with leaks/warnings carry diagonal hatch whose density = load; two hatches crossing at 90deg = the dark-skin east conflict. Controls stay standard and unobscured. -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--z0:#1a1a1c;--z1:#252527;--z2:#303032;--z3:#3f3f41;--z4:#58585a;--z5:#767676;--z6:#949491;--z7:#b0aeaa;--z8:#c8c5bf;--z9:#dcd9d2;--z10:#e9e6df;--mg:#d4308f}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--z0);color:var(--z9);font:400 14px/1.4 Barlow,sans-serif;display:grid;grid-template-columns:248px 1fr;grid-template-rows:900px}
+.cap{font:600 12px 'Barlow Condensed';letter-spacing:.16em;text-transform:uppercase;color:var(--z6)}
+.m{font:400 13px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+aside{background:var(--z1);border-right:1px solid var(--z3);padding:24px 16px;display:flex;flex-direction:column;gap:8px}
+aside h1{font:600 24px 'Barlow Condensed';letter-spacing:.14em;color:var(--z10);margin-bottom:16px}
+aside a{display:block;padding:10px 12px;border-left:3px solid transparent;color:var(--z8);font-size:15px}
+aside a.on{border-color:var(--mg);background:var(--z2);color:var(--z10);font-weight:500}
+aside .foot{margin-top:auto;color:var(--z6);font-size:12px}
+main{padding:20px 32px;display:grid;grid-template-rows:auto auto 1fr auto;gap:14px;min-width:0}
+.steps{display:flex;gap:24px}.steps span{padding-bottom:6px;border-bottom:2px solid var(--z3);color:var(--z6)}
+.steps .d{color:var(--z8)}.steps .c{border-color:var(--mg);color:var(--z10)}
+.wedge{display:flex;height:14px}.wedge i{flex:1}
+.area{display:grid;grid-template-columns:1fr 300px;gap:24px;min-height:0}
+.stage{background:var(--z2);border:1px solid var(--z3);padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.tabs{display:flex;gap:4px}.tabs b{font:500 14px Barlow;padding:5px 14px;border:1px solid var(--z4);color:var(--z8)}
+.tabs b.on{background:var(--z10);color:var(--z0);border-color:var(--mg);box-shadow:0 2px 0 var(--mg)}
+.sheets{flex:1;position:relative;background:var(--z1);border:1px solid var(--z3);overflow:hidden}
+.sheet{position:absolute;top:34px;width:300px;height:330px;background:rgba(233,230,223,.1);border:1px solid rgba(233,230,223,.28);box-shadow:0 6px 16px rgba(0,0,0,.35);padding:10px}
+.sheet .cap{color:var(--z8);position:absolute;top:8px;left:12px}
+.sheet .mask{position:absolute;inset:34px 14px 14px;background:var(--z3);display:grid;place-items:center;outline:1px solid var(--z4);outline-offset:6px}
+.mask.r{background:var(--z2)}
+.hatch{position:absolute;pointer-events:none}
+.h1{background:repeating-linear-gradient(45deg,transparent 0 9px,rgba(233,230,223,.35) 9px 10px)}
+.h2{background:repeating-linear-gradient(-45deg,transparent 0 9px,rgba(212,48,143,.55) 9px 10px)}
+.h1b{background:repeating-linear-gradient(45deg,transparent 0 9px,rgba(212,48,143,.55) 9px 10px)}
+.sheet svg{width:192px;height:192px;image-rendering:pixelated}
+.scrub{display:flex;gap:6px;align-items:center}.scrub b{width:34px;height:28px;display:grid;place-items:center;border:1px solid var(--z4);color:var(--z8)}
+.scrub b.on{background:var(--z10);color:var(--z0);border-color:var(--mg)}
+.panel{display:flex;flex-direction:column;gap:12px}
+.panel label{display:flex;gap:10px;align-items:center;padding:8px 10px;background:var(--z1);border:1px solid var(--z3)}
+.panel input{width:16px;height:16px;accent-color:var(--mg)}
+.panel code{margin-left:auto;color:var(--z6);font:12px 'JetBrains Mono'}
+.res{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:12px;background:var(--z1);border:1px solid var(--z3)}
+.res .m{color:var(--z10);text-align:right}
+.warn{padding:10px 12px;border:1px solid var(--z7);background:repeating-linear-gradient(45deg,var(--z2) 0 8px,var(--z1) 8px 9px);color:var(--z10);font-size:13px}
+.warn .cap{color:var(--z10)}
+.bar{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.cmd{background:var(--z1);border:1px solid var(--z3);padding:10px 12px;display:flex;gap:12px;align-items:flex-start}
+.cmd .m{flex:1;color:var(--z8);font-size:12px;word-break:break-all}
+.btn2{font:500 13px Barlow;padding:4px 12px;border:1px solid var(--z5);color:var(--z9);background:var(--z2)}
+.save{text-align:right}.save button{font:600 16px Barlow;padding:12px 24px;background:var(--z10);color:var(--z0);border:0;border-bottom:3px solid var(--mg);display:block;margin-left:auto}
+.save small{color:var(--z6);font-size:12px}
+</style></head><body>
+<aside><h1>GIZPIX</h1>
+<a>Clean &amp; measure</a><a class="on">Cut outfit layer</a><a>Draw buildings</a><a>Recolour &amp; pack</a>
+<div class="foot">Runs offline. Originals are never changed.</div></aside>
+<main>
+<div class="steps cap"><span class="d">1 Load frames &#10003;</span><span class="c">2 Options</span><span>3 Review</span><span>4 Save copies</span><span class="m" style="margin-left:auto;border:0;text-transform:none;letter-spacing:0;color:var(--z6)">Base 8 frames &middot; Outfit 8 frames &middot; 96&times;96 px</span></div>
+<div class="wedge"><i style="background:#1a1a1c"></i><i style="background:#252527"></i><i style="background:#303032"></i><i style="background:#3f3f41"></i><i style="background:#58585a"></i><i style="background:#767676"></i><i style="background:#949491"></i><i style="background:#b0aeaa"></i><i style="background:#c8c5bf"></i><i style="background:#dcd9d2"></i><i style="background:#e9e6df"></i></div>
+<div class="area">
+<section class="stage">
+<div style="display:flex;justify-content:space-between"><div class="tabs"><b class="on">east</b><b>south</b></div><span class="cap">Frame 3 of 0&ndash;7 &middot; 3&times; nearest</span></div>
+<div class="sheets">
+<div class="sheet" style="left:18px;transform:rotate(-1.6deg)"><span class="cap">Base</span><div class="mask"><svg viewBox="0 0 16 16"><g fill="#c8c5bf"><rect x="6" y="1" width="4" height="4"/><rect x="5" y="5" width="6" height="5"/><rect x="5" y="10" width="2" height="4"/><rect x="9" y="10" width="2" height="4"/></g></svg></div></div>
+<div class="sheet" style="left:230px;top:56px;transform:rotate(1.2deg);background:rgba(233,230,223,.14)"><span class="cap">Layer &middot; Outfit (generated)</span><div class="mask"><svg viewBox="0 0 16 16"><g fill="#949491"><rect x="4" y="5" width="8" height="6"/><rect x="3" y="11" width="10" height="3"/></g><rect x="6" y="5" width="4" height="1" fill="#d4308f"/></svg></div><div class="hatch h1" style="inset:34px 14px 14px;opacity:.5;clip-path:polygon(0 70%,100% 70%,100% 100%,0 100%)"></div></div>
+<div class="sheet" style="left:442px;top:28px;transform:rotate(-.8deg);background:rgba(233,230,223,.18)"><span class="cap">Result &middot; Layer worn on base</span><div class="mask r"><svg viewBox="0 0 16 16"><g fill="#c8c5bf"><rect x="6" y="1" width="4" height="4"/><rect x="5" y="10" width="2" height="4"/><rect x="9" y="10" width="2" height="4"/></g><g fill="#949491"><rect x="4" y="5" width="8" height="6"/></g></svg></div>
+<div class="hatch h1b" style="left:150px;top:150px;width:54px;height:60px"></div><div class="hatch h2" style="left:150px;top:150px;width:54px;height:60px"></div></div>
+<span class="cap" style="position:absolute;left:18px;bottom:10px;color:var(--z6)">Hatch density = load &middot; light hatch: leak 0&ndash;4 px &middot; crossed: conflict</span>
+</div>
+<div class="scrub"><span class="cap" style="margin-right:6px">Frame</span><b>0</b><b>1</b><b>2</b><b class="on m">3</b><b>4</b><b>5</b><b>6</b><b>7</b></div>
+</section>
+<section class="panel">
+<span class="cap">Options</span>
+<label><input type="checkbox" checked>Drop skin colours (auto)</label>
+<label><input type="checkbox" checked>Remove small specks<code>--bits</code></label>
+<label><input type="checkbox" checked>Hair tips and boots<code>--drop-parts</code></label>
+<label><input type="checkbox">Keep dark outline</label>
+<span class="cap" style="margin-top:6px">Exposure</span>
+<div class="res"><span>Layer</span><span class="m">3,479 px (was 5,386)</span><span>Hair/boot leak</span><span class="m">0&ndash;4 px</span><span>Palette</span><span class="m">51 colours</span></div>
+<div class="warn"><span class="cap">Warning &middot; east</span><br>Dark-skin pair, east: the layer has holes where the robe lies over dark trousers. Check frame 3 by eye.</div>
+</section></div>
+<div class="bar"><div class="cmd"><span class="m">python gizpix.py pix_layer cut base/east robe/east layers --name robe --solid --drop-skin auto --bits --drop-parts</span><span class="btn2">Copy</span></div>
+<div class="save"><button>Save copies to layers/robe</button><small>Originals stay untouched.</small></div></div>
+</main></body></html>

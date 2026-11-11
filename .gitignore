@@ -1,0 +1,27 @@
+__pycache__/
+*.pyc
+assets_dl/
+out/
+out_*/
+/work*/
+experiments/*/work*/
+tmp/
+*.bak
+
+# local-only
+page_build/
+docs/
+draw_old/
+.pytest_cache/
+venv/
+.venv/
+*.egg-info/
+build/
+dist/
+experiments/*/out*/
+OVERNIGHT.md
+gizpix_out/
+.impeccable/mocks/
+.impeccable/decision-payload.json
+.impeccable/review/
+.impeccable/build/
