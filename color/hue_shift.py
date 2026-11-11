@@ -46,6 +46,7 @@ def main(argv):
     ap.add_argument("--val", type=float, default=1.0); ap.add_argument("--range"); ap.add_argument("--keep-dark", type=float, default=0.12)
     try: a = ap.parse_args(argv)
     except SystemExit: print("hue_shift: bad options (see -h)", file=sys.stderr); return 2
+    import glob; a.files = [h for f in a.files for h in (sorted(glob.glob(f)) if ("*" in f or "?" in f) else [f])]   # shells that do not expand * (Windows)
     if not a.out or a.hue is None: print("hue_shift: --out DIR and --hue DEGREES are required", file=sys.stderr); return 2
     try:
         rng = tuple(float(v) for v in a.range.split(",")) if a.range else None

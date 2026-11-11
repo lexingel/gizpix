@@ -9,8 +9,8 @@
   function h(tag, attrs, ...kids) {
     const e = document.createElement(tag);
     for (const [k, v] of Object.entries(attrs || {})) {
-      if (v == null || v === false) continue;
-      if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else if (v === true) e.setAttribute(k, ""); else e.setAttribute(k, v);
+      if (v == null || (v === false && !k.startsWith("aria-"))) continue;
+      if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else if (v === true && !k.startsWith("aria-")) e.setAttribute(k, ""); else e.setAttribute(k, v);
     }
     for (const c of kids.flat(Infinity)) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c));
     return e;
@@ -56,7 +56,12 @@
           h("div", { class: "foot" }, h("span", {}, T.pngCount(d.pngs.length)), h("button", { type: "button", class: "btn small primary", onclick: () => { input.value = d.path; set(d.path); box.replaceChildren(); onChange && onChange(); } }, T.chooseFolder))));
       } catch (e) { box.replaceChildren(h("p", { class: "hint" }, e.message)); }
     };
-    return h("div", { class: "field" }, h("label", { for: id }, label), h("div", { class: "row" }, input, h("button", { type: "button", class: "btn fit", onclick: () => open() }, T.browse)), box);
+    const pick = h("button", { type: "button", class: "btn fit", onclick: async e => {
+      const b = e.currentTarget; b.disabled = true; b.textContent = T.picking;
+      try { const d = await api("/api/pick-folder", { path: input.value }); if (d.path) { input.value = d.path; set(d.path); onChange && onChange(); } } catch (err) { box.replaceChildren(h("p", { class: "hint" }, err.message)); }
+      b.disabled = false; b.textContent = T.pickFolder;
+    } }, T.pickFolder); pick.title = T.pickTip;
+    return h("div", { class: "field" }, h("label", { for: id }, label), h("div", { class: "row" }, input, pick, h("button", { type: "button", class: "btn fit", title: T.browseTip, onclick: () => open() }, T.browse)), box);
   }
   function copyButton(getText) {
     const b = h("button", { type: "button", class: "btn small" }, T.copy);
@@ -64,7 +69,7 @@
     return b;
   }
   function commandBox(cmds, outPath, savedPath, planned) {
-    const text = cmds.map(c => c.split(outPath).join(savedPath || planned || T.resultFolder)).join("\n");
+    const text = cmds.map(c => c.split(outPath).join(savedPath || planned || T.resultFolder).split("\\").join("/")).join("\n");
     return h("section", { class: "panel" }, h("h2", {}, T.command), h("pre", { class: "cmd", tabindex: "0" }, text), h("div", { class: "row" }, copyButton(() => text)), h("p", { class: "hint", style: "margin:8px 0 0" }, T.commandHint));
   }
   function savePanel(st, { ready, defaultName, extra }) {
@@ -254,23 +259,25 @@
   // ---- job: recolour & pack --------------------------------------------------------------------------------------------
   const R = { mode: "recolor", input: "", hue: 0, sat: 1, val: 1, range: "", name: "sheet", fps: 12, gif: true, scale: 3, result: null, busy: false, error: null, frame: 0, zoom: 0, checked: new Set(), saved: null, saveName: "" };
   S.drawers.recolor = function () {
-    const mode = h("div", { class: "field" }, h("label", {}, T.rcMode), h("div", { class: "seg", role: "group", "aria-label": T.rcMode }, [["recolor", T.rcRecolor], ["pack", T.rcPack]].map(([m, t]) => h("button", { type: "button", "aria-pressed": R.mode === m, onclick: () => { R.mode = m; R.result = null; R.saved = null; R.error = null; render(); } }, t))));
-    const load = h("section", {}, h("h2", {}, T.load), mode, pathField(T.inputFolder, () => R.input, v => (R.input = v), flowOnly));
+    const mode = h("div", { class: "field" }, h("label", {}, T.rcMode), h("div", { class: "seg", role: "group", "aria-label": T.rcMode }, [["recolor", T.rcRecolor], ["pack", T.rcPack]].map(([m, t]) => h("button", { type: "button", id: "mode-" + m, "aria-pressed": R.mode === m, onclick: () => { R.mode = m; R.result = null; R.saved = null; R.error = null; R.stale = false; render(); } }, t))));
+    const load = h("section", {}, h("h2", {}, T.load), pathField(T.inputFolder, () => R.input, v => (R.input = v), flowOnly));
     const run = async () => {
       if (!R.input) { R.error = T.chooseOne; return render(); }
-      R.editLoad = false; R.busy = true; R.error = null; R.saved = null; R.checked = new Set(); R.frame = 0; render();
+      R.editLoad = false; R.stale = false; R.busy = true; R.error = null; R.saved = null; R.checked = new Set(); R.frame = 0; render();
       try { R.result = R.mode === "recolor" ? await api("/api/job/hue", { input: R.input, hue: R.hue, sat: R.sat, val: R.val, range: R.range }) : await api("/api/job/pack", { input: R.input, name: R.name, fps: R.fps, gif: R.gif, scale: R.scale }); say(T.review); } catch (e) { R.error = e.message; R.result = null; }
       R.busy = false; render();
     };
-    const sld = (id, label, key, min, max, step) => h("div", { class: "field" }, h("label", { for: id }, label + ": " + R[key]), h("input", { type: "range", id, min, max, step, value: R[key], oninput: e => { R[key] = +e.target.value; e.target.previousSibling.textContent = label + ": " + R[key]; } }));
+    const dirty = () => { if (!R.result) return; R.stale = true; const n = document.getElementById("stale-note"), b = document.getElementById("run-btn"), sv = document.querySelector(".save .btn.primary"); if (n) n.hidden = false; if (b) b.classList.add("primary"); if (sv) sv.disabled = true; };
+    const sld = (id, label, key, min, max, step) => { const out = h("output", { class: "num", for: id }, String(R[key])); return h("div", { class: "field" }, h("label", { for: id }, label, " ", out), h("input", { type: "range", id, min, max, step, value: R[key], oninput: e => { R[key] = +e.target.value; out.textContent = String(R[key]); dirty(); } })); };
+    const staleNote = h("p", { class: "hint", id: "stale-note", hidden: !R.stale, role: "status" }, T.staleNote);
     const opts = R.mode === "recolor"
       ? h("section", { class: "panel" }, h("h2", {}, T.options), sld("hu", T.hue, "hue", -180, 180, 1), sld("sa", T.sat, "sat", 0, 2, 0.05), sld("va", T.val, "val", 0, 2, 0.05),
-          h("div", { class: "field" }, h("label", { for: "rg" }, T.range), h("input", { type: "text", id: "rg", value: R.range, placeholder: "0.55,0.72", oninput: e => (R.range = e.target.value) }), h("small", {}, T.rangeHint)),
-          h("button", { type: "button", class: "btn block" + (R.result ? "" : " primary"), disabled: R.busy, onclick: run }, R.busy ? T.previewing : T.recolorBtn))
-      : h("section", { class: "panel" }, h("h2", {}, T.options), h("div", { class: "field" }, h("label", { for: "pn" }, T.packName), h("input", { type: "text", id: "pn", value: R.name, oninput: e => (R.name = e.target.value) })),
-          h("div", { class: "field" }, h("label", { for: "pf" }, T.packFps), h("input", { type: "number", id: "pf", min: 1, max: 60, value: R.fps, onchange: e => (R.fps = +e.target.value || 12) })),
-          h("label", { class: "check" }, h("input", { type: "checkbox", checked: R.gif, onchange: e => (R.gif = e.target.checked) }), h("span", {}, T.packGif)),
-          h("button", { type: "button", class: "btn block" + (R.result ? "" : " primary"), disabled: R.busy, onclick: run }, R.busy ? T.previewing : T.packBtn));
+          h("div", { class: "field" }, h("label", { for: "rg" }, T.range), h("input", { type: "text", id: "rg", value: R.range, placeholder: "0.55,0.72", oninput: e => { R.range = e.target.value; dirty(); } }), h("small", {}, T.rangeHint)),
+          staleNote, h("button", { type: "button", id: "run-btn", class: "btn block" + (R.result && !R.stale ? "" : " primary"), disabled: R.busy, onclick: run }, R.busy ? T.previewing : T.recolorBtn))
+      : h("section", { class: "panel" }, h("h2", {}, T.options), h("div", { class: "field" }, h("label", { for: "pn" }, T.packName), h("input", { type: "text", id: "pn", value: R.name, oninput: e => { R.name = e.target.value; dirty(); } })),
+          h("div", { class: "field" }, h("label", { for: "pf" }, T.packFps), h("input", { type: "number", id: "pf", min: 1, max: 60, value: R.fps, onchange: e => { R.fps = +e.target.value || 12; dirty(); } })),
+          h("label", { class: "check" }, h("input", { type: "checkbox", checked: R.gif, onchange: e => { R.gif = e.target.checked; dirty(); } }), h("span", {}, T.packGif)),
+          staleNote, h("button", { type: "button", id: "run-btn", class: "btn block" + (R.result && !R.stale ? "" : " primary"), disabled: R.busy, onclick: run }, R.busy ? T.previewing : T.packBtn));
     let review;
     if (R.busy) review = busy(T.previewing);
     else if (!R.result) review = empty(T.nothingYet, T.emptyRecolor);
@@ -283,12 +290,16 @@
           { label: T.rowChecked, cells: rows.map((_, i) => checkCell(R, i, n)) }] }));
     } else {
       const gif = R.result.files.find(f => f.endsWith(".gif"));
-      review = h("section", {}, h("h2", {}, T.packResult), gif ? h("div", { class: "gifbox" }, h("img", { src: "/api/raw?" + q({ path: R.result.out + "/" + gif }), alt: gif })) : null, R.result.files.find(f => f.endsWith(".png")) ? h("div", { class: "gifbox", style: "margin-top:12px" }, h("img", { src: "/api/raw?" + q({ path: R.result.out + "/" + R.result.files.find(f => f.endsWith(".png")) }), alt: "sheet" })) : null, h("ul", {}, R.result.files.map(f => h("li", { class: "num" }, f))));
+      const png0 = R.result.files.find(f => f.endsWith(".png")), i = R.result.info || {}, raw = f => "/api/raw?" + q({ path: R.result.out + "/" + f });
+      review = h("section", {}, h("h2", {}, T.packResult), h("p", { class: "num" }, T.packStats(i.frames, i.w, i.h, i.fps)),
+        gif ? h("figure", { class: "gifbox" }, h("img", { src: raw(gif), alt: T.packGifCap }), h("figcaption", {}, T.packGifCap)) : null,
+        png0 ? h("figure", { class: "gifbox", style: "margin-top:12px" }, h("img", { src: raw(png0), alt: T.packSheetCap }), h("figcaption", {}, T.packSheetCap)) : null,
+        h("ul", {}, R.result.files.map(f => h("li", {}, h("span", { class: "num" }, f), " ", f.endsWith(".json") ? T.packJsonNote : ""))));
     }
-    const side = [opts];
-    side.push(savePanel({ get name() { return R.saveName; }, set name(v) { R.saveName = v; }, get result() { return R.result; }, get saved() { return R.saved; }, set saved(v) { R.saved = v; }, get saving() { return R.saving; }, set saving(v) { R.saving = v; }, get error() { return R.error; }, set error(v) { R.error = v; } }, { ready: !!R.result, defaultName: R.mode === "pack" ? "sheet" : "recoloured" }));
+    const side = [h("section", { class: "panel" }, mode), opts];
+    side.push(savePanel({ get name() { return R.saveName; }, set name(v) { R.saveName = v; }, get result() { return R.result; }, get saved() { return R.saved; }, set saved(v) { R.saved = v; }, get saving() { return R.saving; }, set saving(v) { R.saving = v; }, get error() { return R.error; }, set error(v) { R.error = v; } }, { ready: !!R.result && !R.stale, defaultName: R.mode === "pack" ? "sheet" : "recoloured" }));
     if (R.result) side.push(commandBox(R.result.commands, R.result.out, R.saved, outName() + "/" + (safe(R.saveName) || (R.mode === "pack" ? "sheet" : "recoloured"))));
-    return { work: [loadOrSummary(R, load, short(R.input)), errorBox(R), review], side, step: R.saved ? 3 : R.result ? 2 : R.input ? 1 : 0, done: [!!R.input, !!R.result, !!R.result, !!R.saved] };
+    return { work: [loadOrSummary(R, load, (R.mode === "pack" ? T.rcPack : T.rcRecolor) + " · " + short(R.input)), errorBox(R), review], side, step: R.saved ? 3 : R.result ? 2 : R.input ? 1 : 0, done: [!!R.input, !!R.result, !!R.result, !!R.saved] };
   };
 
   // ---- frame ------------------------------------------------------------------------------------------------------------
@@ -317,5 +328,6 @@
     if (demo === "demo" || demo === "demo-dark") { const sel = document.querySelector("#ls"); if (demo === "demo-dark") { sel.value = "3"; } click(T.useSample); setTimeout(() => click(T.cutLayer), 200); }
     else if (demo === "demo-clean") { S.job = "clean"; render(); click(T.cleanSample); setTimeout(() => click(T.runClean), 2500); }
     else if (demo === "demo-draw") { S.job = "draw"; render(); }
+    else if (demo === "demo-recolor" || demo === "demo-pack") { S.job = "recolor"; R.mode = demo === "demo-pack" ? "pack" : "recolor"; R.input = S.info.sample_root + "/base/east"; R.hue = 120; render(); setTimeout(() => click(R.mode === "pack" ? T.packBtn : T.recolorBtn), 200); }
   }).catch(e => { $("#view").replaceChildren(h("div", { class: "notice", role: "alert" }, h("h3", {}, T.errorTitle), h("p", {}, e.message))); });
 })();

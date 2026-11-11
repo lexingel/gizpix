@@ -2,6 +2,7 @@
 
 ## 0.2.0
 - `pip install` support: the `gizpix` command (`pip install git+https://github.com/lexingel/gizpix.git`).
+- Web interface: a `Choose folder…` button opens the operating system's own folder dialog (Browse stays as a fallback); Pack shows `folder/*.png` in its command; `#demo-recolor` and `#demo-pack` captures.
 - Sample frames are now drawn from code (`samples/make_samples.py`), so they share Gizpix's licence; the earlier AI-generated frames are no longer bundled.
 - `python gizpix.py ui`: a local web interface (Python standard library server on 127.0.0.1, plain HTML/CSS/JS, no build step, self-hosted open fonts) for the four jobs: clean & measure, cut outfit layer, draw buildings, recolour & pack. Results are staged first and saved only on request, always to a new folder; each result shows its exact command; previews use whole-number nearest-neighbour zoom; frames are shown as exposure-sheet columns.
 - `ui/design_options/`: the six design sketches that were scored before the interface was built.

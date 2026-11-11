@@ -142,17 +142,36 @@ def job_hue(p):
     r = run_tool(args)
     if r["code"]: raise Bad(r["err"] or r["out"])
     from PIL import Image
-    return {"out": out, "commands": [r["command"]], "rows": [{"name": os.path.basename(f), "original": f, "result": os.path.join(out, os.path.basename(f)), "w": Image.open(f).width, "h": Image.open(f).height} for f in files], "log": r["out"]}
+    return {"out": out, "commands": [folder_glob_shown("hue_shift", files, ["--out", out, *args[args.index("--hue"):]])], "rows": [{"name": os.path.basename(f), "original": f, "result": os.path.join(out, os.path.basename(f)), "w": Image.open(f).width, "h": Image.open(f).height} for f in files], "log": r["out"]}
+
+
+def folder_glob(cmd, files, still=False):
+    """show many frames of one folder as folder/*.png in the displayed command (the real run used the full list)"""
+    d = os.path.dirname(files[0])
+    if len(files) < 3 or any(os.path.dirname(f) != d for f in files): return cmd
+    out = cmd
+    for f in sorted(set(files), key=len, reverse=True): out = out.replace(" " + f, "").replace(' "' + f + '"', "").replace(" " + rel(f), "")
+    t = out.split(" ", 4)   # python gizpix.py TOOL OUT REST
+    return " ".join(t[:4] + ([rel(files[0]).replace("\\", "/")] if still else []) + [rel(d).replace("\\", "/") + "/*.png"] + t[4:]) if len(t) == 5 else out
+
+
+def folder_glob_shown(tool, files, rest):
+    """a runnable displayed command: TOOL folder/*.png REST (used when the frames share one folder)"""
+    d = os.path.dirname(files[0])
+    if len(files) < 3 or any(os.path.dirname(f) != d for f in files): return shown([tool, *files, *rest])
+    return shown([tool, rel(d).replace(chr(92), "/") + "/*.png", *rest])
 
 
 def job_pack(p):
     files = pngs(p["input"]); out = new_dir(p.get("out_root"), "pack"); name = re.sub(r"[^\w-]+", "_", p.get("name") or "sheet") or "sheet"; fps = str(float(p.get("fps", 12))); cmds = []
-    sheet = run_tool(["make_sheet", os.path.join(out, name), *files, "--fps", fps]); cmds.append(sheet["command"])
+    sheet = run_tool(["make_sheet", os.path.join(out, name), *files, "--fps", fps]); cmds.append(folder_glob(sheet["command"], files))
     if sheet["code"]: raise Bad(sheet["err"] or sheet["out"])
     if p.get("gif", True) and len(files) > 1:
-        g = run_tool(["preview_gif", os.path.join(out, name + ".gif"), files[0], *files, "--beat", "even", "--fps", fps, "--scale", str(int(p.get("scale", 3)))]); cmds.append(g["command"])
+        g = run_tool(["preview_gif", os.path.join(out, name + ".gif"), files[0], *files, "--beat", "even", "--fps", fps, "--scale", str(int(p.get("scale", 3)))]); cmds.append(folder_glob(g["command"], files, still=True))
         if g["code"]: raise Bad(g["err"] or g["out"])
-    return {"out": out, "commands": cmds, "files": sorted(os.listdir(out))}
+    from PIL import Image
+    w, h = Image.open(files[0]).size; f = float(fps)
+    return {"out": out, "commands": cmds, "files": sorted(os.listdir(out)), "info": {"frames": len(files), "w": w, "h": h, "fps": int(f) if f == int(f) else f}}
 
 
 def job_lint(p):
@@ -241,6 +260,16 @@ def raw_file(path):
     return open(p, "rb").read(), {"gif": "image/gif", "png": "image/png", "json": "application/json"}[ext]
 
 
+def pick_folder(start):
+    """the operating system's own folder dialog, run in a child process (tkinter must own its thread); '' when cancelled"""
+    code = "import sys,tkinter as t;from tkinter import filedialog as f;r=t.Tk();r.withdraw();r.attributes('-topmost',True);print(f.askdirectory(initialdir=sys.argv[1] or None,mustexist=True) or '')"
+    st = clean_path(start) if start else os.getcwd()
+    try: r = subprocess.run([sys.executable, "-c", code, st if os.path.isdir(st) else os.getcwd()], capture_output=True, text=True, timeout=600)
+    except subprocess.TimeoutExpired: return {"path": ""}
+    if r.returncode: raise Bad("The folder dialog is not available here. Use Browse or type the path.")
+    return {"path": os.path.normpath(r.stdout.strip()) if r.stdout.strip() else ""}
+
+
 def reveal(path):
     p = clean_path(path)
     if p not in STATE["made"] and os.path.dirname(p) not in STATE["made"]: raise Bad("only folders this session made can be opened")
@@ -289,6 +318,7 @@ class H(BaseHTTPRequestHandler):
         try:
             n = int(self.headers.get("Content-Length") or 0); body = json.loads(self.rfile.read(n) or b"{}") if n else {}
             if u.path == "/api/reveal": return self._send(200, reveal(body.get("path", "")))
+            if u.path == "/api/pick-folder": return self._send(200, pick_folder(body.get("path", "")))
             if u.path == "/api/save": return self._send(200, save_result(body))
             if u.path == "/api/out-root":
                 STATE["out_root"] = clean_path(body.get("path") or STATE["out_root"]); return self._send(200, {"out_root": STATE["out_root"]})
@@ -319,6 +349,8 @@ def selftest():
         assert b"gizpix" in get("/", False).lower(), "index"
         assert get("/api/state", False) == 403, "state must need the token"
         s = json.loads(get("/api/state")); assert s["buildings"] and "samples" in s
+        _d = os.path.join(ROOT, "samples", "walk_frames", "base", "east"); _c = folder_glob_shown("hue_shift", [os.path.join(_d, f"{i}.png") for i in range(3)], ["--out", "o", "--hue", "1"])
+        assert "--out *" not in _c and _c.split(" --out ")[0].endswith("*.png\""), _c      # the glob is an input, never the value of --out
         req = urllib.request.Request(base + "/api/state", headers={"X-Gizpix-Token": STATE["token"], "Host": "evil.example"})
         try: urllib.request.urlopen(req); raise AssertionError("foreign Host accepted")
         except urllib.error.HTTPError as e: assert e.code == 403
