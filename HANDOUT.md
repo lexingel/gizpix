@@ -69,7 +69,7 @@ python gizpix.py ui                # the local web interface (for people; see se
 | Send a named colour group (red, skin, grey ...) to a colour | `recolor_groups STILL.png --groups` then `recolor_groups STILL.png FRAMES... --swap red=#2e8b57 --out DIR` | new files | The first file is the still that sets the mapping; frames follow it. `--out` is required. Skin never moves unless named. |
 | Snap to a fixed palette | `apply_palette PALETTE FRAMES... --out DIR [--colors N]` | changes (in place without `--out`) | PALETTE = `.hex`/`.txt` (one `#rrggbb` per line), `.png` swatches, an analysis `.json`, comma-separated hex, or `auto --colors N`. No dithering. |
 | Draw a building, a gallery, a village; no reference, no AI | `pixdraw build SPEC [--style S] --out DIR [--name N] [--frames 8] [--scale 3] [--ms 120]`, `pixdraw scene FILE.json ...`, `pixdraw gallery out.png --style S` | new files | Recipe C. |
-| Draw a pixel effect (fire, explosion, hit, lightning, ice, heal, magic circle, pickup, slash, rain, snow, or anything the user describes) | `pixfx list`, `pixfx show ID`, `pixfx render ID [-o key=value ...] [--frames N] [--scale S] [--out DIR] [--name N] [--bg #hex|none]`, `pixfx palettes`, `pixfx check [ID]`; for an effect the library does not have: `pixfx schema`, `pixfx recipe ID`, `pixfx render my.json` | new files | Recipe E (shipped effects) or Recipe F (describe a new one as a JSON recipe). Writes `NAME.gif` (on a dark background by default), `NAME_sheet.png` + `NAME_sheet.json` (transparent, frames in a grid, `meta.pixfx` has fps, loop, frame size and pivot) and `NAME_contact.png` (look at this one). |
+| Draw a pixel effect (fire, explosion, hit, lightning, ice, heal, magic circle, pickup, slash, rain, snow, or anything the user describes) | `pixfx list`, `pixfx show ID`, `pixfx render ID [-o key=value ...] [--frames N] [--scale S] [--out DIR] [--name N] [--bg #hex|none]`, `pixfx palettes`, `pixfx check [ID] [--report]`; for an effect the library does not have: `pixfx schema`, `pixfx recipe ID`, `pixfx render my.json` | new files | Recipe E (shipped effects) or Recipe F (describe a new one as a JSON recipe). Writes `NAME.gif` (on a dark background by default), `NAME_sheet.png` + `NAME_sheet.json` (transparent, frames in a grid, `meta.pixfx` has fps, loop, frame size and pivot) and `NAME_contact.png` (look at this one). |
 | Move a standing layer onto walk frames; code walks | `warp_layer`, `rig_walk2`, `xform` | experimental | Motion is limited (a few px at 64 px); `warp_layer` improved a real pair by 15 px of 3250. Needs OpenCV. Prefer layers cut from real walk frames. |
 
 ## 4. Input and output conventions
@@ -208,6 +208,8 @@ Turn the description into layers (each line is one layer type):
 | a sword swoosh | `arc` (a circle only: no `squash`) |
 | a tornado, whirlwind, pillar of swirling stripes | `funnel` (`turns` whole for loops, `lean` to sway) |
 | wisps that fly from A to B, energy sucked into a portal | `particles` with `target` (and `curve` to bow them) |
+| a comet tail, a sword smear, a wisp's trail | `smear: [length, taper]` on any moving layer (a fading, shrinking trail of copies of itself) |
+| a clean outline, a lit edge, a dissolve for ring/beam/particles | `outline: "auto"`, `rim: [-1, -1]`, `erode: [0, 0, 6]` on any layer |
 | anything that snakes or sways along its path | `wobble: [ax, ay, whole_cycles]` on the layer |
 
 Rules that save rounds:
@@ -218,6 +220,8 @@ Rules that save rounds:
 - `blob` bands: `depth` about 1.3 times the radius gives layered colour; a small depth gives a flat pale blob. `cover` below 0.3 looks like a mesh at 1x: prefer thin layers, a stepped `glow` or a `ring` to dithered fills.
 - A value can have more than two keys: `"size": [0, 20, 0]` grows then shrinks in ONE layer (no second layer needed). `"$reach*0.5"` scales an option. `blob` takes `lit: [-1, -1]` for sphere-like shading, `bolt` takes `rim: "#hex"` (cracks on dark ground), `beam` takes `shade: flat` (no stripes), `blob` takes `erode: [0, 0, 16]` (the body is eaten from its edge: the clean way to dissolve; avoid `cover`), `glow` and `rays` take `squash` (lying on the floor), `particles` take `shape: star` (twinkles).
 - Options make a recipe reusable: `"options": {"radius": 24}` and `"radius": "$radius"` inside; the user then runs `-o radius=40`. `-o palette=NAME` recolours the whole thing.
+- `python gizpix.py pixfx check my.json --report` prints numbers and FLAG lines (mesh dithering, flat colour, lone pixels, empty frames, motion pops) with the fix for each; run it after every render, then still LOOK at the contact sheet. A motion pop on a hit that lands after a flight is intended.
+- `beam` is drawn as one distance field: `core: 0.6` widens the bright centre, no second thin beam needed. `funnel` takes `profile`, `bend`, `ripple` (keys bottom to top) for a curved column. `arc` uses `tail` (not `trail`).
 - Mistakes come back as one line naming the layer, the wrong key and the closest right one (exit 2).
 - Honest limit: layers draw clean, readable game-sprite effects, not hand-painted detail. Judge `_contact.png` as you would any art, change numbers (counts, sizes, windows, bias), render again; two or three rounds is normal.
 - Share a recipe by sending the JSON file. The same file renders the same frames anywhere (`pixfx render my.json`).

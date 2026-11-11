@@ -7,7 +7,7 @@
   python gizpix.py pixfx schema [LAYER]                    the recipe language: every layer type and key (describe your own effect as JSON)
   python gizpix.py pixfx recipe ID                         print a shipped recipe as JSON: copy it, change it, render the file
   (ID can also be the path of your own recipe, e.g. my_effect.json)
-  python gizpix.py pixfx check [ID ...]                  quality checks (deterministic, loops close, one-shots end empty, nothing cropped)
+  python gizpix.py pixfx check [ID ...] [--report]   (--report adds numbers + flags: mesh dithering, flat colour, lone pixels, empty frames, motion pops)                  quality checks (deterministic, loops close, one-shots end empty, nothing cropped)
   python gizpix.py pixfx gallery out.png [--scale S]       one picture with a mid-animation frame of every effect
 Options (-o): palette=ice (a ramp name, or hex colours dark to bright: '#102,#215,#43a'), seed=7, light=0.6, flip=true, plus the effect's own (see `show`)."""
 import argparse, json, os, sys
@@ -62,8 +62,12 @@ def main(argv=None):
             m, meta = engine.get(rest[0]); print(f"{meta['id']}  {meta['name']}  ({'loop' if meta['loop'] else 'one-shot'}, {meta['duration']} s, {meta['size'][0]}x{meta['size'][1]} px, {meta.get('fps', 12)} fps)\n{meta['about']}")
             print("options:", json.dumps({**engine.COMMON, **meta.get("options", {})})); return 0
         if cmd == "check":
+            rep = "--report" in rest; rest = [r for r in rest if r != "--report"]
             ids = rest or sorted(engine.registry()); bad = 0
             for eid in ids:
+                if rep:
+                    mt, fl = engine.report(eid); print(f"{eid}: " + ", ".join(f"{k} {v}" for k, v in mt.items()))
+                    for x in fl: print("  FLAG " + x)
                 p = engine.check(eid); bad += bool(p); print(("ok   " if not p else "FAIL ") + eid + ("" if not p else ": " + "; ".join(p)))
             return 1 if bad else 0
         if cmd == "gallery":

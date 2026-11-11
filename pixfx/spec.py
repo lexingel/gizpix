@@ -12,7 +12,7 @@ Written for Gizpix; `python gizpix.py pixfx schema` lists every layer and key.""
 import difflib, json, math, os
 from types import SimpleNamespace
 import numpy as np
-from .core import BAYER, TAU, Rng, clamp, lerp, seg, ramp_at, out_expo, out_quart, in_quad, smooth, disc_mask, hex2rgb
+from .core import BAYER, Frame, TAU, Rng, clamp, lerp, seg, ramp_at, out_expo, out_quart, in_quad, smooth, disc_mask, hex2rgb
 from .ramps import resolve
 from .kit import star, jagged
 
@@ -22,7 +22,9 @@ ALLOWED_TOP = set(DEFAULTS) | {"id", "pivot"}
 COMMON = {"t": "time window [start, end] in 0..1 (default [0, 1]); the layer draws only inside it", "at": "[x, y] from the pivot, or [[x0,y0],[x1,y1]] to move",
           "palette": "ramp name or hex list for this layer (default: the recipe palette; 'main' = the recipe palette, which -o palette= changes)",
           "color": "one fixed colour '#rrggbb' instead of a palette", "v": "ramp position 0..1 (dark..bright), number or [from, to] over the layer's life",
-          "ease": "linear | out | expo | in | smooth: how [from, to] values move", "hold": "true = keep drawing the end state after the window", "wobble": "[ax, ay, cycles]: the layer sways around its path (whole cycles close a loop): snaking wisps, swaying columns", "seed": "layers with the same number draw the same random shape (give it to the second layer when one body continues in another layer)"}
+          "ease": "linear | out | expo | in | smooth: how [from, to] values move", "hold": "true = keep drawing the end state after the window", "wobble": "[ax, ay, cycles]: the layer sways around its path (whole cycles close a loop): snaking wisps, swaying columns", "smear": "[length, taper]: a trail of fading, shrinking copies of the layer along its own path (length = fraction of the window, taper = size of the oldest copy 0..1). Sword smears, comet tails, wisp tails",
+          "erode": "(all layers except blob has its own) px eaten from the edge, animatable: the clean dissolve", "outline": "'#rrggbb' or 'auto' (darkest palette colour): a 1 px outline around the drawn layer", "rim": "[dx, dy] light direction, e.g. [-1, -1]: the edge facing the light takes a bright rim colour",
+          "seed": "layers with the same number draw the same random shape (give it to the second layer when one body continues in another layer)"}
 SCHEMA = {
     "glow": {"radius": "px, animatable", "strength": "0..1+, animatable (try {wave:[0.4,0.8,3]})", "steps": "brightness bands (default 4)", "squash": "0.1..1: flat light on the floor (1 = round)"},
     "disc": {"radius": "px", "mode": "core (bright middle) | lit (lit from top-left, smoke/stone)", "bias": "shifts shading dark(-)..bright(+)", "cover": "0..1 dithered translucency"},
@@ -38,10 +40,10 @@ SCHEMA = {
              "rough": "0.1..0.5 zigzag (default 0.28)", "depth": "subdivisions (default 4)", "branches": "int side forks", "glow": "radius of the light along the bolt", "rim": "'#rrggbb' lighter edge under the stroke (cracks on dark ground)"},
     "rays": {"count": "int", "inner": "px from centre, animatable", "length": "px, animatable", "width": "px at the root", "rotate": "degrees over the window", "jitter": "0..1 random length", "squash": "0.1..1: rays lying on the floor (1 = round)"},
     "orbit": {"count": "int", "radius": "px, animatable", "squash": "1 = circle", "turns": "whole turns over the window (whole number for loops)", "size": "px, animatable", "trail": "dots behind each one", "shade": "flat | core"},
-    "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`", "shade": "flat = one colour, no stripes"},
+    "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`", "shade": "flat = one colour, no stripes", "core": "0..0.9 share of the width at the brightest step (default 0.45)"},
     "funnel": {"height": "px, animatable", "base": "half-width at the bottom px", "top": "half-width at the top px", "stripes": "swirl stripes around it (default 3)", "twist": "how much the stripes lean up the column (default 0.15)",
-               "turns": "whole turns over the window (loops close)", "lean": "px the column sways sideways", "fade": "0..1 dithers the top away"},
-    "arc": {"radius": "px", "thick": "px, animatable", "sweep": "[a0, a1] degrees the head travels", "trail": "length of the tail as a fraction of the sweep (default 0.6)"},
+               "turns": "whole turns over the window (loops close)", "lean": "px the column sways sideways", "fade": "0..1 dithers the top away (looks like mesh: prefer `erode`)", "profile": "half-widths bottom to top as keys, e.g. [3, 4, 9, 22] (replaces base/top)", "bend": "sideways offsets bottom to top as keys, e.g. [0, 5, -3, 6]", "ripple": "[amp, cycles]: the width pulses up the column"},
+    "arc": {"radius": "px", "thick": "px, animatable", "sweep": "[a0, a1] degrees the head travels", "tail": "length of the tail as a fraction of the sweep (default 0.6)"},
 }
 
 
@@ -85,12 +87,12 @@ def L_glow(f, d, c):
 
 
 def L_disc(f, d, c):
-    r = val(d.get("radius", 6), c.e)
+    r = val(d.get("radius", 6), c.e) * c.sc
     if r > 0: f.disc(c.ox, c.oy, r, c.ramp, mode=d.get("mode", "core"), cover=val(d.get("cover", 1), c.e), bias=val(d.get("bias", 0), c.e))
 
 
 def L_ring(f, d, c):
-    r = val(d.get("radius", 20), c.e); th = val(d.get("thick", 2), c.e); sq = d.get("squash", 1); cv = val(d.get("cover", 1), c.e)
+    r = val(d.get("radius", 20), c.e); th = val(d.get("thick", 2), c.e) * c.sc; sq = d.get("squash", 1); cv = val(d.get("cover", 1), c.e)
     if r <= 0 or th < 0.5: return
     th = max(th, 1.0)                                                                  # a ring thinner than a pixel would draw as dots
     if sq == 1:
@@ -105,7 +107,7 @@ def L_ring(f, d, c):
 
 
 def L_star(f, d, c):
-    s = val(d.get("size", 14), c.e)
+    s = val(d.get("size", 14), c.e) * c.sc
     if s > 1: star(f, c.ox, c.oy, s, c.ramp, arms=int(d.get("arms", 4)), thin=d.get("thin", 0.14), v=c.v(1.0))
 
 
@@ -122,7 +124,7 @@ def L_particles(f, d, c):
             sx0, sy0 = c.ox + bx, c.oy + by; tx, ty = c.ox + tgt[0] - (c.ox - px0), c.oy + tgt[1] - (c.oy - py0); ang = math.atan2(ty - sy0, tx - sx0); L = math.hypot(tx - sx0, ty - sy0) or 1.0; e2 = ease(age)
             bow = curve * math.sin(math.pi * age) * math.sin(sw); x = lerp(sx0, tx, e2) - (ty - sy0) / L * bow; y = lerp(sy0, ty, e2) + (tx - sx0) / L * bow
         else: dist = sp * ease(age); x = c.ox + bx + math.cos(ang) * dist + sway * math.sin(sw + age * TAU); y = c.oy + by + math.sin(ang) * dist + grav * age * age
-        size = lerp(z0, z1, age); cv = lerp(c0, c1, age); vv = lerp(v0, v1, age)
+        size = lerp(z0, z1, age) * c.sc; cv = lerp(c0, c1, age); vv = lerp(v0, v1, age)
         if size > 0.2: live.append((age, x, y, ang, size, cv, vv))
     for age, x, y, ang, size, cv, vv in sorted(live, reverse=True):                    # oldest first, so the young and hot ones sit on top
         col = ramp_at(c.ramp, vv)
@@ -137,7 +139,7 @@ def L_particles(f, d, c):
 
 
 def L_blob(f, d, c):
-    n = int(d.get("count", 8)); sx, sy = rng2(d.get("spread"), [10, 10]); lo, hi = rng2(d.get("radius"), [4, 8]); sc = val(d.get("scale", 1), c.e); rise = val(d.get("rise", 0), c.e); m = f.mask(); r = c.rng
+    n = int(d.get("count", 8)); sx, sy = rng2(d.get("spread"), [10, 10]); lo, hi = rng2(d.get("radius"), [4, 8]); sc = val(d.get("scale", 1), c.e) * c.sc; rise = val(d.get("rise", 0), c.e); m = f.mask(); r = c.rng
     for i in range(n):
         dx, dy, rr = r.u(-1, 1), r.u(-1, 1), r.u(lo, hi)
         disc_mask(m, c.ox + dx * sx * sc, c.oy + dy * sy * sc - rise, rr * sc)
@@ -182,7 +184,7 @@ def L_rays(f, d, c):
 
 
 def L_orbit(f, d, c):
-    n = int(d.get("count", 5)); R = val(d.get("radius", 20), c.e); sq = d.get("squash", 1); turns = d.get("turns", 1); size = val(d.get("size", 3), c.e); trail = int(d.get("trail", 0))
+    n = int(d.get("count", 5)); R = val(d.get("radius", 20), c.e); sq = d.get("squash", 1); turns = d.get("turns", 1); size = val(d.get("size", 3), c.e) * c.sc; trail = int(d.get("trail", 0))
     if size <= 0.2 or R < 0: return
     for i in range(n):
         for j in range(trail + 1):
@@ -194,13 +196,21 @@ def L_orbit(f, d, c):
 
 
 def L_beam(f, d, c):
-    x0, y0 = pt(d.get("from", [0, 0]), c.e); x1, y1 = pt(d.get("to", [30, 0]), c.e); w = val(d.get("width", 4), c.e); ex = d.get("extend", 0); g = out_expo(seg(c.p, 0, ex)) if ex > 0 else 1.0
-    rp = [ramp_at(c.ramp, c.v(0.8))] if d.get("shade") == "flat" else c.ramp           # flat: one colour, no banding
-    if w > 0.4: f.tapered(c.ox + x0, c.oy + y0, c.ox + lerp(x0, x1, g), c.oy + lerp(y0, y1, g), w, val(d.get("tip", w), c.e), rp, v=c.v(0.8))
+    x0, y0 = pt(d.get("from", [0, 0]), c.e); x1, y1 = pt(d.get("to", [30, 0]), c.e); w0 = val(d.get("width", 4), c.e) * c.sc; w1 = val(d.get("tip", d.get("width", 4)), c.e) * c.sc
+    ex = d.get("extend", 0); g = out_expo(seg(c.p, 0, ex)) if ex > 0 else 1.0; ax, ay = c.ox + x0, c.oy + y0; bx, by = c.ox + lerp(x0, x1, g), c.oy + lerp(y0, y1, g)
+    if max(w0, w1) < 0.4: return
+    gr = f._grid((ax + bx) / 2, (ay + by) / 2, math.hypot(bx - ax, by - ay) / 2 + max(w0, w1))      # one distance field along the segment: bands run along the beam, no stamped discs
+    if gr is None: return
+    gx0, gx1, gy0, gy1, xx, yy = gr; vx, vy = bx - ax, by - ay; u = np.clip(((xx - ax) * vx + (yy - ay) * vy) / max(vx * vx + vy * vy, 1e-6), 0, 1)
+    dd = np.hypot(xx - (ax + vx * u), yy - (ay + vy * u)); hw = (w0 + (w1 - w0) * u) / 2; m = dd <= hw + 0.25; q = np.clip(1 - dd / np.maximum(hw, 1e-6), 0, 1)
+    top = c.v(0.95)
+    pos = np.full(q.shape, min(top, 0.999)) if d.get("shade") == "flat" else np.clip(q / max(1 - d.get("core", 0.45), 1e-3), 0, 1) * min(top, 0.999)
+    cols = np.array(c.ramp, np.uint8)[(pos * len(c.ramp)).astype(int).clip(0, len(c.ramp) - 1)]
+    f.rgb[gy0:gy1, gx0:gx1][m] = cols[m]; f.a[gy0:gy1, gx0:gx1][m] = 255
 
 
 def L_arc(f, d, c):
-    R = d.get("radius", 22); th = val(d.get("thick", 6), c.e); a0, a1 = d.get("sweep", [-60, 60]); tr = d.get("trail", 0.6); head = lerp(a0, a1, out_quart(c.e)); tail = max(a0, head - tr * (a1 - a0)); S = 6
+    R = d.get("radius", 22); th = val(d.get("thick", 6), c.e) * c.sc; a0, a1 = d.get("sweep", [-60, 60]); tr = d.get("tail", 0.6); head = lerp(a0, a1, out_quart(c.e)); tail = max(a0, head - tr * (a1 - a0)); S = 6
     if th <= 0.4 or head <= tail: return
     for s in range(S):
         f.ring(c.ox, c.oy, R, th * (0.25 + 0.75 * (s + 1) / S), c.ramp, v=min(0.99, c.v(0.5) + 0.5 * (s + 1) / S) if "v" not in d else c.v(0.8), arc=(math.radians(lerp(tail, head, s / S)), math.radians(lerp(tail, head, (s + 1) / S))))
@@ -208,9 +218,11 @@ def L_arc(f, d, c):
 
 def L_funnel(f, d, c):
     H = int(val(d.get("height", 40), c.e)); wb = val(d.get("base", 6), c.e); wt = val(d.get("top", 18), c.e); st = d.get("stripes", 3); tw = d.get("twist", 0.15)
-    lean = d.get("lean", 0); fade = d.get("fade", 0)
+    lean = d.get("lean", 0); fade = d.get("fade", 0); prof = d.get("profile"); bend = d.get("bend"); rip = d.get("ripple")
     for k in range(max(H, 0)):
-        u = k / max(H - 1, 1); w = lerp(wb, wt, u); xc = c.ox + lean * math.sin(u * math.pi + c.p * TAU); y = c.oy - k
+        u = k / max(H - 1, 1); w = val(prof, u) if prof else lerp(wb, wt, u); xc = c.ox + lean * math.sin(u * math.pi + c.p * TAU) + (val(bend, u) if bend else 0); y = c.oy - k
+        if rip: w += rip[0] * math.sin(k * 0.3 + c.p * TAU * rip[1])
+        w = round(w, 3)                                                                 # rounding noise must not flip a pixel column at the loop seam
         for x in range(-int(w), int(w) + 1):
             sx = clamp(x / max(w, 1e-6), -1, 1); ph = math.asin(sx) + k * tw + c.p * d.get("turns", 1) * TAU
             v = (0.3 + 0.55 * (0.5 + 0.5 * math.sin(st * ph))) * (1 - 0.45 * sx * sx) + (c.v(0.5) - 0.5)
@@ -240,19 +252,42 @@ def _near(k, pool):
     m = difflib.get_close_matches(k, list(pool), 1, 0.6); return f" (did you mean '{m[0]}'?)" if m else ""
 
 
+def _one(spec, g, d, i, t, px, py, main, o, sc, vs):
+    t0, t1 = d.get("t", [0, 1]); p = seg(t, t0, t1); e = EASE[d.get("ease", "linear")](p); ox, oy = pt(d.get("at", [0, 0]), e); wob = d.get("wobble")
+    if wob: ox += wob[0] * math.sin(TAU * (t * wob[2])); oy += wob[1] * math.sin(TAU * (t * wob[2] + 0.25))
+    vv = d.get("v")
+    c = SimpleNamespace(f=g, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None, sc=sc,
+                        v=lambda default, vv=vv, e=e: val(default if vv is None else vv, e) + vs)
+    c.rng = Rng(c.seed); LAYERS[d["type"]](g, d, c)
+
+
+def _post(f, g, d, main, e):
+    """erode / outline / rim on what one layer drew (into the scratch frame g), then lay it on the real frame"""
+    from scipy.ndimage import distance_transform_edt, binary_dilation
+    m = g.a > 0; er = val(d.get("erode", 0), e) if d["type"] != "blob" else 0; ramp = _ramp(d, main)
+    if er > 0 and m.any():
+        m = m & (distance_transform_edt(np.pad(m, 1))[1:-1, 1:-1] > er); g.a[~m] = 0
+    if d.get("rim"):
+        dx, dy = d["rim"]; rm = m & ~np.roll(m, (-int(np.sign(dy)), -int(np.sign(dx))), (0, 1)); g.rgb[rm] = ramp[-2] if len(ramp) > 2 else ramp[-1]
+    if d.get("outline"):
+        oc = ramp[0] if d["outline"] == "auto" else hex2rgb(d["outline"]); ol = binary_dilation(m) & ~m; g.rgb[ol] = oc; g.a[ol] = 255
+    mk = g.a > 0; f.rgb[mk] = g.rgb[mk]; f.a[mk] = 255; f.light += g.light
+
+
 def draw_spec(spec, f, t, o):
     px, py = spec["pivot"]; main = resolve(o.palette, spec["palette"])
     for i, d in enumerate(spec["layers"]):
         try:
-            d = sub(d, o); t0, t1 = d.get("t", [0, 1])
-            if t < t0 or (t > t1 and not d.get("hold")): continue
-            p = seg(t, t0, t1); e = EASE[d.get("ease", "linear")](p); ox, oy = pt(d.get("at", [0, 0]), e)
-            wob = d.get("wobble")
-            if wob: ox += wob[0] * math.sin(TAU * (t * wob[2])); oy += wob[1] * math.sin(TAU * (t * wob[2] + 0.25))
-            vv = d.get("v")
-            c = SimpleNamespace(f=f, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None,
-                                v=lambda default, vv=vv, e=e: val(default if vv is None else vv, e))
-            c.rng = Rng(c.seed); LAYERS[d["type"]](f, d, c)
+            d = sub(d, o); t0, t1 = d.get("t", [0, 1]); sm = d.get("smear"); S = 7 if sm else 0
+            post = any(k in d for k in ("outline", "rim")) or ("erode" in d and d["type"] != "blob"); g = Frame(f.w, f.h) if post else f
+            for k in range(S, -1, -1):                                                 # the oldest copy of a smear first, the real layer last
+                tk = t
+                if k:
+                    if not spec["loop"] and t >= t1: continue                          # a one-shot ends empty: no trail once the window is over
+                    dt = k / S * sm[0] * (t1 - t0); tk = (t - dt) % 1.0 if spec["loop"] else t - dt
+                if tk < t0 or (tk > t1 and not d.get("hold")): continue
+                _one(spec, g, d, i, tk, px, py, main, o, 1 - (1 - sm[1]) * k / S if k else 1.0, -0.45 * k / S if k else 0.0)
+            if post: _post(f, g, d, main, EASE[d.get("ease", "linear")](seg(t, t0, t1)))
         except (TypeError, KeyError, IndexError, ValueError, ZeroDivisionError) as ex:
             raise ValueError(f"layer {i} ({d.get('type')}): {type(ex).__name__}: {ex}") from None
 

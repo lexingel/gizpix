@@ -104,3 +104,29 @@ def check(eid, given=None):
         edge += int((f.a[0] > 0).sum() + (f.a[-1] > 0).sum() + (f.a[:, 0] > 0).sum() + (f.a[:, -1] > 0).sum())
     if edge and not meta.get("tile"): bad.append(f"{edge} pixels touch the canvas edge over the animation (cropped? make the canvas bigger)")
     return bad
+
+
+def report(eid, given=None):
+    """mechanical quality numbers for an effect (an agent still has to LOOK at the contact sheet): returns (metrics dict, flags list)"""
+    from scipy.ndimage import convolve
+    frames = [np.array(f) for f in render(eid, given)]; ops = [f[..., 3] > 0 for f in frames]; n = len(frames); H, W = ops[0].shape
+    empty = sum(1 for o in ops if not o.any()); lone = []; mesh_n = mesh_d = 0
+    for o in ops:
+        nb = convolve(o.astype(int), np.ones((3, 3), int), mode="constant") - o; lone.append(int((o & (nb == 0)).sum()))
+        a, b, c, d = o[:-1, :-1], o[:-1, 1:], o[1:, :-1], o[1:, 1:]; any_ = a | b | c | d
+        mesh_n += int(((a & d & ~b & ~c) | (b & c & ~a & ~d)).sum()); mesh_d += int(any_.sum())
+    px = np.concatenate([f[o][:, :3] for f, o in zip(frames, ops) if o.any()]) if any(o.any() for o in ops) else np.zeros((0, 3), np.uint8)
+    cols, cnt = np.unique(px, axis=0, return_counts=True) if len(px) else (np.zeros((0, 3)), np.array([0]))
+    cen = [np.array(np.nonzero(o)).mean(1) for o in ops if o.any()]; jumps = [float(np.hypot(*(b - a))) for a, b in zip(cen, cen[1:])]
+    mx = max(jumps) if jumps else 0.0; med = float(np.median(jumps)) if jumps else 0.0
+    m = {"frames": n, "empty_frames": empty, "lone_px_mean": round(sum(lone) / n, 1), "lone_px_max": max(lone), "mesh": round(mesh_n / max(mesh_d, 1), 3),
+         "flat": round(float(cnt.max()) / max(len(px), 1), 2), "colors": len(cols), "motion_max_jump": round(mx, 1), "motion_median_jump": round(med, 1)}
+    fl = []
+    if m["mesh"] > 0.12: fl.append(f"mesh {m['mesh']}: dithering reads as a net at 1x; use `erode`, a stepped glow or a thinner layer instead of `cover`")
+    tile = bool(get(eid)[1].get("tile"))
+    if m["flat"] > 0.7 and not tile: fl.append(f"flat {m['flat']}: one colour fills most of the effect; widen `depth`, use `lit`, or more ramp steps (`v`)")
+    if m["lone_px_mean"] > 14 and not tile: fl.append(f"lone pixels {m['lone_px_mean']} per frame: fewer or larger particles (size >= 2) read better")
+    if n > 4 and empty > n * 0.35: fl.append(f"{empty} of {n} frames are empty: shorten `duration` or start earlier")
+    if jumps and mx > 4 * med + 10: fl.append(f"motion pops: the centre of the effect jumps {mx:.0f} px in one frame (median {med:.0f}); check overlapping windows and shared `seed`")
+    if m["colors"] > 40: fl.append(f"{m['colors']} colours: raise nothing, lower `-o colors=` or avoid layered glows")
+    return m, fl

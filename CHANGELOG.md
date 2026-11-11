@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0
+- Recipe language: `smear` (a fading, shrinking trail of any moving layer), `outline`/`rim`/`erode` on every layer, `beam` drawn as one distance field (`core`), `funnel` `profile`/`bend`/`ripple`; `arc` `trail` renamed `tail`. `pixfx check --report`: mesh dithering, flat colour, lone pixels, empty frames, motion pops, with a fix per flag. New recipe: comet; tornado, soul wisp, vampire drain and smite redrawn.
 - Recipe language: `funnel` layer (swirling column), particle `target` + `curve` (fly from a spawn area to a point), layer `wobble` (snaking, swaying). Tornado, soul wisp, vampire drain and portal redrawn with them; `pixfx palettes` lists the palette names.
 - Recipe language: `blob` `erode` (dissolve from the edge), `glow`/`rays` `squash`, particle `shape: star`. Smoke puff redrawn with them.
 - `pixfx` output cleanup, found by running `pixel_lint` over every effect: the additive glow used to make 120+ near-duplicate colours (torch) and half-transparent pixels. Every effect is now limited to one shared palette of 24 colours by default (`-o colors=N`, 0 = off), and `-o hard=true` makes glow dithered on/off with no half-transparent pixels. Recipe language: values may have more than two keys (`[0, 1, 0]`), options can be scaled (`"$reach*0.5"`), `blob` takes `lit`, `bolt` takes `rim`, `beam` takes `shade: flat`; a ring thinner than a pixel no longer draws as dots. The poison-cloud, shield-bubble, fire-breath, energy-orb and smoke-puff recipes were redrawn after a review.
