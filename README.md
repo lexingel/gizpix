@@ -151,6 +151,6 @@ python experiments/demos/make_demos.py   # regenerate the pictures in images/
 - **Code:** AGPL-3.0-or-later, see [LICENSE](LICENSE).
 - **Your output is yours.** Sprites, sheets, GIFs and buildings you make with Gizpix belong to you, and running the tools from a build script or a pipeline does not change the licence of your game. The AGPL only reaches you if you modify Gizpix and let other people use the modified version over a network, or if you ship Gizpix's code inside your own product.
 - **Closed, embedded or hosted use:** a separate commercial licence is available. Open an issue titled "Commercial licence" in this repository.
-- **Documentation and pictures:** CC BY 4.0 (credit "Gizpix" and link back); the pictures in `images/evidence/` are CC0. See [LICENSE-DOCS](LICENSE-DOCS).
+- **Documentation and pictures:** CC BY 4.0 (credit "Gizpix" and link back); the pictures in `images/evidence/` and `images/about/` are CC0. See [LICENSE-DOCS](LICENSE-DOCS).
 - **Name:** "Gizpix" is the name of this project. A fork should use another name.
 - Third-party data and licences: [NOTICE.md](NOTICE.md). Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).

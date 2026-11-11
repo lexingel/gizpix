@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0
+- `ABOUT.md`: a plain-language overview with pictures (`images/about/`, rebuilt by `experiments/evidence/make_about.py`).
 - Licensing made explicit: code AGPL-3.0-or-later with a commercial licence on request, documentation CC BY 4.0, evidence pictures CC0 (`LICENSE-DOCS`); `CONTRIBUTING.md` (contributions under MIT so the code can be dual-licensed), a pull-request template, SPDX headers on every Python file.
 - `experiments/evidence/make_evidence.py` and `images/evidence/`: pictures of the layer, `--drop-parts`, dark-skin failure and clean-up tools on real generated frames; `MEASUREMENTS.md` rewritten around them.
 - `pip install` support: the `gizpix` command (`pip install git+https://github.com/lexingel/gizpix.git`).
