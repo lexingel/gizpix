@@ -24,19 +24,19 @@ COMMON = {"t": "time window [start, end] in 0..1 (default [0, 1]); the layer dra
           "color": "one fixed colour '#rrggbb' instead of a palette", "v": "ramp position 0..1 (dark..bright), number or [from, to] over the layer's life",
           "ease": "linear | out | expo | in | smooth: how [from, to] values move", "hold": "true = keep drawing the end state after the window", "seed": "layers with the same number draw the same random shape (give it to the second layer when one body continues in another layer)"}
 SCHEMA = {
-    "glow": {"radius": "px, animatable", "strength": "0..1+, animatable (try {wave:[0.4,0.8,3]})", "steps": "brightness bands (default 4)"},
+    "glow": {"radius": "px, animatable", "strength": "0..1+, animatable (try {wave:[0.4,0.8,3]})", "steps": "brightness bands (default 4)", "squash": "0.1..1: flat light on the floor (1 = round)"},
     "disc": {"radius": "px", "mode": "core (bright middle) | lit (lit from top-left, smoke/stone)", "bias": "shifts shading dark(-)..bright(+)", "cover": "0..1 dithered translucency"},
     "ring": {"radius": "px", "thick": "px", "squash": "1 = circle, 0.4 = flat ellipse on the floor", "cover": "0..1 dither", "arc": "[a0, a1] degrees: only part of the ring"},
     "star": {"size": "px (spike length)", "arms": "4 | 6 | 8", "thin": "0.05..0.4 body width"},
     "particles": {"mode": "burst (all fly out from the window start) | stream (endless, loop-safe)", "count": "int", "area": "[w, h] spawn box", "angle": "[a0, a1] degrees, 0 = right, 90 = down, -90 = up",
                   "speed": "[lo, hi] px travelled over a particle's life", "life": "[lo, hi] fraction of the window (burst) or of the cycle (stream)", "cycles": "stream: repeats per loop (whole number)",
                   "stagger": "burst: spread the births over this fraction of the window", "gravity": "px of downward pull at end of life (negative = rises)", "sway": "px of side wobble",
-                  "size": "[start, end] px", "shape": "dot | streak", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life"},
+                  "size": "[start, end] px", "shape": "dot | streak | star", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life"},
     "blob": {"count": "int discs merged into one body", "spread": "[w, h] px", "radius": "[lo, hi] px", "scale": "0..1+ animatable: grow and shrink the whole body", "rise": "px upward, animatable",
-             "depth": "band width px (bigger = bands further in)", "lit": "[dx, dy] direction of the light, e.g. [-1, -1] = top-left (sphere-like shading)", "lit_strength": "0..1, default 0.3", "bias": "dark(-)..bright(+) animatable: cool a fireball with [0.2, -0.6]", "cover": "0..1 dither"},
+             "depth": "band width px (bigger = bands further in)", "lit": "[dx, dy] direction of the light, e.g. [-1, -1] = top-left (sphere-like shading)", "lit_strength": "0..1, default 0.3", "bias": "dark(-)..bright(+) animatable: cool a fireball with [0.2, -0.6]", "erode": "px eaten from the edge, animatable ([0, 10] dissolves it; better than cover)", "cover": "0..1 dither"},
     "bolt": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "grow": "fraction of the window spent striking from `from` to `to`", "flicker": "reshapes per window (default 6)",
              "rough": "0.1..0.5 zigzag (default 0.28)", "depth": "subdivisions (default 4)", "branches": "int side forks", "glow": "radius of the light along the bolt", "rim": "'#rrggbb' lighter edge under the stroke (cracks on dark ground)"},
-    "rays": {"count": "int", "inner": "px from centre, animatable", "length": "px, animatable", "width": "px at the root", "rotate": "degrees over the window", "jitter": "0..1 random length"},
+    "rays": {"count": "int", "inner": "px from centre, animatable", "length": "px, animatable", "width": "px at the root", "rotate": "degrees over the window", "jitter": "0..1 random length", "squash": "0.1..1: rays lying on the floor (1 = round)"},
     "orbit": {"count": "int", "radius": "px, animatable", "squash": "1 = circle", "turns": "whole turns over the window (whole number for loops)", "size": "px, animatable", "trail": "dots behind each one", "shade": "flat | core"},
     "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`", "shade": "flat = one colour, no stripes"},
     "arc": {"radius": "px", "thick": "px, animatable", "sweep": "[a0, a1] degrees the head travels", "trail": "length of the tail as a fraction of the sweep (default 0.6)"},
@@ -79,7 +79,7 @@ def _ramp(d, main):
 # ---- layers --------------------------------------------------------------------------------------------------------------
 def L_glow(f, d, c):
     r = val(d.get("radius", 20), c.e); k = val(d.get("strength", 0.6), c.e, c.t)
-    if r > 0 and k > 0: f.glow(c.ox, c.oy, r, ramp_at(c.ramp, c.v(0.6)), k, steps=int(d.get("steps", 4)))
+    if r > 0 and k > 0: f.glow(c.ox, c.oy, r, ramp_at(c.ramp, c.v(0.6)), k, steps=int(d.get("steps", 4)), sq=d.get("squash", 1))
 
 
 def L_disc(f, d, c):
@@ -121,7 +121,11 @@ def L_particles(f, d, c):
         if size > 0.2: live.append((age, x, y, ang, size, cv, vv))
     for age, x, y, ang, size, cv, vv in sorted(live, reverse=True):                    # oldest first, so the young and hot ones sit on top
         col = ramp_at(c.ramp, vv)
-        if shape == "streak": f.tapered(x, y, x - math.cos(ang) * streak * (1 - age * 0.7), y - math.sin(ang) * streak * (1 - age * 0.7), max(size, 1), 1, [col], cover=cv)
+        if shape == "star":                                                            # a plus-shaped twinkle; size 3 = 1 px arms, 5 = 2 px arms
+            arm = int(size / 2); f.put(x, y, c.ramp[-1] if len(c.ramp) > 1 else col)
+            for k in range(1, arm + 1):
+                for dx, dy in ((k, 0), (-k, 0), (0, k), (0, -k)): f.put(x + dx, y + dy, col)
+        elif shape == "streak": f.tapered(x, y, x - math.cos(ang) * streak * (1 - age * 0.7), y - math.sin(ang) * streak * (1 - age * 0.7), max(size, 1), 1, [col], cover=cv)
         elif size < 1.6: f.dput(x, y, col, cv)
         elif d.get("shade", "flat") == "core": f.disc(x, y, size / 2, c.ramp, mode="core", cover=cv, bias=vv - 0.5)
         else: f.disc(x, y, size / 2, [col], cover=cv)
@@ -132,6 +136,10 @@ def L_blob(f, d, c):
     for i in range(n):
         dx, dy, rr = r.u(-1, 1), r.u(-1, 1), r.u(lo, hi)
         disc_mask(m, c.ox + dx * sx * sc, c.oy + dy * sy * sc - rise, rr * sc)
+    er = val(d.get("erode", 0), c.e)
+    if er > 0 and m.any():                                                             # eat the body away from its edge: a clean, banded dissolve
+        from scipy.ndimage import distance_transform_edt
+        m = m & (distance_transform_edt(np.pad(m, 1))[1:-1, 1:-1] > er)
     grad = None
     if d.get("lit"):                                                                   # light from this side: brighter that way, darker the other
         lx, ly = d["lit"]; k = d.get("lit_strength", 0.3); yy, xx = np.mgrid[0:f.h, 0:f.w]; R = max(sx, sy, hi) * max(sc, 0.2) + hi
@@ -164,8 +172,8 @@ def L_rays(f, d, c):
     n = int(d.get("count", 8)); r0 = val(d.get("inner", 4), c.e); ln = val(d.get("length", 12), c.e); rot = math.radians(val(d.get("rotate", 0), c.e)); jit = d.get("jitter", 0); wd = d.get("width", 2)
     if ln <= 0.5: return
     for i in range(n):
-        a = TAU * i / n + rot; L = ln * (1 - jit * c.rng.u(0, 1)); x0, y0 = c.ox + math.cos(a) * r0, c.oy + math.sin(a) * r0
-        f.tapered(x0, y0, x0 + math.cos(a) * L, y0 + math.sin(a) * L, wd, 1, c.ramp, v=c.v(0.8))
+        a = TAU * i / n + rot; L = ln * (1 - jit * c.rng.u(0, 1)); sq = d.get("squash", 1); x0, y0 = c.ox + math.cos(a) * r0, c.oy + math.sin(a) * r0 * sq
+        f.tapered(x0, y0, x0 + math.cos(a) * L, y0 + math.sin(a) * L * sq, wd, 1, c.ramp, v=c.v(0.8))
 
 
 def L_orbit(f, d, c):

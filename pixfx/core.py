@@ -138,11 +138,11 @@ class Frame:
         keep = mask if cover >= 1 else mask & (cover > np.tile(BAYER, (self.h // 4 + 1, self.w // 4 + 1))[:self.h, :self.w])
         self.rgb[keep] = cols[keep]; self.a[keep] = 255
 
-    def glow(self, cx, cy, r, c, k=1.0, steps=4):
+    def glow(self, cx, cy, r, c, k=1.0, steps=4, sq=1.0):
         """additive light: a round falloff quantized to a few steps so it keeps the pixel look"""
         g = self._grid(cx, cy, r)
         if g is None or r <= 0: return
-        x0, x1, y0, y1, xx, yy = g; d = np.hypot(xx - cx, yy - cy) / r; f = np.clip(1 - d, 0, 1); f = np.ceil(f * steps) / steps * (d < 1)
+        x0, x1, y0, y1, xx, yy = g; d = np.hypot(xx - cx, (yy - cy) / min(max(sq, 0.1), 1.0)) / r; f = np.clip(1 - d, 0, 1); f = np.ceil(f * steps) / steps * (d < 1)
         self.light[y0:y1, x0:x1] += f[..., None] * np.array(c, np.float32) / 255.0 * k
 
     # ---- output ----------------------------------------------------------------------------------------------------
