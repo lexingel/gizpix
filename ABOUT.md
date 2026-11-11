@@ -37,15 +37,6 @@ Fixing this by hand across hundreds of frames is slow. Gizpix does it in one run
 
 Gizpix runs only on your computer. The web page is served to your own machine and no other computer can reach it. There is no account, no upload and no AI inside the tool, and even the fonts of the interface are included. Your originals are never changed.
 
-## What it cannot do yet
-
-- The layer cutting was built and measured on one character from one AI generator. Other characters and generators are untested.
-- A dark outfit on dark skin can leave holes in the layer, because the two look too alike for the tool to tell them apart. The interface flags frames that look different from the others, but it cannot add pixels that are missing.
-- A repaired dot takes a colour from its neighbours. That colour is not always the exact original.
-- Removing hair tips and boots can take away a few real pixels, such as a belt buckle. Look at the result.
-- Top-down buildings with an L-shaped wing are harder to read than isometric ones.
-- The automatic tests pass on Windows, macOS and Linux with Python 3.10 and 3.12. Most hands-on checking was done on Windows.
-
 ## Install
 
 You need Python 3.10 or newer.
