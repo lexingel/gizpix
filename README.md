@@ -123,7 +123,7 @@ Most tools write somewhere new. These edit **in place unless you pass `--out`** 
 - `despeckle` and `repair_outline` can damage clean sprites; use them on frames that have the defect.
 - `top`-view buildings with an L-wing read less clearly than `iso`.
 - `extract-style` is a starting point to edit, not a copy of your sprites.
-- The numbers behind each claim are in [MEASUREMENTS.md](MEASUREMENTS.md).
+- The numbers behind each claim, with pictures of the tools on real generated frames (including the failure case), are in [MEASUREMENTS.md](MEASUREMENTS.md).
 
 ## For AI coding agents
 

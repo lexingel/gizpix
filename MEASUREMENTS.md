@@ -1,10 +1,32 @@
 # Gizpix — what was measured
 
-Numbers behind the claims in `README.md` and `HANDOUT.md`. Everything here was measured on **AI-generated walk frames that are not bundled** (the repository ships simple code-drawn samples in `samples/walk_frames` instead, so counts there differ) or on synthetic data, with the scripts in `experiments/` and the self-tests. Treat the layer-cutting results as **one character from one skeleton-driven generator**; other generators and characters are untested.
+Numbers behind the claims in `README.md` and `HANDOUT.md`. The layer and clean-up measurements were made on **real AI-generated walk frames from a skeleton-driven sprite generator** (one character, eight directions, bare base plus a robe, pauldrons and a dark-skin pair), with the scripts in `experiments/` and the self-tests. Those frames are **not in the repository**; the pictures made from them are in `images/evidence/` and are rebuilt with `python experiments/evidence/make_evidence.py PATH/TO/frames`. Treat the layer-cutting results as **one character from one generator**; other generators and characters are untested.
 
-## Sample frames
+The bundled `samples/walk_frames/` are different frames: small characters drawn by `samples/make_samples.py` so the tools can be tried without any generator. They are clean, so counts on them differ from the numbers below.
 
-The bundled `samples/walk_frames/{base,robe,pauld,dbase,drobe}/{east,south}/0..7.png` are 96×96 and drawn by `samples/make_samples.py`. The measurements below come from AI-generated frames of the same layout (8 directions, `dbase`/`drobe` dark skin), which are not distributed; the bundled frames are clean, so use them to try the tools, not to reproduce these numbers.
+## What the tools did on real frames
+
+Each picture is a 4× nearest-neighbour zoom with the same crop in every row (frames 0, 3 and 6 of the walk).
+
+**Robe, walking east.** The layer follows the walk and keeps the hem and sleeves; the generator re-draws the whole body, so the bare base under it is not identical to the body in the outfit frame.
+
+![Robe layer, east](images/evidence/layer_robe_east.png)
+
+**Pauldrons, walking south.** Shoulder plates and gauntlets are cut; the far forearm is thin in some frames because that is what the generator drew.
+
+![Pauldron layer, south](images/evidence/layer_pauld_south.png)
+
+**Hair tips and boots (`--drop-parts`).** Pixels the option removed are red in the third column. The cut without the option keeps hair strands at the shoulders and a boot sliver at the hem.
+
+![Hair tips and boots removed](images/evidence/parts_robe_south.png)
+
+**Dark skin with a dark robe, walking east (a known failure).** The layer has holes and, in frame 6, orange hair pixels, because the robe and the body underneath are close in colour and the removal rules cannot add missing pixels. The fix is on the generation side.
+
+![Dark pair, east](images/evidence/dark_east_holes.png)
+
+**Clean-up.** Five off-palette specks and three pinholes were injected into each of three frames; `speck_fix` then `fill_pinholes` was run. Pinholes went from 3 to 0 in every frame and the specks no longer stand out. The repaired pixels take a colour from their neighbourhood, so they are not always the original colour: counting colours that are not in the original frame, 5 injected colours became 3, 4 and 5 (frames 0, 3, 6), not zero.
+
+![Injected defects and repair](images/evidence/clean_real.png)
 
 ## Outfit layers (`pix_layer cut`)
 

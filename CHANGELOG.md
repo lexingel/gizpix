@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0
+- `experiments/evidence/make_evidence.py` and `images/evidence/`: pictures of the layer, `--drop-parts`, dark-skin failure and clean-up tools on real generated frames; `MEASUREMENTS.md` rewritten around them.
 - `pip install` support: the `gizpix` command (`pip install git+https://github.com/lexingel/gizpix.git`).
 - Web interface: a `Choose folder…` button opens the operating system's own folder dialog (Browse stays as a fallback); Pack shows `folder/*.png` in its command; `#demo-recolor` and `#demo-pack` captures.
 - Sample frames are now drawn from code (`samples/make_samples.py`), so they share Gizpix's licence; the earlier AI-generated frames are no longer bundled.
