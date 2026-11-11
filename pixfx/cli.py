@@ -4,7 +4,10 @@
   python gizpix.py pixfx list [WORD]                       the effects, with a one-line description
   python gizpix.py pixfx show ID                           options, size, duration of one effect
   python gizpix.py pixfx render ID [-o key=value ...] [--frames N] [--fps N] [--scale S] [--out DIR] [--name N] [--bg #rrggbb|none] [--no-gif] [--no-sheet] [--no-contact]
-  python gizpix.py pixfx check [ID ...]                    quality checks (deterministic, loops close, one-shots end empty, nothing cropped)
+  python gizpix.py pixfx schema [LAYER]                    the recipe language: every layer type and key (describe your own effect as JSON)
+  python gizpix.py pixfx recipe ID                         print a shipped recipe as JSON: copy it, change it, render the file
+  (ID can also be the path of your own recipe, e.g. my_effect.json)
+  python gizpix.py pixfx check [ID ...]                  quality checks (deterministic, loops close, one-shots end empty, nothing cropped)
   python gizpix.py pixfx gallery out.png [--scale S]       one picture with a mid-animation frame of every effect
 Options (-o): palette=ice (a ramp name, or hex colours dark to bright: '#102,#215,#43a'), seed=7, light=0.6, flip=true, plus the effect's own (see `show`)."""
 import argparse, json, os, sys
@@ -47,6 +50,12 @@ def main(argv=None):
                 if eid.split("/")[0] != cat: cat = eid.split("/")[0]; print(f"\n[{cat}]")
                 print(f"  {eid:26s} {'loop' if meta['loop'] else 'once'} {meta['duration']:>4}s {meta['size'][0]}x{meta['size'][1]:<4} {meta['about']}")
             print("\nPalettes: " + ", ".join(sorted(RAMPS))); return 0
+        if cmd == "schema":
+            from .spec import schema_text; print(schema_text(rest[0] if rest else None)); return 0
+        if cmd == "recipe":                                                                      # print a recipe to copy and edit
+            m, meta = engine.get(rest[0])
+            if "recipe" not in meta: raise KeyError(f"'{rest[0]}' is drawn by Python code, not a recipe. Recipes: " + ", ".join(k for k, (_, mt) in sorted(engine.registry().items()) if "recipe" in mt))
+            print(json.dumps(meta["recipe"], indent=1)); return 0
         if cmd == "show":
             m, meta = engine.get(rest[0]); print(f"{meta['id']}  {meta['name']}  ({'loop' if meta['loop'] else 'one-shot'}, {meta['duration']} s, {meta['size'][0]}x{meta['size'][1]} px, {meta.get('fps', 12)} fps)\n{meta['about']}")
             print("options:", json.dumps({**engine.COMMON, **meta.get("options", {})})); return 0
@@ -72,9 +81,9 @@ def main(argv=None):
             name = a.name or meta["id"].split("/")[-1]
             for p in write_all(frames, a.out, name, meta, dict(o), fps, scale=a.scale, gif=not a.no_gif, sheet=not a.no_sheet, contact=not a.no_contact, bg=_bg(a.bg)): print(p)
             return 0
-    except (KeyError, ValueError) as e:
+    except (KeyError, ValueError) as e:                                                          # recipe errors arrive as ValueError from the draw call too
         print(f"pixfx: {e.args[0] if e.args else e}", file=sys.stderr); return 2
-    print(f"pixfx: unknown command '{cmd}'. Commands: list, show, render, check, gallery, selftest", file=sys.stderr); return 2
+    print(f"pixfx: unknown command '{cmd}'. Commands: list, show, schema, recipe, render, check, gallery, selftest", file=sys.stderr); return 2
 
 
 def _centre(f, W, H):

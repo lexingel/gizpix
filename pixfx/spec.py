@@ -1,0 +1,245 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+"""pixfx.spec - describe an effect as data (JSON), no Python needed.
+
+A recipe is a JSON object: canvas, timing, a palette and a list of LAYERS drawn in order (later = on top). Each layer is one building
+block (glow, disc, ring, star, particles, blob, bolt, rays, orbit, beam, arc) with a time window `t` and values that animate:
+  3            a fixed number
+  [3, 0]       goes from 3 to 0 across the layer's window (shaped by `ease`)
+  {"wave":[lo,hi,cycles]}   pulses lo..hi `cycles` times per loop (closes a loop exactly)
+  "$radius"    the recipe's option of that name (so `-o radius=30` works)
+Coordinates are pixels from the recipe's pivot, y down. Everything random comes from the seed, so the same recipe gives the same frames.
+Written for Gizpix; `python gizpix.py pixfx schema` lists every layer and key."""
+import difflib, json, math, os
+from types import SimpleNamespace
+import numpy as np
+from .core import BAYER, TAU, Rng, clamp, lerp, seg, ramp_at, out_expo, out_quart, in_quad, smooth, disc_mask, hex2rgb
+from .ramps import resolve
+from .kit import star, jagged
+
+EASE = {"linear": lambda p: p, "out": out_quart, "expo": out_expo, "in": in_quad, "smooth": smooth}
+DEFAULTS = {"name": "Custom effect", "about": "", "loop": False, "duration": 1.0, "fps": 12, "size": [96, 96], "palette": "fire", "options": {}, "tags": [], "layers": []}
+ALLOWED_TOP = set(DEFAULTS) | {"id", "pivot"}
+COMMON = {"t": "time window [start, end] in 0..1 (default [0, 1]); the layer draws only inside it", "at": "[x, y] from the pivot, or [[x0,y0],[x1,y1]] to move",
+          "palette": "ramp name or hex list for this layer (default: the recipe palette; 'main' = the recipe palette, which -o palette= changes)",
+          "color": "one fixed colour '#rrggbb' instead of a palette", "v": "ramp position 0..1 (dark..bright), number or [from, to] over the layer's life",
+          "ease": "linear | out | expo | in | smooth: how [from, to] values move", "hold": "true = keep drawing the end state after the window", "seed": "layers with the same number draw the same random shape (give it to the second layer when one body continues in another layer)"}
+SCHEMA = {
+    "glow": {"radius": "px, animatable", "strength": "0..1+, animatable (try {wave:[0.4,0.8,3]})", "steps": "brightness bands (default 4)"},
+    "disc": {"radius": "px", "mode": "core (bright middle) | lit (lit from top-left, smoke/stone)", "bias": "shifts shading dark(-)..bright(+)", "cover": "0..1 dithered translucency"},
+    "ring": {"radius": "px", "thick": "px", "squash": "1 = circle, 0.4 = flat ellipse on the floor", "cover": "0..1 dither", "arc": "[a0, a1] degrees: only part of the ring"},
+    "star": {"size": "px (spike length)", "arms": "4 | 6 | 8", "thin": "0.05..0.4 body width"},
+    "particles": {"mode": "burst (all fly out from the window start) | stream (endless, loop-safe)", "count": "int", "area": "[w, h] spawn box", "angle": "[a0, a1] degrees, 0 = right, 90 = down, -90 = up",
+                  "speed": "[lo, hi] px travelled over a particle's life", "life": "[lo, hi] fraction of the window (burst) or of the cycle (stream)", "cycles": "stream: repeats per loop (whole number)",
+                  "stagger": "burst: spread the births over this fraction of the window", "gravity": "px of downward pull at end of life (negative = rises)", "sway": "px of side wobble",
+                  "size": "[start, end] px", "shape": "dot | streak", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life"},
+    "blob": {"count": "int discs merged into one body", "spread": "[w, h] px", "radius": "[lo, hi] px", "scale": "0..1+ animatable: grow and shrink the whole body", "rise": "px upward, animatable",
+             "depth": "band width px (bigger = bands further in)", "bias": "dark(-)..bright(+) animatable: cool a fireball with [0.2, -0.6]", "cover": "0..1 dither"},
+    "bolt": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "grow": "fraction of the window spent striking from `from` to `to`", "flicker": "reshapes per window (default 6)",
+             "rough": "0.1..0.5 zigzag (default 0.28)", "depth": "subdivisions (default 4)", "branches": "int side forks", "glow": "radius of the light along the bolt"},
+    "rays": {"count": "int", "inner": "px from centre, animatable", "length": "px, animatable", "width": "px at the root", "rotate": "degrees over the window", "jitter": "0..1 random length"},
+    "orbit": {"count": "int", "radius": "px, animatable", "squash": "1 = circle", "turns": "whole turns over the window (whole number for loops)", "size": "px, animatable", "trail": "dots behind each one", "shade": "flat | core"},
+    "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`"},
+    "arc": {"radius": "px", "thick": "px, animatable", "sweep": "[a0, a1] degrees the head travels", "trail": "length of the tail as a fraction of the sweep (default 0.6)"},
+}
+
+
+def sub(x, o):
+    """replace "$name" strings by the option's value, recursively"""
+    if isinstance(x, str) and x.startswith("$"):
+        if x[1:] not in o: raise KeyError(f"'{x}' is not an option of this recipe (options: {', '.join(sorted(o))})")
+        return o[x[1:]]
+    if isinstance(x, list): return [sub(i, o) for i in x]
+    if isinstance(x, dict): return {k: sub(v, o) for k, v in x.items()}
+    return x
+
+
+def val(x, p, t=0.0):
+    if isinstance(x, dict):
+        w = (list(x["wave"]) + [1, 0])[:4]; return lerp(w[0], w[1], 0.5 + 0.5 * math.sin(TAU * (t * w[2] + w[3])))
+    if isinstance(x, (list, tuple)): return lerp(x[0], x[1], p)
+    return x
+
+
+def pt(x, p):
+    return (lerp(x[0][0], x[1][0], p), lerp(x[0][1], x[1][1], p)) if isinstance(x[0], (list, tuple)) else (x[0], x[1])
+
+
+def rng2(x, default):
+    x = default if x is None else x; return (x, x) if not isinstance(x, (list, tuple)) else x
+
+
+def _ramp(d, main):
+    if "color" in d: return [hex2rgb(d["color"])]
+    pal = d.get("palette")
+    return main if pal in (None, "main") else resolve(pal, "fire")
+
+
+# ---- layers --------------------------------------------------------------------------------------------------------------
+def L_glow(f, d, c):
+    r = val(d.get("radius", 20), c.e); k = val(d.get("strength", 0.6), c.e, c.t)
+    if r > 0 and k > 0: f.glow(c.ox, c.oy, r, ramp_at(c.ramp, c.v(0.6)), k, steps=int(d.get("steps", 4)))
+
+
+def L_disc(f, d, c):
+    r = val(d.get("radius", 6), c.e)
+    if r > 0: f.disc(c.ox, c.oy, r, c.ramp, mode=d.get("mode", "core"), cover=val(d.get("cover", 1), c.e), bias=val(d.get("bias", 0), c.e))
+
+
+def L_ring(f, d, c):
+    r = val(d.get("radius", 20), c.e); th = val(d.get("thick", 2), c.e); sq = d.get("squash", 1); cv = val(d.get("cover", 1), c.e)
+    if r <= 0 or th <= 0: return
+    if sq == 1:
+        arc = d.get("arc"); f.ring(c.ox, c.oy, r, th, c.ramp, v=c.v(0.8) if "v" in d else None, cover=cv, arc=None if arc is None else (math.radians(arc[0]), math.radians(arc[1]))); return
+    g = f._grid(c.ox, c.oy, r + th)                                                    # a flat ring: distance measured on the squashed plane
+    if g is None: return
+    x0, x1, y0, y1, xx, yy = g; dd = np.hypot(xx - c.ox, (yy - c.oy) / sq); te = max(th, 1.0 / sq)    # at least 1 px tall
+    m = np.abs(dd - r) <= te / 2
+    if cv < 1: m &= cv > np.tile(BAYER, (f.h // 4 + 1, f.w // 4 + 1))[y0:y1, x0:x1]
+    pos = np.clip(0.5 + (dd - r) / te + ((c.v(0.5) - 0.5) if "v" in d else 0.3), 0, 0.999)
+    cols = np.array(c.ramp, np.uint8)[(pos * len(c.ramp)).astype(int)]; f.rgb[y0:y1, x0:x1][m] = cols[m]; f.a[y0:y1, x0:x1][m] = 255
+
+
+def L_star(f, d, c):
+    s = val(d.get("size", 14), c.e)
+    if s > 1: star(f, c.ox, c.oy, s, c.ramp, arms=int(d.get("arms", 4)), thin=d.get("thin", 0.14), v=c.v(1.0))
+
+
+def L_particles(f, d, c):
+    n = int(d.get("count", 20)); stream = d.get("mode", "burst") == "stream"; ax, ay = rng2(d.get("area"), [0, 0]); a0, a1 = rng2(d.get("angle"), [0, 360])
+    s0, s1 = rng2(d.get("speed"), [10, 30]); l0, l1 = rng2(d.get("life"), [0.5, 1.0]); z0, z1 = rng2(d.get("size"), [2, 0]); grav = d.get("gravity", 0); sway = d.get("sway", 0)
+    cyc = d.get("cycles", 1); stag = clamp(d.get("stagger", 0.3), 0, 0.9); ease = EASE[d.get("travel", "out")]; shape = d.get("shape", "dot"); streak = d.get("streak", 6)
+    v0, v1 = rng2(d.get("v"), [0.9, 0.3]); c0, c1 = rng2(d.get("cover"), [1, 1]); r = c.rng; live = []
+    for i in range(n):
+        ang = math.radians(r.u(a0, a1)); sp = r.u(s0, s1); lf = max(r.u(l0, l1), 1e-3); ph = r.u(0, 1); bx = r.u(-0.5, 0.5) * ax; by = r.u(-0.5, 0.5) * ay; sw = r.u(0, TAU)
+        age = ((c.t * cyc + (i + ph * 0.5) / n) % 1.0) / lf if stream else (c.p - ph * stag) / (lf * (1 - stag))     # (1 - stag): every burst particle is over by p = 1
+        if age < 0 or age >= 1: continue
+        dist = sp * ease(age); x = c.ox + bx + math.cos(ang) * dist + sway * math.sin(sw + age * TAU); y = c.oy + by + math.sin(ang) * dist + grav * age * age
+        size = lerp(z0, z1, age); cv = lerp(c0, c1, age); vv = lerp(v0, v1, age)
+        if size > 0.2: live.append((age, x, y, ang, size, cv, vv))
+    for age, x, y, ang, size, cv, vv in sorted(live, reverse=True):                    # oldest first, so the young and hot ones sit on top
+        col = ramp_at(c.ramp, vv)
+        if shape == "streak": f.tapered(x, y, x - math.cos(ang) * streak * (1 - age * 0.7), y - math.sin(ang) * streak * (1 - age * 0.7), max(size, 1), 1, [col], cover=cv)
+        elif size < 1.6: f.dput(x, y, col, cv)
+        elif d.get("shade", "flat") == "core": f.disc(x, y, size / 2, c.ramp, mode="core", cover=cv, bias=vv - 0.5)
+        else: f.disc(x, y, size / 2, [col], cover=cv)
+
+
+def L_blob(f, d, c):
+    n = int(d.get("count", 8)); sx, sy = rng2(d.get("spread"), [10, 10]); lo, hi = rng2(d.get("radius"), [4, 8]); sc = val(d.get("scale", 1), c.e); rise = val(d.get("rise", 0), c.e); m = f.mask(); r = c.rng
+    for i in range(n):
+        dx, dy, rr = r.u(-1, 1), r.u(-1, 1), r.u(lo, hi)
+        disc_mask(m, c.ox + dx * sx * sc, c.oy + dy * sy * sc - rise, rr * sc)
+    f.fill(m, c.ramp, depth=d.get("depth", 5), bias=val(d.get("bias", 0), c.e), cover=val(d.get("cover", 1), c.e))
+
+
+def L_bolt(f, d, c):
+    x0, y0 = pt(d.get("from", [0, -30]), c.e); x1, y1 = pt(d.get("to", [0, 30]), c.e); w = val(d.get("width", 3), c.e)
+    if w <= 0: return
+    grow = d.get("grow", 0); g = out_expo(seg(c.p, 0, grow)) if grow > 0 else 1.0; k = int(c.p * d.get("flicker", 6)) % max(1, int(d.get("flicker", 6))); r = Rng(c.seed * 7919 + k)
+    pts = jagged(r, c.ox + x0, c.oy + y0, c.ox + lerp(x0, x1, g), c.oy + lerp(y0, y1, g), depth=int(d.get("depth", 4)), rough=d.get("rough", 0.28))
+    paths = [(pts, w)]
+    for _ in range(int(d.get("branches", 0))):
+        bx, by = pts[r.i(len(pts) // 4, len(pts) * 3 // 4)]; ln = math.hypot(x1 - x0, y1 - y0) * r.u(0.2, 0.4); a = math.atan2(y1 - y0, x1 - x0) + r.u(-1.0, 1.0)
+        paths.append((jagged(r, bx, by, bx + math.cos(a) * ln, by + math.sin(a) * ln, depth=3), max(1, w / 2)))
+    if d.get("glow"): f.glow(c.ox + lerp(x0, x1, 0.5), c.oy + lerp(y0, y1, 0.5), d["glow"], ramp_at(c.ramp, 0.7), 0.5)
+    for pl, ww in paths:
+        for a, b in zip(pl, pl[1:]): f.line(a[0], a[1], b[0], b[1], ramp_at(c.ramp, c.v(0.65)), width=max(1, int(ww)))
+    for pl, ww in paths:
+        if ww >= 2:                                                                    # a bright 1 px core down the thick strokes
+            for a, b in zip(pl, pl[1:]): f.line(a[0], a[1], b[0], b[1], c.ramp[-1], width=1)
+
+
+def L_rays(f, d, c):
+    n = int(d.get("count", 8)); r0 = val(d.get("inner", 4), c.e); ln = val(d.get("length", 12), c.e); rot = math.radians(val(d.get("rotate", 0), c.e)); jit = d.get("jitter", 0); wd = d.get("width", 2)
+    if ln <= 0.5: return
+    for i in range(n):
+        a = TAU * i / n + rot; L = ln * (1 - jit * c.rng.u(0, 1)); x0, y0 = c.ox + math.cos(a) * r0, c.oy + math.sin(a) * r0
+        f.tapered(x0, y0, x0 + math.cos(a) * L, y0 + math.sin(a) * L, wd, 1, c.ramp, v=c.v(0.8))
+
+
+def L_orbit(f, d, c):
+    n = int(d.get("count", 5)); R = val(d.get("radius", 20), c.e); sq = d.get("squash", 1); turns = d.get("turns", 1); size = val(d.get("size", 3), c.e); trail = int(d.get("trail", 0))
+    if size <= 0.2 or R < 0: return
+    for i in range(n):
+        for j in range(trail + 1):
+            a = TAU * (i / n + c.p * turns) - j * 0.16; s = size * (1 - j / (trail + 1)); x, y = c.ox + math.cos(a) * R, c.oy + math.sin(a) * R * sq
+            col = ramp_at(c.ramp, c.v(0.9) - 0.5 * j / (trail + 1))
+            if s < 1.6: f.put(x, y, col)
+            elif d.get("shade", "flat") == "core": f.disc(x, y, s / 2, c.ramp, mode="core")
+            else: f.disc(x, y, s / 2, [col])
+
+
+def L_beam(f, d, c):
+    x0, y0 = pt(d.get("from", [0, 0]), c.e); x1, y1 = pt(d.get("to", [30, 0]), c.e); w = val(d.get("width", 4), c.e); ex = d.get("extend", 0); g = out_expo(seg(c.p, 0, ex)) if ex > 0 else 1.0
+    if w > 0.4: f.tapered(c.ox + x0, c.oy + y0, c.ox + lerp(x0, x1, g), c.oy + lerp(y0, y1, g), w, val(d.get("tip", w), c.e), c.ramp, v=c.v(0.8))
+
+
+def L_arc(f, d, c):
+    R = d.get("radius", 22); th = val(d.get("thick", 6), c.e); a0, a1 = d.get("sweep", [-60, 60]); tr = d.get("trail", 0.6); head = lerp(a0, a1, out_quart(c.e)); tail = max(a0, head - tr * (a1 - a0)); S = 6
+    if th <= 0.4 or head <= tail: return
+    for s in range(S):
+        f.ring(c.ox, c.oy, R, th * (0.25 + 0.75 * (s + 1) / S), c.ramp, v=min(0.99, c.v(0.5) + 0.5 * (s + 1) / S) if "v" not in d else c.v(0.8), arc=(math.radians(lerp(tail, head, s / S)), math.radians(lerp(tail, head, (s + 1) / S))))
+
+
+LAYERS = {"glow": L_glow, "disc": L_disc, "ring": L_ring, "star": L_star, "particles": L_particles, "blob": L_blob, "bolt": L_bolt, "rays": L_rays, "orbit": L_orbit, "beam": L_beam, "arc": L_arc}
+
+
+# ---- validation, drawing, loading ---------------------------------------------------------------------------------------
+def validate(spec):
+    for k in spec:
+        if k not in ALLOWED_TOP: raise ValueError(f"recipe key '{k}' is unknown" + _near(k, ALLOWED_TOP))
+    if not spec["layers"]: raise ValueError("a recipe needs at least one layer")
+    for i, d in enumerate(spec["layers"]):
+        ty = d.get("type")
+        if ty not in LAYERS: raise ValueError(f"layer {i}: type '{ty}' is unknown" + _near(str(ty), LAYERS) + f". Types: {', '.join(LAYERS)}")
+        ok = set(SCHEMA[ty]) | set(COMMON) | {"type"}
+        for k in d:
+            if k not in ok: raise ValueError(f"layer {i} ({ty}): key '{k}' is unknown" + _near(k, ok) + f". Keys: {', '.join(sorted(ok))}")
+        t = d.get("t", [0, 1])
+        if not (isinstance(t, list) and len(t) == 2 and 0 <= t[0] <= t[1] <= 1): raise ValueError(f"layer {i} ({ty}): t must be [start, end] with 0 <= start <= end <= 1, got {t}")
+        if d.get("ease", "linear") not in EASE: raise ValueError(f"layer {i} ({ty}): ease must be one of {', '.join(EASE)}")
+
+
+def _near(k, pool):
+    m = difflib.get_close_matches(k, list(pool), 1, 0.6); return f" (did you mean '{m[0]}'?)" if m else ""
+
+
+def draw_spec(spec, f, t, o):
+    px, py = spec["pivot"]; main = resolve(o.palette, spec["palette"])
+    for i, d in enumerate(spec["layers"]):
+        try:
+            d = sub(d, o); t0, t1 = d.get("t", [0, 1])
+            if t < t0 or (t > t1 and not d.get("hold")): continue
+            p = seg(t, t0, t1); e = EASE[d.get("ease", "linear")](p); ox, oy = pt(d.get("at", [0, 0]), e)
+            vv = d.get("v")
+            c = SimpleNamespace(f=f, t=t, p=p, e=e, ox=px + ox, oy=py + oy, ramp=_ramp(d, main), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None,
+                                v=lambda default, vv=vv, e=e: val(default if vv is None else vv, e))
+            c.rng = Rng(c.seed); LAYERS[d["type"]](f, d, c)
+        except (TypeError, KeyError, IndexError, ValueError, ZeroDivisionError) as ex:
+            raise ValueError(f"layer {i} ({d.get('type')}): {type(ex).__name__}: {ex}") from None
+
+
+def load(src):
+    """recipe (path to a .json file, or a dict) -> (module-like, meta) for the engine"""
+    if isinstance(src, dict): spec = dict(src)
+    else:
+        with open(src, encoding="utf-8") as fh:
+            try: spec = json.load(fh)
+            except ValueError as e: raise ValueError(f"{src}: not valid JSON: {e}") from None
+    spec = {**DEFAULTS, **spec}; validate(spec); spec["size"] = list(spec["size"]); spec["pivot"] = list(spec.get("pivot") or [spec["size"][0] // 2, spec["size"][1] // 2])
+    base = os.path.splitext(os.path.basename(src))[0] if not isinstance(src, dict) else "custom"
+    meta = {"id": spec.get("id") or f"custom/{base}", "name": spec["name"], "loop": bool(spec["loop"]), "duration": spec["duration"], "fps": spec["fps"], "size": tuple(spec["size"]),
+            "pivot": tuple(spec["pivot"]), "about": spec["about"], "tags": list(spec["tags"]) + ["recipe"], "options": dict(spec["options"]),
+            "recipe": spec, "draw": lambda f, t, o, spec=spec: draw_spec(spec, f, t, o)}
+    return SimpleNamespace(draw=meta["draw"]), meta
+
+
+def schema_text(ty=None):
+    out = ["Recipe (JSON): " + ", ".join(f"{k}" for k in sorted(ALLOWED_TOP)), "  id 'category/name', name, about, tags[], loop true|false, duration s, fps, size [w,h], pivot [x,y] (default centre),",
+           "  palette (name or hex list), options {name: default} (use as \"$name\" in any value), layers [ ... ]", "", "Keys every layer takes:"]
+    out += [f"  {k:8s} {v}" for k, v in COMMON.items()] + [""]
+    for name in ([ty] if ty else LAYERS):
+        if name not in LAYERS: raise ValueError(f"unknown layer type '{name}'. Types: {', '.join(LAYERS)}")
+        out.append(f"layer \"{name}\":"); out += [f"  {k:9s} {v}" for k, v in SCHEMA[name].items()]; out.append("")
+    out.append("Values: 3 | [from, to] | {\"wave\":[lo,hi,cycles]} | \"$option\". Loops: use `wave`, particles mode stream with whole `cycles`, orbit with whole `turns`.")
+    return "\n".join(out)

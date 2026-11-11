@@ -91,6 +91,8 @@ python gizpix.py pixfx list                                        # the effects
 python gizpix.py pixfx render fire/torch -o palette=ice --out fx   # fx/torch.gif, torch_sheet.png, torch_sheet.json, torch_contact.png
 python gizpix.py pixfx render explosions/small-explosion -o seed=4 -o light=0.6 --scale 4 --out fx
 python gizpix.py pixfx check                                       # every effect: deterministic, loops close, one-shots end empty, nothing cropped
+python gizpix.py pixfx schema                                      # the recipe language: write your own effect as JSON
+python gizpix.py pixfx render my_effect.json --out fx              # draw a recipe of your own
 ```
 
 ![One frame from each effect](images/pixfx/gallery.png)
@@ -112,7 +114,7 @@ Run `python gizpix.py list` for the live list; `python gizpix.py help TOOL` for 
 | **rig** | `rig_walk2`, `warp_layer`, `xform`: code-driven walks and moving a layer with the base |
 | **ui** | `python gizpix.py ui`: the local web interface for the four jobs above (not a separate tool; it runs the same commands) |
 | **draw** | `pixdraw`: buildings (house, cottage, inn, tower, round tower, keep, stall), three views (`iso`, `top`, `side`), five JSON styles, scenes with trees, fences, paths; `extract-style` makes a starting style from your own sprites |
-| **effects** | `pixfx`: 13 code-drawn effects (torch, fireball, small explosion, hit spark, shockwave, lightning bolt, frost nova, heal, magic circle, coin sparkle, slash, rain, snow); 22 palettes or your own; seeds; loops that close and one-shots that end empty; GIF, sprite sheet and JSON; `pixfx check` verifies them |
+| **effects** | `pixfx`: 24 ready effects (torch, fireball, explosions, hits, lightning, ice, heal, magic circle, shields, portals, clouds, rain, snow...) and a recipe language: describe your own effect as a JSON file of layers (glow, ring, particles, blob, bolt, beam...); 22 palettes or your own; seeds; loops that close and one-shots that end empty; GIF, sprite sheet and JSON; `pixfx check` verifies them |
 
 Every tool answers `-h`, prints one-line errors on bad input and exits 2 for usage problems.
 

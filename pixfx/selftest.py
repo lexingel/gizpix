@@ -32,4 +32,11 @@ def run():
             js = json.load(open(os.path.join(d, "x_sheet.json"), encoding="utf-8")); assert js["meta"]["pixfx"]["frames"] == 6 and js["meta"]["pixfx"]["loop"] == meta["loop"]
             with Image.open(os.path.join(d, "x.gif")) as g: n = sum(1 for _ in ImageSequence.Iterator(g))
             assert n >= 6, n
+    from . import spec                                                               # recipes: a described effect renders, and mistakes are named
+    mod, meta = spec.load({"name": "t", "size": [48, 48], "options": {"r": 10}, "layers": [{"type": "ring", "radius": "$r", "thick": [3, 0]}, {"type": "glow", "radius": 12, "strength": [0.6, 0]}]})
+    assert len(engine.render_frame(mod, meta, engine.options(meta), 0.2).a.nonzero()[0]) > 0
+    for bad_spec, word in (({"layers": [{"type": "particle"}]}, "particles"), ({"layers": [{"type": "glow", "raduis": 3}]}, "radius"), ({"layers": [{"type": "glow", "radius": "$nope"}]}, "option")):
+        try:
+            m2, me2 = spec.load({"size": [32, 32], **bad_spec}); engine.render_frame(m2, me2, engine.options(me2), 0.5); raise SystemExit(f"recipe mistake not caught: {bad_spec}")
+        except (ValueError, KeyError) as e: assert word in str(e), (word, str(e))
     print(f"pixfx selftest ok ({len(reg)} effects)"); return 0

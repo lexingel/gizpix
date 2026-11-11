@@ -65,13 +65,19 @@ You cut each outfit once and then mix them, instead of generating every characte
 
 **Drawing effects from code.** Gizpix also draws pixel-art effects with no reference picture: a burning torch, a fireball, an explosion, a hit spark, a shockwave on the floor, a lightning bolt, a ring of ice, healing sparkles, a magic circle, a coin pickup, a sword cut, rain and snow. Each effect is a function of time, so the same settings always give the same animation, and a loop closes exactly with no jump. You can change the colours (22 named palettes, or your own list of colours), the random seed for a different take, the strength of the glow, and settings that belong to the effect, such as the radius of a frost nova. The result is a GIF to look at, and a sprite sheet with a data file for a game engine.
 
-![A contact sheet with one frame from each of the thirteen effects](images/pixfx/gallery.png)
+**Describe an effect you want.** The ready-made effects are examples. The main idea is that anyone can ask for an effect that does not exist yet: an AI assistant (or you) describes it as a short list of layers, such as a glow, a ring on the floor, sparks that fall, a cloud that swells and cools, a lightning bolt. Gizpix draws it, checks it, and you look at the picture and ask for changes. A meteor that falls and blows up is nine layers, and the same file gives the same animation on any computer.
+
+![A contact sheet with one frame from each of the effects](images/pixfx/gallery.png)
 
 *One frame from each effect, drawn by Gizpix.*
 
 ![A torch burning, looping](images/pixfx/torch.gif) ![An explosion](images/pixfx/small-explosion.gif) ![A frost nova](images/pixfx/frost-nova.gif)
 
 *A torch (a seamless loop), an explosion and a frost nova (they fade to nothing and start again).*
+
+![A meteor falling and exploding](images/pixfx/meteor-impact.gif) ![A level-up burst](images/pixfx/level-up.gif)
+
+*Two effects that came from written descriptions, not from code: a meteor impact and a level-up.*
 
 ## Two ways to use it
 

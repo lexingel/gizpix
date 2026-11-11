@@ -4,7 +4,7 @@
 An effect module defines META (a dict) and draw(f, t, o): f is a core.Frame, t in [0, 1], o the merged options (dict-like with attribute access).
 META keys: id 'category/name', name, loop (True = t runs 0..1 and wraps; False = a one-shot, t = 0..1 inclusive and it must end empty), duration (s),
 size (w, h), pivot (x, y) = where the effect's origin is, options = {name: default}, about (one line), tags."""
-import importlib, json, os, pkgutil
+import glob, importlib, json, os, pkgutil
 import numpy as np
 from PIL import Image
 from .core import Frame
@@ -28,10 +28,18 @@ def registry():
     for m in _modules():
         for meta in getattr(m, "EFFECTS", [getattr(m, "META", None)]):
             if meta: reg[meta["id"]] = (m, meta)
+    from . import spec
+    for p in sorted(glob.glob(os.path.join(os.path.dirname(__file__), "recipes", "*.json"))):    # recipes shipped with Gizpix
+        m, meta = spec.load(p); reg[meta["id"]] = (m, meta)
     return reg
 
 
 def get(eid):
+    if eid.lower().endswith(".json"):                                                            # a recipe file of your own
+        if not os.path.exists(eid): raise KeyError(f"recipe file '{eid}' not found")
+        from . import spec
+        try: return spec.load(eid)
+        except ValueError as e: raise KeyError(str(e)) from None
     reg = registry()
     if eid in reg: return reg[eid]
     near = [k for k in reg if eid in k or k.split("/")[-1] == eid]

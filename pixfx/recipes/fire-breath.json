@@ -1,0 +1,10 @@
+{
+  "id": "fire/fire-breath", "name": "Fire breath", "about": "A jet of flame to the right, hot and bright at the mouth, cooling and breaking up as it travels.",
+  "tags": ["fire", "breath", "dragon", "flame", "jet"], "loop": true, "duration": 1.0, "fps": 12, "size": [128, 56], "pivot": [10, 28], "palette": "fire",
+  "options": {"reach": 96},
+  "layers": [
+    {"type": "glow", "radius": {"wave": [26, 32, 2]}, "strength": 0.6},
+    {"type": "particles", "mode": "stream", "count": 150, "area": [4, 8], "angle": [-14, 14], "speed": [30, "$reach"], "life": [0.5, 0.95], "size": [9, 2], "cycles": 2, "v": [0.95, 0.1]},
+    {"type": "blob", "count": 5, "spread": [3, 4], "radius": [5, 7], "scale": {"wave": [0.9, 1.1, 2]}, "depth": 4, "bias": 0.3}
+  ]
+}

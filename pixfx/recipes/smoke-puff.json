@@ -1,0 +1,8 @@
+{
+  "id": "environment/smoke-puff", "name": "Smoke puff", "about": "A puff of smoke that swells, drifts up and thins away.",
+  "tags": ["smoke", "dust", "puff", "environment"], "loop": false, "duration": 1.2, "fps": 10, "size": [72, 80], "pivot": [36, 58], "palette": "smoke",
+  "layers": [
+    {"type": "blob", "count": 7, "spread": [10, 6], "radius": [5, 9], "scale": [0.2, 1.2], "rise": [0, 10], "t": [0, 0.55], "ease": "out", "seed": 1, "depth": 10, "bias": [0.1, -0.1]},
+    {"type": "blob", "count": 7, "spread": [10, 6], "radius": [5, 9], "scale": [1.2, 0], "rise": [10, 26], "t": [0.55, 1], "seed": 1, "depth": 10, "bias": [-0.1, -0.4]}
+  ]
+}
