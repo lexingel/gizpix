@@ -5,7 +5,7 @@ import io, importlib.util, json, os, sys, tempfile
 import numpy as np
 from PIL import Image
 from . import render, scene, compose, list_styles, load_style, PRESETS, extract_style
-from .export import export, sheet
+from .export import export, sheet, save_gif
 from .templates import spec_of
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -15,6 +15,27 @@ def _lint():
     p = os.path.join(HERE, "..", "check", "pixel_lint.py")
     if not os.path.exists(p): return None
     spec = importlib.util.spec_from_file_location("pixel_lint", p); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); return m.lint
+
+
+def gif_check(fr):
+    """GIF output must show exactly the frames given: one colour is one colour in every frame, and an opaque colour is never
+    flagged transparent (an old bug: transparency index 0 was forced, so a ground colour at index 0 vanished or flashed)"""
+    from PIL import ImageSequence
+    ground = (40, 58, 36, 255)
+    cases = {"opaque ground": [Image.new("RGBA", (24, 16), ground) for _ in range(3)],
+             "transparent edge": [Image.new("RGBA", (24, 16), (0, 0, 0, 0)) for _ in range(3)]}
+    for k, f in enumerate(cases["opaque ground"]): f.putpixel((3 + k, 4), (200, 30 + k, 30, 255))
+    for k, f in enumerate(cases["transparent edge"]): f.paste((90, 60, 40, 255), (4, 4, 10 + k, 12))
+    many = [Image.effect_noise((40, 40), 80).convert("RGBA") for _ in range(2)]; cases["over 256 colours"] = many
+    with tempfile.TemporaryDirectory() as d:
+        for name, frames in cases.items():
+            p = os.path.join(d, "t.gif"); save_gif(frames, p, 100)
+            with Image.open(p) as im: got = [np.array(x.convert("RGBA")) for x in ImageSequence.Iterator(im)]
+            assert len(got) == len(frames), (name, "frame count")
+            for g, src in zip(got, frames):
+                s = np.array(src); opaque = s[..., 3] >= 128
+                if name != "over 256 colours": assert np.array_equal(g[opaque][:, :3], s[opaque][:, :3]) and ((g[..., 3] >= 128) == opaque).all(), (name, "frame differs from its source")
+                else: assert (np.abs(g[..., :3].astype(int) - s[..., :3].astype(int)).mean() < 12), (name, "quantization too lossy")
 
 
 def run():
@@ -67,6 +88,7 @@ def run():
         js = json.load(open(os.path.join(d, "stall_sheet.json"))); sz = Image.open(os.path.join(d, "stall_sheet.png")).size; assert js["meta"]["size"] == {"w": sz[0], "h": sz[1]}
         src = os.path.join(d, "s.png"); render({"type": "house"}, "dark_fantasy")[0].save(src)          # style extractor round trip
         out = os.path.join(d, "st.json"); extract_style([src], out); assert render({"type": "inn"}, out)[0].width > 20
+    gif_check(fr)
     vj = json.load(open(os.path.join(HERE, "examples", "village.json"), encoding="utf-8"))          # scene composition: renders, loops, deterministic, bad items rejected
     for st in list_styles():
         a = compose(vj["items"], st, tuple(vj["size"]), frames=4); assert len(a) == 4 and a[0].size == tuple(vj["size"]) and np.array(a[0])[..., 3].min() == 255, st

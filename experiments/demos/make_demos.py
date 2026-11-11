@@ -58,6 +58,8 @@ for k in range(n):
     for g in gifs: g.seek(k); fs.append(g.convert("RGBA"))
     w = sum(f.width for f in fs) + 8; c = Image.new("RGBA", (w, max(f.height for f in fs)), (30, 30, 38, 255)); x = 0
     for f in fs: c.paste(f, (x, 0)); x += f.width + 8
-    out.append(c.convert("P", palette=Image.ADAPTIVE, colors=64))
-out[0].save(f"{OUT}/village.gif", save_all=True, append_images=out[1:], duration=gifs[0].info.get("duration", 120), loop=0, disposal=2)
+    out.append(c)
+sys.path.insert(0, ROOT)
+from pixdraw.export import save_gif                  # one palette for every frame: no colour flashing between frames
+save_gif(out, f"{OUT}/village.gif", gifs[0].info.get("duration", 120))
 shutil.rmtree(T, ignore_errors=True)
