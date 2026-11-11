@@ -134,7 +134,7 @@ Most tools write somewhere new. These edit **in place unless you pass `--out`** 
 ## Tests
 
 ```bash
-python gizpix.py doctor        # packages + every tool's -h + real-frame tests (about 2 minutes)
+python gizpix.py doctor        # packages + every tool's -h + defect-injection tests on the bundled samples (about 2 minutes)
 python selftest_all.py           # all self-tests, the chain test, pixdraw selftest + golden hashes
 python -m pytest                 # pixdraw tests (configured in pyproject.toml)
 python experiments/demos/make_demos.py   # regenerate the pictures in images/

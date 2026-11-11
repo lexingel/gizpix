@@ -62,6 +62,13 @@ Defects injected into the walk frames (`experiments/anim_chain/tools_real_test.p
 
 `align_frames` flattens the walk's natural 1–2 px bob when it aligns the feet row; use it for frames whose ground line drifted.
 
+## Checks run on the bundled code-drawn samples
+
+`experiments/anim_chain/chain_test.py` and `tools_real_test.py` (run by `doctor`) now read `samples/walk_frames`, which are drawn from code, so they test that the tools run and behave on clean frames. The costs quoted above for `scrub` and `despeckle` were measured on the AI-generated frames. Two things found on the bundled samples on 2026-11-11:
+
+- `speck_fix` at its defaults fixed 0 of 5 injected specks that all had the same colour (it only fixes a colour used by at most `--rare` pixels, default 2); `--rare 5` fixed all 5.
+- `pix_snap` without `--cells` found 87×96 for a clean 3× upscale of a 96×96 sprite; `--cells 96 96` was exact.
+
 ## Snapping (`pix_snap`)
 
 On 240 real pixel-art images (Kenney CC0 16×16 tiles and sprites, re-scaled and warped) automatic exact-grid detection recovered the true size on 57/120 regular-grid images against 27/120 for the other method compared. Elastic-grid size scoring was tried and dropped (worse than the dip rule). For warped images pass `--candidates`.

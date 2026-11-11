@@ -87,7 +87,7 @@ pixdraw.render({"type": "house", "roof_mat": "corrugated"}, "desert")
 
 ## Tests
 
-`python -m pixdraw selftest` (every preset x projection x style, bad specs, clipping, loops, palette, no game names, golden hashes) and `python -m pixdraw golden` (SHA-256 of 48 fixed renders; `--update` after an intended change). With pytest: `pytest pixdraw/test_pixdraw.py` (on this machine a protobuf plugin breaks pytest start-up: use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`).
+`python -m pixdraw selftest` (every preset x projection x style, bad specs, clipping, loops, palette, no game names, golden hashes) and `python -m pixdraw golden` (SHA-256 of 50 fixed renders; `--update` after an intended change). With pytest: `pytest pixdraw/test_pixdraw.py` (on this machine a protobuf plugin breaks pytest start-up: use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`).
 
 ## Licence and provenance
 

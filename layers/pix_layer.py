@@ -13,7 +13,7 @@ What it does (measured numbers: MEASUREMENTS.md, scripts in experiments/skeleton
      plus the dark outline (RGB sum < 150).
   3. Extract again, keeping only key colours.
 --solid : for animation frames. Drops sparse specks (re-shaded skin) and small pieces; walk test: layer 530 -> ~310 px/frame, mostly skin gone, ~2 real px lost.
---outline : put back the layer's own dark 1 px outline (paperdoll.py's thin-line filter removes it). LPC test: shirt kept 86% -> see README.
+--outline : put back the layer's own dark 1 px outline (paperdoll.py's thin-line filter removes it). LPC test (third-party art, not in this repository): shirt kept 86%.
 --bits    : after --drop-skin, drop specks (<= 30 px groups) that look like body (hair, boots) and are nearer to the base colours than to the outfit. Skeleton-v3 walk test: removes the hair-red tips on pauldrons.
 --drop-parts : after --bits: drop hair-tip and boot leaks that are attached to the outfit. From the base of the SAME direction it takes the hair (warm components that reach the upper 40% of the silhouette)
   and the boots (the lowest 12 rows), widens them by 3 px, and drops layer pixels in there whose colour lies on that part's own colour ramp (RGB < 45 and hue within 0.06, or both grey) and is nearer to it than to the
