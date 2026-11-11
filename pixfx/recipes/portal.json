@@ -1,0 +1,115 @@
+{
+ "id": "magic/portal",
+ "name": "Portal",
+ "about": "Swirling portal ring on the ground plane with energy pulled inward.",
+ "loop": true,
+ "duration": 1.6,
+ "fps": 12,
+ "size": [
+  112,
+  80
+ ],
+ "pivot": [
+  56,
+  40
+ ],
+ "palette": "arcane",
+ "layers": [
+  {
+   "type": "glow",
+   "radius": {
+    "wave": [
+     36,
+     40,
+     2
+    ]
+   },
+   "strength": {
+    "wave": [
+     0.4,
+     0.6,
+     2
+    ]
+   },
+   "squash": 0.5
+  },
+  {
+   "type": "glow",
+   "radius": 18,
+   "strength": 0.5,
+   "squash": 0.5,
+   "steps": 3,
+   "v": 0.2
+  },
+  {
+   "type": "ring",
+   "squash": 0.5,
+   "radius": 25,
+   "thick": 2,
+   "arc": [
+    0,
+    230
+   ],
+   "v": 1,
+   "seed": 1
+  },
+  {
+   "type": "ring",
+   "squash": 0.5,
+   "radius": 32,
+   "thick": 3,
+   "v": 0.55
+  },
+  {
+   "type": "orbit",
+   "count": 5,
+   "radius": 26,
+   "squash": 0.5,
+   "turns": 1,
+   "size": 3,
+   "trail": 6,
+   "v": 1
+  },
+  {
+   "type": "orbit",
+   "count": 3,
+   "radius": 16,
+   "squash": 0.5,
+   "turns": 2,
+   "size": 2,
+   "trail": 5,
+   "v": 0.8
+  },
+  {
+   "type": "particles",
+   "mode": "stream",
+   "count": 22,
+   "area": [
+    56,
+    4
+   ],
+   "angle": [
+    0,
+    360
+   ],
+   "speed": [
+    24,
+    30
+   ],
+   "life": [
+    0.5,
+    0.8
+   ],
+   "cycles": 2,
+   "size": [
+    3,
+    0
+   ],
+   "v": [
+    1,
+    0.6
+   ],
+   "travel": "in"
+  }
+ ]
+}

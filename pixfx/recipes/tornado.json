@@ -1,0 +1,126 @@
+{
+ "id": "weather/tornado",
+ "name": "Tornado",
+ "about": "Looping whirlwind column with debris.",
+ "loop": true,
+ "duration": 1.2,
+ "fps": 12,
+ "size": [
+  80,
+  112
+ ],
+ "pivot": [
+  40,
+  96
+ ],
+ "palette": "dust",
+ "layers": [
+  {
+   "type": "glow",
+   "at": [
+    0,
+    -2
+   ],
+   "radius": 18,
+   "strength": 0.3,
+   "squash": 0.4
+  },
+  {
+   "type": "orbit",
+   "count": 5,
+   "radius": 8,
+   "squash": 0.35,
+   "turns": 1,
+   "size": 6,
+   "at": [
+    0,
+    -4
+   ],
+   "v": 0.5,
+   "trail": 7
+  },
+  {
+   "type": "orbit",
+   "count": 5,
+   "radius": 13,
+   "squash": 0.35,
+   "turns": 1,
+   "size": 6,
+   "at": [
+    0,
+    -20
+   ],
+   "v": 0.6,
+   "trail": 7
+  },
+  {
+   "type": "orbit",
+   "count": 6,
+   "radius": 18,
+   "squash": 0.35,
+   "turns": 1,
+   "size": 6,
+   "at": [
+    0,
+    -38
+   ],
+   "v": 0.7,
+   "trail": 7
+  },
+  {
+   "type": "orbit",
+   "count": 6,
+   "radius": 23,
+   "squash": 0.35,
+   "turns": 1,
+   "size": 6,
+   "at": [
+    0,
+    -56
+   ],
+   "v": 0.85,
+   "trail": 7
+  },
+  {
+   "type": "orbit",
+   "count": 7,
+   "radius": 27,
+   "squash": 0.35,
+   "turns": 1,
+   "size": 5,
+   "at": [
+    0,
+    -74
+   ],
+   "v": 0.95,
+   "trail": 7
+  },
+  {
+   "type": "orbit",
+   "count": 3,
+   "radius": 20,
+   "squash": 0.4,
+   "turns": 2,
+   "size": 3,
+   "at": [
+    0,
+    -30
+   ],
+   "palette": "earth",
+   "v": 0.9,
+   "shade": "flat"
+  },
+  {
+   "type": "ring",
+   "squash": 0.3,
+   "radius": 14,
+   "thick": 2,
+   "at": [
+    0,
+    -2
+   ],
+   "v": 0.5,
+   "cover": 0.6
+  }
+ ]
+}
