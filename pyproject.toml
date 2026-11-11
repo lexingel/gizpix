@@ -1,7 +1,7 @@
 # Project metadata, packaging and test configuration.
 # From a clone:  python gizpix.py ...      After  pip install .  :  gizpix ...
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,7 +10,8 @@ version = "0.2.0"
 description = "Local, free, offline pixel-art toolkit: clean frames, cut outfit layers, measure quality, recolour, pack sheets, draw buildings from code."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "AGPL-3.0-or-later" }
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE", "LICENSE-DOCS", "NOTICE.md"]
 dependencies = ["numpy>=1.23", "Pillow>=9.5", "scipy>=1.9"]
 
 [project.optional-dependencies]

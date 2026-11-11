@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """make_demos.py - regenerate the three README pictures in images/ from the bundled sample frames and pixdraw.  python experiments/demos/make_demos.py
   1. outfit_layer.png : base | outfit | cut layer | layer worn on the base   (pix_layer cut on samples/walk_frames, frames 0, 3, 6, robe east)
   2. repair.png       : a damaged frame, then speck_fix + fill_pinholes, with pixel_lint numbers
