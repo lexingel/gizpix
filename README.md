@@ -1,5 +1,7 @@
 # Gizpix
 
+*New to pixel art? Read the plain-language overview: [ABOUT.md](ABOUT.md).*
+
 A local, free, offline toolkit for pixel-art sprites. It cleans animation frames, cuts outfit layers out of generated sprites, measures quality, recolours, aligns and packs frames, and draws pixel-art buildings and villages from code. Nothing calls a network or an AI service; every tool reads and writes plain PNG/GIF/JSON files, so you can run it in a build script or let a coding agent drive it.
 
 ![Outfit layer cut from walk frames](images/outfit_layer.png)
