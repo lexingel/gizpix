@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0
+- Recipe language: curved paths (`at` with 3+ points) and `spin`, per-step `ease` lists, `blob` modes `flame` and `ring` (`drift`, `stagger`), particle shapes `bubble` and `shard`, a whole-effect `style` pass (outline, rim, shadow) and palette roles (`"@role"`). New recipes: curving orb, dust ring; soul wisp (a real flame silhouette) and acid splash (flat puddle, popping bubbles) redrawn.
 - Recipe language: `smear` (a fading, shrinking trail of any moving layer), `outline`/`rim`/`erode` on every layer, `beam` drawn as one distance field (`core`), `funnel` `profile`/`bend`/`ripple`; `arc` `trail` renamed `tail`. `pixfx check --report`: mesh dithering, flat colour, lone pixels, empty frames, motion pops, with a fix per flag. New recipe: comet; tornado, soul wisp, vampire drain and smite redrawn.
 - Recipe language: `funnel` layer (swirling column), particle `target` + `curve` (fly from a spawn area to a point), layer `wobble` (snaking, swaying). Tornado, soul wisp, vampire drain and portal redrawn with them; `pixfx palettes` lists the palette names.
 - Recipe language: `blob` `erode` (dissolve from the edge), `glow`/`rays` `squash`, particle `shape: star`. Smoke puff redrawn with them.

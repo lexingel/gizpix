@@ -17,12 +17,13 @@ from .ramps import resolve
 from .kit import star, jagged
 
 EASE = {"linear": lambda p: p, "out": out_quart, "expo": out_expo, "in": in_quad, "smooth": smooth}
-DEFAULTS = {"name": "Custom effect", "about": "", "loop": False, "duration": 1.0, "fps": 12, "size": [96, 96], "palette": "fire", "options": {}, "tags": [], "layers": []}
+DEFAULTS = {"name": "Custom effect", "about": "", "loop": False, "duration": 1.0, "fps": 12, "size": [96, 96], "palette": "fire", "options": {}, "tags": [], "layers": [], "style": {}, "palettes": {}}
 ALLOWED_TOP = set(DEFAULTS) | {"id", "pivot"}
-COMMON = {"t": "time window [start, end] in 0..1 (default [0, 1]); the layer draws only inside it", "at": "[x, y] from the pivot, or [[x0,y0],[x1,y1]] to move",
+STYLE_KEYS = {"outline": "'auto' or '#rrggbb': 1 px outline around everything drawn", "rim": "[dx, dy] light direction: lit edge", "shadow": "[dx, dy] offset: a hard shadow in the darkest palette colour"}
+COMMON = {"t": "time window [start, end] in 0..1 (default [0, 1]); the layer draws only inside it", "at": "[x, y] from the pivot; [[x0,y0],[x1,y1]] to move on a line; three or more points = a smooth curve through them",
           "palette": "ramp name or hex list for this layer (default: the recipe palette; 'main' = the recipe palette, which -o palette= changes)",
           "color": "one fixed colour '#rrggbb' instead of a palette", "v": "ramp position 0..1 (dark..bright), number or [from, to] over the layer's life",
-          "ease": "linear | out | expo | in | smooth: how [from, to] values move", "hold": "true = keep drawing the end state after the window", "wobble": "[ax, ay, cycles]: the layer sways around its path (whole cycles close a loop): snaking wisps, swaying columns", "smear": "[length, taper]: a trail of fading, shrinking copies of the layer along its own path (length = fraction of the window, taper = size of the oldest copy 0..1). Sword smears, comet tails, wisp tails",
+          "ease": "linear | out | expo | in | smooth: how [from, to] values move; or a list, one name per key step: [\"out\", \"linear\", \"in\"]", "spin": "[radius, turns]: circles around its path (a spiral when it also moves)", "hold": "true = keep drawing the end state after the window", "wobble": "[ax, ay, cycles]: the layer sways around its path (whole cycles close a loop): snaking wisps, swaying columns", "smear": "[length, taper]: a trail of fading, shrinking copies of the layer along its own path (length = fraction of the window, taper = size of the oldest copy 0..1). Sword smears, comet tails, wisp tails",
           "erode": "(all layers except blob has its own) px eaten from the edge, animatable: the clean dissolve", "outline": "'#rrggbb' or 'auto' (darkest palette colour): a 1 px outline around the drawn layer", "rim": "[dx, dy] light direction, e.g. [-1, -1]: the edge facing the light takes a bright rim colour",
           "seed": "layers with the same number draw the same random shape (give it to the second layer when one body continues in another layer)"}
 SCHEMA = {
@@ -33,8 +34,8 @@ SCHEMA = {
     "particles": {"mode": "burst (all fly out from the window start) | stream (endless, loop-safe)", "count": "int", "area": "[w, h] spawn box", "angle": "[a0, a1] degrees, 0 = right, 90 = down, -90 = up",
                   "speed": "[lo, hi] px travelled over a particle's life", "life": "[lo, hi] fraction of the window (burst) or of the cycle (stream)", "cycles": "stream: repeats per loop (whole number)",
                   "stagger": "burst: spread the births over this fraction of the window", "gravity": "px of downward pull at end of life (negative = rises)", "sway": "px of side wobble",
-                  "size": "[start, end] px", "shape": "dot | streak | star", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life", "target": "[x, y] from the pivot: every particle travels from its spawn point to here instead of flying along `angle`", "curve": "px sideways bow of that path (with `target`), random per particle"},
-    "blob": {"count": "int discs merged into one body", "spread": "[w, h] px", "radius": "[lo, hi] px", "scale": "0..1+ animatable: grow and shrink the whole body", "rise": "px upward, animatable",
+                  "size": "[start, end] px", "shape": "dot | streak | star | bubble (hollow, pops) | shard (sliver)", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life", "target": "[x, y] from the pivot: every particle travels from its spawn point to here instead of flying along `angle`", "curve": "px sideways bow of that path (with `target`), random per particle"},
+    "blob": {"mode": "lump (default) | ring (puffs on the `spread` ellipse: ground dust, smoke rings; `drift` px outward, `stagger`) | flame (puffs up a swaying spine: `height`, `radius` = [base, tip-ish], `flicker`, `sway`, `cycles`, `jitter`)", "count": "int discs merged into one body", "height": "flame: px", "flicker": "flame: reshapes per window (default 5)", "sway": "flame: px", "cycles": "flame: sways per window (whole)", "jitter": "flame: px", "drift": "ring: px outward, animatable", "stagger": "0..0.9: puffs start growing at different moments", "spread": "[w, h] px", "radius": "[lo, hi] px", "scale": "0..1+ animatable: grow and shrink the whole body", "rise": "px upward, animatable",
              "depth": "band width px (bigger = bands further in)", "lit": "[dx, dy] direction of the light, e.g. [-1, -1] = top-left (sphere-like shading)", "lit_strength": "0..1, default 0.3", "bias": "dark(-)..bright(+) animatable: cool a fireball with [0.2, -0.6]", "erode": "px eaten from the edge, animatable ([0, 10] dissolves it; better than cover)", "cover": "0..1 dither"},
     "bolt": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "grow": "fraction of the window spent striking from `from` to `to`", "flicker": "reshapes per window (default 6)",
              "rough": "0.1..0.5 zigzag (default 0.28)", "depth": "subdivisions (default 4)", "branches": "int side forks", "glow": "radius of the light along the bolt", "rim": "'#rrggbb' lighter edge under the stroke (cracks on dark ground)"},
@@ -58,25 +59,41 @@ def sub(x, o):
     return x
 
 
+_SEG = [None]                                                                          # per-segment ease names of the layer being drawn (ease given as a list)
+
+
 def val(x, p, t=0.0):
     if isinstance(x, dict):
         w = (list(x["wave"]) + [1, 0])[:4]; return lerp(w[0], w[1], 0.5 + 0.5 * math.sin(TAU * (t * w[2] + w[3])))
     if isinstance(x, (list, tuple)):                                                   # [a, b] or [a, b, c, ...]: evenly spaced keys over the window
-        n = len(x) - 1; pos = clamp(p) * n; i = min(int(pos), n - 1); return lerp(x[i], x[i + 1], pos - i)
+        n = len(x) - 1; pos = clamp(p) * n; i = min(int(pos), n - 1); u = pos - i; se = _SEG[0]
+        if se: u = EASE[se[min(i, len(se) - 1)]](u)
+        return lerp(x[i], x[i + 1], u)
     return x
 
 
 def pt(x, p):
-    return (lerp(x[0][0], x[1][0], p), lerp(x[0][1], x[1][1], p)) if isinstance(x[0], (list, tuple)) else (x[0], x[1])
+    """a point, or a path: two points = a line, three or more = a smooth curve through them (Catmull-Rom)"""
+    if not isinstance(x[0], (list, tuple)): return (x[0], x[1])
+    if len(x) == 2: return (lerp(x[0][0], x[1][0], p), lerp(x[0][1], x[1][1], p))
+    n = len(x) - 1; pos = clamp(p) * n; i = min(int(pos), n - 1); u = pos - i; P0, P1, P2, P3 = x[max(i - 1, 0)], x[i], x[i + 1], x[min(i + 2, n)]
+    return tuple(0.5 * (2 * P1[k] + (-P0[k] + P2[k]) * u + (2 * P0[k] - 5 * P1[k] + 4 * P2[k] - P3[k]) * u * u + (-P0[k] + 3 * P1[k] - 3 * P2[k] + P3[k]) * u ** 3) for k in (0, 1))
+
+
+def _efn(d):
+    e = d.get("ease", "linear"); return EASE["linear"] if isinstance(e, list) else EASE[e]
 
 
 def rng2(x, default):
     x = default if x is None else x; return (x, x) if not isinstance(x, (list, tuple)) else x
 
 
-def _ramp(d, main):
+def _ramp(d, main, roles=None):
     if "color" in d: return [hex2rgb(d["color"])]
     pal = d.get("palette")
+    if isinstance(pal, str) and pal.startswith("@"):                                   # a role defined in the recipe's "palettes"
+        if not roles or pal[1:] not in roles: raise KeyError(f"palette '{pal}' is not defined in the recipe's palettes ({', '.join(roles or {}) or 'none'})")
+        pal = roles[pal[1:]]
     return main if pal in (None, "main") else resolve(pal, "fire")
 
 
@@ -132,6 +149,12 @@ def L_particles(f, d, c):
             arm = int(size / 2); f.put(x, y, c.ramp[-1] if len(c.ramp) > 1 else col)
             for k in range(1, arm + 1):
                 for dx, dy in ((k, 0), (-k, 0), (0, k), (0, -k)): f.put(x + dx, y + dy, col)
+        elif shape == "bubble":                                                        # a hollow ring that grows, then pops into four dots
+            if age < 0.8: f.ring(x, y, max(size / 2, 1.2), 1.0, [col])
+            else:
+                for dx, dy in ((1, 1), (-1, 1), (1, -1), (-1, -1)): f.put(x + dx * size * 0.7, y + dy * size * 0.7, col)
+        elif shape == "shard":                                                         # a tapered sliver pointing along its flight
+            f.tapered(x, y, x + math.cos(ang) * size * 1.6, y + math.sin(ang) * size * 1.6, max(size * 0.6, 1), 0.5, [col])
         elif shape == "streak": f.tapered(x, y, x - math.cos(ang) * streak * (1 - age * 0.7), y - math.sin(ang) * streak * (1 - age * 0.7), max(size, 1), 1, [col], cover=cv)
         elif size < 1.6: f.dput(x, y, col, cv)
         elif d.get("shade", "flat") == "core": f.disc(x, y, size / 2, c.ramp, mode="core", cover=cv, bias=vv - 0.5)
@@ -139,10 +162,21 @@ def L_particles(f, d, c):
 
 
 def L_blob(f, d, c):
-    n = int(d.get("count", 8)); sx, sy = rng2(d.get("spread"), [10, 10]); lo, hi = rng2(d.get("radius"), [4, 8]); sc = val(d.get("scale", 1), c.e) * c.sc; rise = val(d.get("rise", 0), c.e); m = f.mask(); r = c.rng
-    for i in range(n):
-        dx, dy, rr = r.u(-1, 1), r.u(-1, 1), r.u(lo, hi)
-        disc_mask(m, c.ox + dx * sx * sc, c.oy + dy * sy * sc - rise, rr * sc)
+    n = int(d.get("count", 8)); mode = d.get("mode", "lump"); sx, sy = rng2(d.get("spread"), [10, 10]); lo, hi = rng2(d.get("radius"), [4, 8]); sc = val(d.get("scale", 1), c.e) * c.sc
+    rise = val(d.get("rise", 0), c.e); stag = clamp(d.get("stagger", 0.3 if mode == "ring" else 0), 0, 0.9); m = f.mask(); r = c.rng
+    if mode == "flame":                                                                # puffs stacked up a swaying spine, shrinking to a tip; reshaped `flicker` times per window
+        H = val(d.get("height", 30), c.e) * c.sc; fl = max(1, int(d.get("flicker", 5))); rr = Rng(c.seed * 13 + int(c.p * fl) % fl); sw = d.get("sway", 3); cyc = d.get("cycles", 1)
+        for i in range(n):
+            u = (i + 0.5) / n; x = c.ox + sw * u * math.sin(TAU * c.p * cyc + rr.u(0, 0.6)) + rr.u(-1, 1) * d.get("jitter", 1.2) * u; rad = max(0.0, lerp(hi, 0.8, u ** 0.8) * sc * rr.u(0.85, 1.1))
+            disc_mask(m, x, c.oy - rise - u * H, rad)
+    else:
+        for i in range(n):
+            dx, dy, rr = r.u(-1, 1), r.u(-1, 1), r.u(lo, hi); dl = r.u(0, stag) if stag > 0 else 0.0
+            s_i = sc * (clamp((c.e - dl) / (1 - dl)) if stag > 0 else 1.0)              # stagger: each puff starts growing at its own moment
+            if mode == "ring":                                                         # puffs on an ellipse (ground dust, smoke rings), each drifting outward by `drift` px
+                a = TAU * (i + dx * 0.2) / n; dr = val(d.get("drift", 0), c.e)
+                disc_mask(m, c.ox + math.cos(a) * (sx + dr), c.oy + math.sin(a) * (sy + dr * sy / max(sx, 1)) - rise, rr * s_i)
+            else: disc_mask(m, c.ox + dx * sx * sc, c.oy + dy * sy * sc - rise, rr * sc)
     er = val(d.get("erode", 0), c.e)
     if er > 0 and m.any():                                                             # eat the body away from its edge: a clean, banded dissolve
         from scipy.ndimage import distance_transform_edt
@@ -237,6 +271,8 @@ def validate(spec):
     for k in spec:
         if k not in ALLOWED_TOP: raise ValueError(f"recipe key '{k}' is unknown" + _near(k, ALLOWED_TOP))
     if not spec["layers"]: raise ValueError("a recipe needs at least one layer")
+    for k in spec.get("style", {}):
+        if k not in STYLE_KEYS: raise ValueError(f"style key '{k}' is unknown" + _near(k, STYLE_KEYS) + f". Keys: {', '.join(STYLE_KEYS)}")
     for i, d in enumerate(spec["layers"]):
         ty = d.get("type")
         if ty not in LAYERS: raise ValueError(f"layer {i}: type '{ty}' is unknown" + _near(str(ty), LAYERS) + f". Types: {', '.join(LAYERS)}")
@@ -245,7 +281,8 @@ def validate(spec):
             if k not in ok: raise ValueError(f"layer {i} ({ty}): key '{k}' is unknown" + _near(k, ok) + f". Keys: {', '.join(sorted(ok))}")
         t = d.get("t", [0, 1])
         if not (isinstance(t, list) and len(t) == 2 and 0 <= t[0] <= t[1] <= 1): raise ValueError(f"layer {i} ({ty}): t must be [start, end] with 0 <= start <= end <= 1, got {t}")
-        if d.get("ease", "linear") not in EASE: raise ValueError(f"layer {i} ({ty}): ease must be one of {', '.join(EASE)}")
+        es = d.get("ease", "linear")
+        if any(x not in EASE for x in (es if isinstance(es, list) else [es])): raise ValueError(f"layer {i} ({ty}): ease must be one of {', '.join(EASE)} (or a list of them, one per key step)")
 
 
 def _near(k, pool):
@@ -253,18 +290,19 @@ def _near(k, pool):
 
 
 def _one(spec, g, d, i, t, px, py, main, o, sc, vs):
-    t0, t1 = d.get("t", [0, 1]); p = seg(t, t0, t1); e = EASE[d.get("ease", "linear")](p); ox, oy = pt(d.get("at", [0, 0]), e); wob = d.get("wobble")
+    t0, t1 = d.get("t", [0, 1]); p = seg(t, t0, t1); _SEG[0] = d["ease"] if isinstance(d.get("ease"), list) else None; e = _efn(d)(p); ox, oy = pt(d.get("at", [0, 0]), e); wob = d.get("wobble")
+    if d.get("spin"): ox += d["spin"][0] * math.cos(TAU * d["spin"][1] * p); oy += d["spin"][0] * math.sin(TAU * d["spin"][1] * p)
     if wob: ox += wob[0] * math.sin(TAU * (t * wob[2])); oy += wob[1] * math.sin(TAU * (t * wob[2] + 0.25))
     vv = d.get("v")
-    c = SimpleNamespace(f=g, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None, sc=sc,
+    c = SimpleNamespace(f=g, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main, spec.get("palettes")), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None, sc=sc,
                         v=lambda default, vv=vv, e=e: val(default if vv is None else vv, e) + vs)
     c.rng = Rng(c.seed); LAYERS[d["type"]](g, d, c)
 
 
-def _post(f, g, d, main, e):
+def _post(f, g, d, main, e, roles=None):
     """erode / outline / rim on what one layer drew (into the scratch frame g), then lay it on the real frame"""
     from scipy.ndimage import distance_transform_edt, binary_dilation
-    m = g.a > 0; er = val(d.get("erode", 0), e) if d["type"] != "blob" else 0; ramp = _ramp(d, main)
+    m = g.a > 0; er = val(d.get("erode", 0), e) if d["type"] != "blob" else 0; ramp = _ramp(d, main, roles)
     if er > 0 and m.any():
         m = m & (distance_transform_edt(np.pad(m, 1))[1:-1, 1:-1] > er); g.a[~m] = 0
     if d.get("rim"):
@@ -272,6 +310,19 @@ def _post(f, g, d, main, e):
     if d.get("outline"):
         oc = ramp[0] if d["outline"] == "auto" else hex2rgb(d["outline"]); ol = binary_dilation(m) & ~m; g.rgb[ol] = oc; g.a[ol] = 255
     mk = g.a > 0; f.rgb[mk] = g.rgb[mk]; f.a[mk] = 255; f.light += g.light
+
+
+def _style(f, st, main):
+    """whole-effect treatment after every layer: shadow, outline, rim (all from the pixels that were drawn, glow excluded)"""
+    from scipy.ndimage import binary_dilation
+    m = f.a > 0
+    if not m.any(): return
+    if st.get("shadow"):
+        dx, dy = st["shadow"]; sh = np.roll(m, (int(dy), int(dx)), (0, 1)) & ~m; f.rgb[sh] = main[0]; f.a[sh] = 255
+    if st.get("outline"):
+        oc = main[0] if st["outline"] == "auto" else hex2rgb(st["outline"]); ol = binary_dilation(m) & ~m; f.rgb[ol] = oc; f.a[ol] = 255
+    if st.get("rim"):
+        dx, dy = st["rim"]; rm = m & ~np.roll(m, (-int(np.sign(dy)), -int(np.sign(dx))), (0, 1)); f.rgb[rm] = main[-2] if len(main) > 2 else main[-1]
 
 
 def draw_spec(spec, f, t, o):
@@ -287,9 +338,10 @@ def draw_spec(spec, f, t, o):
                     dt = k / S * sm[0] * (t1 - t0); tk = (t - dt) % 1.0 if spec["loop"] else t - dt
                 if tk < t0 or (tk > t1 and not d.get("hold")): continue
                 _one(spec, g, d, i, tk, px, py, main, o, 1 - (1 - sm[1]) * k / S if k else 1.0, -0.45 * k / S if k else 0.0)
-            if post: _post(f, g, d, main, EASE[d.get("ease", "linear")](seg(t, t0, t1)))
+            if post: _post(f, g, d, main, _efn(d)(seg(t, t0, t1)), spec.get("palettes"))
         except (TypeError, KeyError, IndexError, ValueError, ZeroDivisionError) as ex:
             raise ValueError(f"layer {i} ({d.get('type')}): {type(ex).__name__}: {ex}") from None
+    if spec.get("style"): _style(f, spec["style"], main)
 
 
 def load(src):
@@ -309,7 +361,8 @@ def load(src):
 
 def schema_text(ty=None):
     out = ["Recipe (JSON): " + ", ".join(f"{k}" for k in sorted(ALLOWED_TOP)), "  id 'category/name', name, about, tags[], loop true|false, duration s, fps, size [w,h], pivot [x,y] (default centre),",
-           "  palette (name or hex list), options {name: default} (use as \"$name\" in any value), layers [ ... ]", "", "Keys every layer takes:"]
+           "  palette (name or hex list), options {name: default} (use as \"$name\" in any value), layers [ ... ],",
+           "  palettes {role: name or hex list} (a layer says \"palette\": \"@role\"), style {" + "; ".join(f"{k}: {v}" for k, v in STYLE_KEYS.items()) + "}", "", "Keys every layer takes:"]
     out += [f"  {k:8s} {v}" for k, v in COMMON.items()] + [""]
     for name in ([ty] if ty else LAYERS):
         if name not in LAYERS: raise ValueError(f"unknown layer type '{name}'. Types: {', '.join(LAYERS)}")
