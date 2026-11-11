@@ -63,6 +63,16 @@ You cut each outfit once and then mix them, instead of generating every characte
 
 *A scene made from a list of buildings, trees and fences, drawn in two styles.*
 
+**Drawing effects from code.** Gizpix also draws pixel-art effects with no reference picture: a burning torch, a fireball, an explosion, a hit spark, a shockwave on the floor, a lightning bolt, a ring of ice, healing sparkles, a magic circle, a coin pickup, a sword cut, rain and snow. Each effect is a function of time, so the same settings always give the same animation, and a loop closes exactly with no jump. You can change the colours (22 named palettes, or your own list of colours), the random seed for a different take, the strength of the glow, and settings that belong to the effect, such as the radius of a frost nova. The result is a GIF to look at, and a sprite sheet with a data file for a game engine.
+
+![A contact sheet with one frame from each of the thirteen effects](images/pixfx/gallery.png)
+
+*One frame from each effect, drawn by Gizpix.*
+
+![A torch burning, looping](images/pixfx/torch.gif) ![An explosion](images/pixfx/small-explosion.gif) ![A frost nova](images/pixfx/frost-nova.gif)
+
+*A torch (a seamless loop), an explosion and a frost nova (they fade to nothing and start again).*
+
 ## Two ways to use it
 
 **In your browser.** Type `gizpix ui` and a page opens with four jobs: Clean and measure, Cut outfit layer, Draw buildings, and Recolour and pack. You pick a folder, press a button and see the pictures before and after, enlarged by whole numbers so the dots stay sharp. Frames are laid out as columns with their numbers underneath. A frame that needs a second look gets a red circle. Nothing is saved until you press Save, and Save always copies into a new folder. Every result also shows the exact command it ran, so you can repeat it later in a script.

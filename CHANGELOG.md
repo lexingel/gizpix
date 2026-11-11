@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0
+- `pixfx`: code-drawn pixel effects (13: torch, fireball, small explosion, hit spark, shockwave, lightning bolt, frost nova, heal, magic circle, coin sparkle, slash, rain, snow). Two buffers (pixels and additive light), effects as functions of time with a seeded generator, 22 palettes or your own, GIF + sprite sheet + JSON export, `pixfx check` (deterministic, loops close, one-shots end empty, nothing cropped).
 - `pix_snap` recognises exact whole-number upscales first (they come back pixel for pixel); `speck_fix` reports pixels it kept and suggests a `--rare` value; `pixel_lint` has `odd_px` and an "odd-coloured pixels" flag (advisory); README notes on `--rare` and Windows globs.
 - Fixed GIF flicker in `pixdraw` animations: transparency index 0 was forced, so on scenes with an opaque ground colour the ground was flagged transparent and colours flashed between frames. All frames now share one palette and transparency is used only when a frame has transparent pixels; `pixdraw selftest` decodes the GIFs and compares them with their source frames. The README village GIF was rebuilt (its per-frame 64-colour palettes also flashed).
 - `ABOUT.md`: a plain-language overview with pictures (`images/about/`, rebuilt by `experiments/evidence/make_about.py`).

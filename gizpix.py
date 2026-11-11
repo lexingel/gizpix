@@ -18,6 +18,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # name: (group, path relative to ROOT or "module:NAME", one-line purpose)
 TOOLS = {
     "pixdraw": ("draw", "module:pixdraw", "draw pixel-art buildings from parameters (3 views, 5 styles, animation, sprite sheet) and compose scenes; no reference image, no AI"),
+    "pixfx": ("draw", "module:pixfx", "draw pixel-art effects from code (fire, explosions, hits, lightning, ice, heal, magic circle, pickups, slash, rain, snow): any palette, loops or one-shots, GIF + sprite sheet + JSON; no reference image, no AI"),
     "pix_layer": ("layers", "layers/pix_layer.py", "cut an outfit layer out of base-vs-outfit sprites or walk frames (new-colour key, skin drop, solid, outline, bits, drop-parts)"),
     "paperdoll": ("layers", "layers/paperdoll.py", "difference-based layer extract + compose + checks (region, drift, palette key)"),
     "pix_snap": ("prep", "prep/pix_snap.py", "turn an upscaled / off-grid pixel-art image back into real pixels"),

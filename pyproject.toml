@@ -28,7 +28,7 @@ gizpix_toolkit = "."
 [tool.setuptools]
 packages = ["gizpix_toolkit", "gizpix_toolkit.layers", "gizpix_toolkit.prep", "gizpix_toolkit.check", "gizpix_toolkit.clean",
             "gizpix_toolkit.color", "gizpix_toolkit.sheets", "gizpix_toolkit.rig", "gizpix_toolkit.pixdraw",
-            "gizpix_toolkit.ui", "gizpix_toolkit.experiments.anim_chain"]
+            "gizpix_toolkit.pixfx", "gizpix_toolkit.pixfx.effects", "gizpix_toolkit.ui", "gizpix_toolkit.experiments.anim_chain"]
 
 [tool.setuptools.package-data]
 gizpix_toolkit = ["samples/make_samples.py", "samples/walk_frames/**/*.png", "ui/web/*", "ui/web/fonts/*", "pixdraw/*.json", "pixdraw/styles/*.json", "pixdraw/examples/*", "experiments/anim_chain/*.py", "*.md"]

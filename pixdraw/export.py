@@ -24,7 +24,7 @@ def palette_frames(frames):
     else:
         h = arrs[0].shape[0]; mont = Image.new("RGB", (arrs[0].shape[1], h * len(arrs)))
         for i, a in enumerate(arrs): mont.paste(Image.fromarray(a[..., :3]), (0, i * h))
-        q = mont.quantize(256 - off, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+        q = mont.quantize(256 - off, method=0, dither=0)
         flat = [0, 0, 0] * off + q.getpalette()[:3 * (256 - off)]
         for i, a in enumerate(arrs):
             ix = np.array(q.crop((0, i * h, a.shape[1], (i + 1) * h)), dtype=np.uint8) + off

@@ -84,6 +84,17 @@ python gizpix.py fill_pinholes step1.png --out fixed/
 
 ![Repair](images/repair.png)
 
+Draw a pixel effect from code (no reference image, no AI):
+
+```bash
+python gizpix.py pixfx list                                        # the effects, with palettes
+python gizpix.py pixfx render fire/torch -o palette=ice --out fx   # fx/torch.gif, torch_sheet.png, torch_sheet.json, torch_contact.png
+python gizpix.py pixfx render explosions/small-explosion -o seed=4 -o light=0.6 --scale 4 --out fx
+python gizpix.py pixfx check                                       # every effect: deterministic, loops close, one-shots end empty, nothing cropped
+```
+
+![One frame from each effect](images/pixfx/gallery.png)
+
 Notes that save time: `speck_fix` takes one file in and one file out, and only fixes a colour used by at most `--rare` pixels (default 2); if it says some pixels look like specks but were kept, run it again with the `--rare` value it suggests. On Windows `*.png` is not expanded by the shell: `despeckle`, `qa`, `hue_shift` and `make_sheet` expand it themselves, for the other tools list the files. Coding agents: read [HANDOUT.md](HANDOUT.md).
 
 ## The tools
@@ -101,6 +112,7 @@ Run `python gizpix.py list` for the live list; `python gizpix.py help TOOL` for 
 | **rig** | `rig_walk2`, `warp_layer`, `xform`: code-driven walks and moving a layer with the base |
 | **ui** | `python gizpix.py ui`: the local web interface for the four jobs above (not a separate tool; it runs the same commands) |
 | **draw** | `pixdraw`: buildings (house, cottage, inn, tower, round tower, keep, stall), three views (`iso`, `top`, `side`), five JSON styles, scenes with trees, fences, paths; `extract-style` makes a starting style from your own sprites |
+| **effects** | `pixfx`: 13 code-drawn effects (torch, fireball, small explosion, hit spark, shockwave, lightning bolt, frost nova, heal, magic circle, coin sparkle, slash, rain, snow); 22 palettes or your own; seeds; loops that close and one-shots that end empty; GIF, sprite sheet and JSON; `pixfx check` verifies them |
 
 Every tool answers `-h`, prints one-line errors on bad input and exits 2 for usage problems.
 

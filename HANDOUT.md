@@ -69,6 +69,7 @@ python gizpix.py ui                # the local web interface (for people; see se
 | Send a named colour group (red, skin, grey ...) to a colour | `recolor_groups STILL.png --groups` then `recolor_groups STILL.png FRAMES... --swap red=#2e8b57 --out DIR` | new files | The first file is the still that sets the mapping; frames follow it. `--out` is required. Skin never moves unless named. |
 | Snap to a fixed palette | `apply_palette PALETTE FRAMES... --out DIR [--colors N]` | changes (in place without `--out`) | PALETTE = `.hex`/`.txt` (one `#rrggbb` per line), `.png` swatches, an analysis `.json`, comma-separated hex, or `auto --colors N`. No dithering. |
 | Draw a building, a gallery, a village; no reference, no AI | `pixdraw build SPEC [--style S] --out DIR [--name N] [--frames 8] [--scale 3] [--ms 120]`, `pixdraw scene FILE.json ...`, `pixdraw gallery out.png --style S` | new files | Recipe C. |
+| Draw a pixel effect (fire, explosion, hit, lightning, ice, heal, magic circle, pickup, slash, rain, snow) | `pixfx list`, `pixfx show ID`, `pixfx render ID [-o key=value ...] [--frames N] [--scale S] [--out DIR] [--name N] [--bg #hex|none]`, `pixfx check [ID]` | new files | Recipe E. Writes `NAME.gif` (on a dark background by default), `NAME_sheet.png` + `NAME_sheet.json` (transparent, frames in a grid, `meta.pixfx` has fps, loop, frame size and pivot) and `NAME_contact.png` (look at this one). |
 | Move a standing layer onto walk frames; code walks | `warp_layer`, `rig_walk2`, `xform` | experimental | Motion is limited (a few px at 64 px); `warp_layer` improved a real pair by 15 px of 3250. Needs OpenCV. Prefer layers cut from real walk frames. |
 
 ## 4. Input and output conventions
@@ -160,6 +161,23 @@ python gizpix.py palette_diff robe/0.png green/0.png                            
 ```
 
 `recolor_groups` names the groups for you; `hue_shift --range` needs you to know where the colour sits on the wheel. Both leave skin and outline alone unless told otherwise.
+
+### E. Effects with `pixfx`
+
+```bash
+python gizpix.py pixfx list                       # id, loop or once, duration, size, one line each, then the palette names
+python gizpix.py pixfx show fire/torch            # its options and defaults
+python gizpix.py pixfx render fire/torch -o palette=ice -o seed=3 --out fx --scale 4
+python gizpix.py pixfx render ice/frost-nova -o radius=52 -o spikes=18 --bg none --out fx     # transparent GIF: glow edges are cut at 50% alpha
+python gizpix.py pixfx check                      # all effects; exit 1 on a failure
+```
+
+- Options: `palette` (a name from `pixfx list`, or hex colours dark to bright: `-o palette='#102,#215,#43a'`), `seed`, `light` (glow strength), `flip` (face left), plus each effect's own (`show`). An unknown option or palette is a one-line error, exit 2.
+- Loops (`loop`) are seamless: the last frame leads into the first. One-shots end on an empty frame; the GIF holds four blank frames before it restarts.
+- Always open `NAME_contact.png` (a labelled grid of frames) and judge at the given zoom, as for any art. Glow is baked into the sheet as translucent pixels: it reads as additive over dark scenes; render with another `palette` or `light=0.3` for bright ones.
+- Rain and snow are tiles that wrap on both axes (they touch the edges on purpose).
+- The effects are drawn from functions of time and a seed, so the same command gives the same frames; `pixfx check` verifies it. Python: `from pixfx import engine; frames = engine.render("fire/torch", {"palette": "ice"})` returns RGBA PIL images.
+- Quality: placeholder and game-sprite level, 13 effects. Do not promise an effect that is not in `pixfx list`; adding one means writing a function `draw(frame, t, options)` in `pixfx/effects/` (read `pixfx/core.py` and any effect file).
 
 ## 6. Reading the output
 
