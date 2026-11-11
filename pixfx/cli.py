@@ -50,6 +50,8 @@ def main(argv=None):
                 if eid.split("/")[0] != cat: cat = eid.split("/")[0]; print(f"\n[{cat}]")
                 print(f"  {eid:26s} {'loop' if meta['loop'] else 'once'} {meta['duration']:>4}s {meta['size'][0]}x{meta['size'][1]:<4} {meta['about']}")
             print("\nPalettes: " + ", ".join(sorted(RAMPS))); return 0
+        if cmd == "palettes":
+            print(", ".join(sorted(RAMPS))); return 0
         if cmd == "schema":
             from .spec import schema_text; print(schema_text(rest[0] if rest else None)); return 0
         if cmd == "recipe":                                                                      # print a recipe to copy and edit
@@ -83,7 +85,7 @@ def main(argv=None):
             return 0
     except (KeyError, ValueError) as e:                                                          # recipe errors arrive as ValueError from the draw call too
         print(f"pixfx: {e.args[0] if e.args else e}", file=sys.stderr); return 2
-    print(f"pixfx: unknown command '{cmd}'. Commands: list, show, schema, recipe, render, check, gallery, selftest", file=sys.stderr); return 2
+    print(f"pixfx: unknown command '{cmd}'. Commands: list, show, palettes, schema, recipe, render, check, gallery, selftest", file=sys.stderr); return 2
 
 
 def _centre(f, W, H):

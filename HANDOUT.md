@@ -69,7 +69,7 @@ python gizpix.py ui                # the local web interface (for people; see se
 | Send a named colour group (red, skin, grey ...) to a colour | `recolor_groups STILL.png --groups` then `recolor_groups STILL.png FRAMES... --swap red=#2e8b57 --out DIR` | new files | The first file is the still that sets the mapping; frames follow it. `--out` is required. Skin never moves unless named. |
 | Snap to a fixed palette | `apply_palette PALETTE FRAMES... --out DIR [--colors N]` | changes (in place without `--out`) | PALETTE = `.hex`/`.txt` (one `#rrggbb` per line), `.png` swatches, an analysis `.json`, comma-separated hex, or `auto --colors N`. No dithering. |
 | Draw a building, a gallery, a village; no reference, no AI | `pixdraw build SPEC [--style S] --out DIR [--name N] [--frames 8] [--scale 3] [--ms 120]`, `pixdraw scene FILE.json ...`, `pixdraw gallery out.png --style S` | new files | Recipe C. |
-| Draw a pixel effect (fire, explosion, hit, lightning, ice, heal, magic circle, pickup, slash, rain, snow, or anything the user describes) | `pixfx list`, `pixfx show ID`, `pixfx render ID [-o key=value ...] [--frames N] [--scale S] [--out DIR] [--name N] [--bg #hex|none]`, `pixfx check [ID]`; for an effect the library does not have: `pixfx schema`, `pixfx recipe ID`, `pixfx render my.json` | new files | Recipe E (shipped effects) or Recipe F (describe a new one as a JSON recipe). Writes `NAME.gif` (on a dark background by default), `NAME_sheet.png` + `NAME_sheet.json` (transparent, frames in a grid, `meta.pixfx` has fps, loop, frame size and pivot) and `NAME_contact.png` (look at this one). |
+| Draw a pixel effect (fire, explosion, hit, lightning, ice, heal, magic circle, pickup, slash, rain, snow, or anything the user describes) | `pixfx list`, `pixfx show ID`, `pixfx render ID [-o key=value ...] [--frames N] [--scale S] [--out DIR] [--name N] [--bg #hex|none]`, `pixfx palettes`, `pixfx check [ID]`; for an effect the library does not have: `pixfx schema`, `pixfx recipe ID`, `pixfx render my.json` | new files | Recipe E (shipped effects) or Recipe F (describe a new one as a JSON recipe). Writes `NAME.gif` (on a dark background by default), `NAME_sheet.png` + `NAME_sheet.json` (transparent, frames in a grid, `meta.pixfx` has fps, loop, frame size and pivot) and `NAME_contact.png` (look at this one). |
 | Move a standing layer onto walk frames; code walks | `warp_layer`, `rig_walk2`, `xform` | experimental | Motion is limited (a few px at 64 px); `warp_layer` improved a real pair by 15 px of 3250. Needs OpenCV. Prefer layers cut from real walk frames. |
 
 ## 4. Input and output conventions
@@ -205,7 +205,10 @@ Turn the description into layers (each line is one layer type):
 | a glow, an aura, a pulse | `glow` with `{"wave": [lo, hi, cycles]}` |
 | orbiting motes, a magic circle | `orbit`, `ring` |
 | light rays, a spiky burst | `rays` |
-| a sword swoosh | `arc` |
+| a sword swoosh | `arc` (a circle only: no `squash`) |
+| a tornado, whirlwind, pillar of swirling stripes | `funnel` (`turns` whole for loops, `lean` to sway) |
+| wisps that fly from A to B, energy sucked into a portal | `particles` with `target` (and `curve` to bow them) |
+| anything that snakes or sways along its path | `wobble: [ax, ay, whole_cycles]` on the layer |
 
 Rules that save rounds:
 - Coordinates are pixels from `pivot`, y down; `angle` 0 = right, 90 = down, -90 = up. Put the pivot where the effect is anchored (feet for ground effects, centre for orbs) and leave 8 px of canvas around everything, or `check` reports cropping.

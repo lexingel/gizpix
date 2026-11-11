@@ -22,7 +22,7 @@ ALLOWED_TOP = set(DEFAULTS) | {"id", "pivot"}
 COMMON = {"t": "time window [start, end] in 0..1 (default [0, 1]); the layer draws only inside it", "at": "[x, y] from the pivot, or [[x0,y0],[x1,y1]] to move",
           "palette": "ramp name or hex list for this layer (default: the recipe palette; 'main' = the recipe palette, which -o palette= changes)",
           "color": "one fixed colour '#rrggbb' instead of a palette", "v": "ramp position 0..1 (dark..bright), number or [from, to] over the layer's life",
-          "ease": "linear | out | expo | in | smooth: how [from, to] values move", "hold": "true = keep drawing the end state after the window", "seed": "layers with the same number draw the same random shape (give it to the second layer when one body continues in another layer)"}
+          "ease": "linear | out | expo | in | smooth: how [from, to] values move", "hold": "true = keep drawing the end state after the window", "wobble": "[ax, ay, cycles]: the layer sways around its path (whole cycles close a loop): snaking wisps, swaying columns", "seed": "layers with the same number draw the same random shape (give it to the second layer when one body continues in another layer)"}
 SCHEMA = {
     "glow": {"radius": "px, animatable", "strength": "0..1+, animatable (try {wave:[0.4,0.8,3]})", "steps": "brightness bands (default 4)", "squash": "0.1..1: flat light on the floor (1 = round)"},
     "disc": {"radius": "px", "mode": "core (bright middle) | lit (lit from top-left, smoke/stone)", "bias": "shifts shading dark(-)..bright(+)", "cover": "0..1 dithered translucency"},
@@ -31,7 +31,7 @@ SCHEMA = {
     "particles": {"mode": "burst (all fly out from the window start) | stream (endless, loop-safe)", "count": "int", "area": "[w, h] spawn box", "angle": "[a0, a1] degrees, 0 = right, 90 = down, -90 = up",
                   "speed": "[lo, hi] px travelled over a particle's life", "life": "[lo, hi] fraction of the window (burst) or of the cycle (stream)", "cycles": "stream: repeats per loop (whole number)",
                   "stagger": "burst: spread the births over this fraction of the window", "gravity": "px of downward pull at end of life (negative = rises)", "sway": "px of side wobble",
-                  "size": "[start, end] px", "shape": "dot | streak | star", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life"},
+                  "size": "[start, end] px", "shape": "dot | streak | star", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life", "target": "[x, y] from the pivot: every particle travels from its spawn point to here instead of flying along `angle`", "curve": "px sideways bow of that path (with `target`), random per particle"},
     "blob": {"count": "int discs merged into one body", "spread": "[w, h] px", "radius": "[lo, hi] px", "scale": "0..1+ animatable: grow and shrink the whole body", "rise": "px upward, animatable",
              "depth": "band width px (bigger = bands further in)", "lit": "[dx, dy] direction of the light, e.g. [-1, -1] = top-left (sphere-like shading)", "lit_strength": "0..1, default 0.3", "bias": "dark(-)..bright(+) animatable: cool a fireball with [0.2, -0.6]", "erode": "px eaten from the edge, animatable ([0, 10] dissolves it; better than cover)", "cover": "0..1 dither"},
     "bolt": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "grow": "fraction of the window spent striking from `from` to `to`", "flicker": "reshapes per window (default 6)",
@@ -39,6 +39,8 @@ SCHEMA = {
     "rays": {"count": "int", "inner": "px from centre, animatable", "length": "px, animatable", "width": "px at the root", "rotate": "degrees over the window", "jitter": "0..1 random length", "squash": "0.1..1: rays lying on the floor (1 = round)"},
     "orbit": {"count": "int", "radius": "px, animatable", "squash": "1 = circle", "turns": "whole turns over the window (whole number for loops)", "size": "px, animatable", "trail": "dots behind each one", "shade": "flat | core"},
     "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`", "shade": "flat = one colour, no stripes"},
+    "funnel": {"height": "px, animatable", "base": "half-width at the bottom px", "top": "half-width at the top px", "stripes": "swirl stripes around it (default 3)", "twist": "how much the stripes lean up the column (default 0.15)",
+               "turns": "whole turns over the window (loops close)", "lean": "px the column sways sideways", "fade": "0..1 dithers the top away"},
     "arc": {"radius": "px", "thick": "px, animatable", "sweep": "[a0, a1] degrees the head travels", "trail": "length of the tail as a fraction of the sweep (default 0.6)"},
 }
 
@@ -111,12 +113,15 @@ def L_particles(f, d, c):
     n = int(d.get("count", 20)); stream = d.get("mode", "burst") == "stream"; ax, ay = rng2(d.get("area"), [0, 0]); a0, a1 = rng2(d.get("angle"), [0, 360])
     s0, s1 = rng2(d.get("speed"), [10, 30]); l0, l1 = rng2(d.get("life"), [0.5, 1.0]); z0, z1 = rng2(d.get("size"), [2, 0]); grav = d.get("gravity", 0); sway = d.get("sway", 0)
     cyc = d.get("cycles", 1); stag = clamp(d.get("stagger", 0.3), 0, 0.9); ease = EASE[d.get("travel", "out")]; shape = d.get("shape", "dot"); streak = d.get("streak", 6)
-    v0, v1 = rng2(d.get("v"), [0.9, 0.3]); c0, c1 = rng2(d.get("cover"), [1, 1]); r = c.rng; live = []
+    v0, v1 = rng2(d.get("v"), [0.9, 0.3]); c0, c1 = rng2(d.get("cover"), [1, 1]); r = c.rng; live = []; tgt = d.get("target"); curve = d.get("curve", 0); px0, py0 = c.px0, c.py0
     for i in range(n):
         ang = math.radians(r.u(a0, a1)); sp = r.u(s0, s1); lf = max(r.u(l0, l1), 1e-3); ph = r.u(0, 1); bx = r.u(-0.5, 0.5) * ax; by = r.u(-0.5, 0.5) * ay; sw = r.u(0, TAU)
         age = ((c.t * cyc + (i + ph * 0.5) / n) % 1.0) / lf if stream else (c.p - ph * stag) / (lf * (1 - stag))     # (1 - stag): every burst particle is over by p = 1
         if age < 0 or age >= 1: continue
-        dist = sp * ease(age); x = c.ox + bx + math.cos(ang) * dist + sway * math.sin(sw + age * TAU); y = c.oy + by + math.sin(ang) * dist + grav * age * age
+        if tgt:                                                                        # fly from the spawn point to the target, bowing sideways by `curve`
+            sx0, sy0 = c.ox + bx, c.oy + by; tx, ty = c.ox + tgt[0] - (c.ox - px0), c.oy + tgt[1] - (c.oy - py0); ang = math.atan2(ty - sy0, tx - sx0); L = math.hypot(tx - sx0, ty - sy0) or 1.0; e2 = ease(age)
+            bow = curve * math.sin(math.pi * age) * math.sin(sw); x = lerp(sx0, tx, e2) - (ty - sy0) / L * bow; y = lerp(sy0, ty, e2) + (tx - sx0) / L * bow
+        else: dist = sp * ease(age); x = c.ox + bx + math.cos(ang) * dist + sway * math.sin(sw + age * TAU); y = c.oy + by + math.sin(ang) * dist + grav * age * age
         size = lerp(z0, z1, age); cv = lerp(c0, c1, age); vv = lerp(v0, v1, age)
         if size > 0.2: live.append((age, x, y, ang, size, cv, vv))
     for age, x, y, ang, size, cv, vv in sorted(live, reverse=True):                    # oldest first, so the young and hot ones sit on top
@@ -201,7 +206,18 @@ def L_arc(f, d, c):
         f.ring(c.ox, c.oy, R, th * (0.25 + 0.75 * (s + 1) / S), c.ramp, v=min(0.99, c.v(0.5) + 0.5 * (s + 1) / S) if "v" not in d else c.v(0.8), arc=(math.radians(lerp(tail, head, s / S)), math.radians(lerp(tail, head, (s + 1) / S))))
 
 
-LAYERS = {"glow": L_glow, "disc": L_disc, "ring": L_ring, "star": L_star, "particles": L_particles, "blob": L_blob, "bolt": L_bolt, "rays": L_rays, "orbit": L_orbit, "beam": L_beam, "arc": L_arc}
+def L_funnel(f, d, c):
+    H = int(val(d.get("height", 40), c.e)); wb = val(d.get("base", 6), c.e); wt = val(d.get("top", 18), c.e); st = d.get("stripes", 3); tw = d.get("twist", 0.15)
+    lean = d.get("lean", 0); fade = d.get("fade", 0)
+    for k in range(max(H, 0)):
+        u = k / max(H - 1, 1); w = lerp(wb, wt, u); xc = c.ox + lean * math.sin(u * math.pi + c.p * TAU); y = c.oy - k
+        for x in range(-int(w), int(w) + 1):
+            sx = clamp(x / max(w, 1e-6), -1, 1); ph = math.asin(sx) + k * tw + c.p * d.get("turns", 1) * TAU
+            v = (0.3 + 0.55 * (0.5 + 0.5 * math.sin(st * ph))) * (1 - 0.45 * sx * sx) + (c.v(0.5) - 0.5)
+            f.dput(xc + x, y, ramp_at(c.ramp, v), 1 - fade * u)
+
+
+LAYERS = {"glow": L_glow, "disc": L_disc, "ring": L_ring, "star": L_star, "particles": L_particles, "blob": L_blob, "bolt": L_bolt, "rays": L_rays, "orbit": L_orbit, "funnel": L_funnel, "beam": L_beam, "arc": L_arc}
 
 
 # ---- validation, drawing, loading ---------------------------------------------------------------------------------------
@@ -231,8 +247,10 @@ def draw_spec(spec, f, t, o):
             d = sub(d, o); t0, t1 = d.get("t", [0, 1])
             if t < t0 or (t > t1 and not d.get("hold")): continue
             p = seg(t, t0, t1); e = EASE[d.get("ease", "linear")](p); ox, oy = pt(d.get("at", [0, 0]), e)
+            wob = d.get("wobble")
+            if wob: ox += wob[0] * math.sin(TAU * (t * wob[2])); oy += wob[1] * math.sin(TAU * (t * wob[2] + 0.25))
             vv = d.get("v")
-            c = SimpleNamespace(f=f, t=t, p=p, e=e, ox=px + ox, oy=py + oy, ramp=_ramp(d, main), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None,
+            c = SimpleNamespace(f=f, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None,
                                 v=lambda default, vv=vv, e=e: val(default if vv is None else vv, e))
             c.rng = Rng(c.seed); LAYERS[d["type"]](f, d, c)
         except (TypeError, KeyError, IndexError, ValueError, ZeroDivisionError) as ex:
