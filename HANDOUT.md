@@ -208,6 +208,9 @@ Turn the description into layers (each line is one layer type):
 | a sword swoosh | `arc` (a circle only: no `squash`) |
 | a tornado, whirlwind, pillar of swirling stripes | `funnel` (`turns` whole for loops, `lean` to sway) |
 | wisps that fly from A to B, energy sucked into a portal | `particles` with `target` (and `curve` to bow them) |
+| crystals, rocks, shards, spikes | `poly` (`shape: crystal | shard | rock | diamond | arrow`, or `points`; animate `scale` and `rotate`) |
+| the user's own small sprite (a coin, a leaf) | `stamp` (a PNG of at most 32x32 next to the recipe file; `scale` 1 to 4) |
+| an existing effect inside a new one, at another place or time | `include` (`recipe` id or .json path, `options`, `palette`; at most 2 deep; only recipes, not the Python effects) |
 | a projectile on a curve, a spiral, a homing swoop | `at` with 3 or more points `[[x,y],[x,y],[x,y],...]` (a smooth curve), `spin: [radius, turns]` |
 | a flame silhouette, a ground dust ring, a puddle, bubbles | `blob` `mode: flame` / `mode: ring` (`drift`, `stagger`); `particles` `shape: bubble` (pops), `shard` |
 | a comet tail, a sword smear, a wisp's trail | `smear: [length, taper]` on any moving layer (a fading, shrinking trail of copies of itself) |
@@ -223,6 +226,7 @@ Rules that save rounds:
 - A value can have more than two keys: `"size": [0, 20, 0]` grows then shrinks in ONE layer (no second layer needed). `"$reach*0.5"` scales an option. `blob` takes `lit: [-1, -1]` for sphere-like shading, `bolt` takes `rim: "#hex"` (cracks on dark ground), `beam` takes `shade: flat` (no stripes), `blob` takes `erode: [0, 0, 16]` (the body is eaten from its edge: the clean way to dissolve; avoid `cover`), `glow` and `rays` take `squash` (lying on the floor), `particles` take `shape: star` (twinkles).
 - Options make a recipe reusable: `"options": {"radius": 24}` and `"radius": "$radius"` inside; the user then runs `-o radius=40`. `-o palette=NAME` recolours the whole thing.
 - `python gizpix.py pixfx check my.json --report` prints numbers and FLAG lines (mesh dithering, flat colour, lone pixels, empty frames, motion pops) with the fix for each; run it after every render, then still LOOK at the contact sheet. A motion pop on a hit that lands after a flight is intended.
+- Limits (every recipe): at most 40 layers, canvas 8 to 256 px, particle `count` 400, other counts 64 (blob 60). A recipe someone sends you: `python gizpix.py pixfx import FILE.json` validates it, applies the limits, runs `check` and the report, and keeps a copy under `~/.gizpix/recipes` (it then shows in `pixfx list`); a recipe never runs code, reads outside its own folder, or fetches anything.
 - `ease` can be a list, one name per key step: `"size": [0, 20, 0], "ease": ["out", "in"]`. A recipe can say `"style": {"outline": "auto", "rim": [-1, -1], "shadow": [1, 1]}` for a consistent drawn look over the whole effect, and `"palettes": {"hot": "fire", "soot": "smoke"}` with `"palette": "@soot"` per layer.
 - `beam` is drawn as one distance field: `core: 0.6` widens the bright centre, no second thin beam needed. `funnel` takes `profile`, `bend`, `ripple` (keys bottom to top) for a curved column. `arc` uses `tail` (not `trail`).
 - Mistakes come back as one line naming the layer, the wrong key and the closest right one (exit 2).

@@ -5,6 +5,7 @@
   python gizpix.py pixfx show ID                           options, size, duration of one effect
   python gizpix.py pixfx render ID [-o key=value ...] [--frames N] [--fps N] [--scale S] [--out DIR] [--name N] [--bg #rrggbb|none] [--no-gif] [--no-sheet] [--no-contact]
   python gizpix.py pixfx schema [LAYER]                    the recipe language: every layer type and key (describe your own effect as JSON)
+  python gizpix.py pixfx import FILE.json                  a recipe someone sent you: validate, limits, render, report, then keep it in ~/.gizpix/recipes
   python gizpix.py pixfx recipe ID                         print a shipped recipe as JSON: copy it, change it, render the file
   (ID can also be the path of your own recipe, e.g. my_effect.json)
   python gizpix.py pixfx check [ID ...] [--report]   (--report adds numbers + flags: mesh dithering, flat colour, lone pixels, empty frames, motion pops)                  quality checks (deterministic, loops close, one-shots end empty, nothing cropped)
@@ -54,6 +55,13 @@ def main(argv=None):
             print(", ".join(sorted(RAMPS))); return 0
         if cmd == "schema":
             from .spec import schema_text; print(schema_text(rest[0] if rest else None)); return 0
+        if cmd == "import":                                                                      # someone sent you a recipe
+            from .spec import import_recipe
+            dest, meta, problems, flags = import_recipe(rest[0])
+            print(f"{meta['id']}: {len(meta['recipe']['layers'])} layers, {meta['size'][0]}x{meta['size'][1]}, {'loop' if meta['loop'] else 'one-shot'}")
+            for x in problems: print("  PROBLEM " + x)
+            for x in flags: print("  FLAG " + x)
+            print(f"kept as {dest}" + ("  (it has problems: fix before using)" if problems else "")); return 1 if problems else 0
         if cmd == "recipe":                                                                      # print a recipe to copy and edit
             m, meta = engine.get(rest[0])
             if "recipe" not in meta: raise KeyError(f"'{rest[0]}' is drawn by Python code, not a recipe. Recipes: " + ", ".join(k for k, (_, mt) in sorted(engine.registry().items()) if "recipe" in mt))
@@ -89,7 +97,7 @@ def main(argv=None):
             return 0
     except (KeyError, ValueError) as e:                                                          # recipe errors arrive as ValueError from the draw call too
         print(f"pixfx: {e.args[0] if e.args else e}", file=sys.stderr); return 2
-    print(f"pixfx: unknown command '{cmd}'. Commands: list, show, palettes, schema, recipe, render, check, gallery, selftest", file=sys.stderr); return 2
+    print(f"pixfx: unknown command '{cmd}'. Commands: list, show, palettes, schema, import, recipe, render, check, gallery, selftest", file=sys.stderr); return 2
 
 
 def _centre(f, W, H):

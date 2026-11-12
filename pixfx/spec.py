@@ -9,7 +9,7 @@ block (glow, disc, ring, star, particles, blob, bolt, rays, orbit, beam, arc) wi
   "$radius"    the recipe's option of that name (so `-o radius=30` works)
 Coordinates are pixels from the recipe's pivot, y down. Everything random comes from the seed, so the same recipe gives the same frames.
 Written for Gizpix; `python gizpix.py pixfx schema` lists every layer and key."""
-import difflib, json, math, os
+import difflib, json, math, os, hashlib, shutil
 from types import SimpleNamespace
 import numpy as np
 from .core import BAYER, Frame, TAU, Rng, clamp, lerp, seg, ramp_at, out_expo, out_quart, in_quad, smooth, disc_mask, hex2rgb
@@ -18,7 +18,7 @@ from .kit import star, jagged
 
 EASE = {"linear": lambda p: p, "out": out_quart, "expo": out_expo, "in": in_quad, "smooth": smooth}
 DEFAULTS = {"name": "Custom effect", "about": "", "loop": False, "duration": 1.0, "fps": 12, "size": [96, 96], "palette": "fire", "options": {}, "tags": [], "layers": [], "style": {}, "palettes": {}}
-ALLOWED_TOP = set(DEFAULTS) | {"id", "pivot"}
+ALLOWED_TOP = set(DEFAULTS) | {"id", "pivot", "_dir"}
 STYLE_KEYS = {"outline": "'auto' or '#rrggbb': 1 px outline around everything drawn", "rim": "[dx, dy] light direction: lit edge", "shadow": "[dx, dy] offset: a hard shadow in the darkest palette colour"}
 COMMON = {"t": "time window [start, end] in 0..1 (default [0, 1]); the layer draws only inside it", "at": "[x, y] from the pivot; [[x0,y0],[x1,y1]] to move on a line; three or more points = a smooth curve through them",
           "palette": "ramp name or hex list for this layer (default: the recipe palette; 'main' = the recipe palette, which -o palette= changes)",
@@ -42,6 +42,10 @@ SCHEMA = {
     "rays": {"count": "int", "inner": "px from centre, animatable", "length": "px, animatable", "width": "px at the root", "rotate": "degrees over the window", "jitter": "0..1 random length", "squash": "0.1..1: rays lying on the floor (1 = round)"},
     "orbit": {"count": "int", "radius": "px, animatable", "squash": "1 = circle", "turns": "whole turns over the window (whole number for loops)", "size": "px, animatable", "trail": "dots behind each one", "shade": "flat | core"},
     "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`", "shade": "flat = one colour, no stripes", "core": "0..0.9 share of the width at the brightest step (default 0.45)"},
+    "poly": {"shape": "crystal | shard | rock | diamond | arrow (ready-made outlines)", "points": "[[x, y], ...] your own outline, px from `at` (3 to 24 points)", "rotate": "degrees, animatable", "scale": "animatable",
+             "depth": "band width px (default 4)", "lit": "[dx, dy] light direction (default [-1, -1])", "lit_strength": "0..1, default 0.35", "bias": "dark(-)..bright(+)", "cover": "0..1 dither"},
+    "stamp": {"image": "a PNG next to the recipe file, at most 32x32 px (your own sprite: a coin, a leaf)", "scale": "whole number 1 to 4", "flip": "true = mirror", "rotate": "0 | 90 | 180 | 270"},
+    "include": {"recipe": "id of a recipe (`pixfx list`) or the path of a .json file; its time is stretched over this layer's window and it is drawn at this layer's `at`", "options": "{name: value} for that recipe's options"},
     "funnel": {"height": "px, animatable", "base": "half-width at the bottom px", "top": "half-width at the top px", "stripes": "swirl stripes around it (default 3)", "twist": "how much the stripes lean up the column (default 0.15)",
                "turns": "whole turns over the window (loops close)", "lean": "px the column sways sideways", "fade": "0..1 dithers the top away (looks like mesh: prefer `erode`)", "profile": "half-widths bottom to top as keys, e.g. [3, 4, 9, 22] (replaces base/top)", "bend": "sideways offsets bottom to top as keys, e.g. [0, 5, -3, 6]", "ripple": "[amp, cycles]: the width pulses up the column"},
     "arc": {"radius": "px", "thick": "px, animatable", "sweep": "[a0, a1] degrees the head travels", "tail": "length of the tail as a fraction of the sweep (default 0.6)"},
@@ -263,7 +267,61 @@ def L_funnel(f, d, c):
             f.dput(xc + x, y, ramp_at(c.ramp, v), 1 - fade * u)
 
 
-LAYERS = {"glow": L_glow, "disc": L_disc, "ring": L_ring, "star": L_star, "particles": L_particles, "blob": L_blob, "bolt": L_bolt, "rays": L_rays, "orbit": L_orbit, "funnel": L_funnel, "beam": L_beam, "arc": L_arc}
+POLYS = {"crystal": [[0, -13], [5, -4], [4, 9], [-4, 9], [-5, -4]], "shard": [[0, -11], [3, 7], [-3, 7]], "diamond": [[0, -9], [6, 0], [0, 9], [-6, 0]], "arrow": [[0, -10], [6, 0], [2, 0], [2, 10], [-2, 10], [-2, 0], [-6, 0]],
+         "rock": [[-7, 5], [-8, -1], [-4, -6], [2, -7], [7, -2], [8, 4], [3, 7]]}
+
+
+def L_poly(f, d, c):
+    from PIL import Image, ImageDraw
+    pts = d.get("points") or POLYS[d.get("shape", "crystal")]
+    if not 3 <= len(pts) <= 24: raise ValueError("poly needs 3 to 24 points")
+    sc = val(d.get("scale", 1), c.e) * c.sc; a = math.radians(val(d.get("rotate", 0), c.e)); ca, sa = math.cos(a), math.sin(a)
+    if sc <= 0.05: return
+    P = [(c.ox + (x * ca - y * sa) * sc, c.oy + (x * sa + y * ca) * sc) for x, y in pts]
+    im = Image.new("L", (f.w, f.h), 0); ImageDraw.Draw(im).polygon(P, fill=255); m = np.array(im) > 0
+    if not m.any(): return
+    lx, ly = d.get("lit", [-1, -1]); yy, xx = np.mgrid[0:f.h, 0:f.w]; R = max(max(abs(x), abs(y)) for x, y in pts) * sc + 1
+    grad = d.get("lit_strength", 0.35) * ((xx + 0.5 - c.ox) * lx + (yy + 0.5 - c.oy) * ly) / (math.hypot(lx, ly) * R)
+    f.fill(m, c.ramp, depth=d.get("depth", 4), grad=grad, bias=val(d.get("bias", 0), c.e), cover=val(d.get("cover", 1), c.e))
+
+
+_IMG = {}
+
+
+def L_stamp(f, d, c):
+    from PIL import Image
+    if not c.dir: raise ValueError("stamp needs a recipe file (an image is looked up next to it), not an inline recipe")
+    path = os.path.realpath(os.path.join(c.dir, d["image"]))
+    if not path.startswith(os.path.realpath(c.dir) + os.sep): raise ValueError("stamp: the image must sit inside the recipe's own folder")
+    if path not in _IMG:
+        with Image.open(path) as im: im = im.convert("RGBA")
+        if im.width > 32 or im.height > 32: raise ValueError(f"stamp: {d['image']} is {im.width}x{im.height}; at most 32x32")
+        _IMG[path] = np.array(im)
+    a = _IMG[path]; r = int(d.get("rotate", 0)) // 90 % 4
+    if r: a = np.rot90(a, -r)
+    if d.get("flip"): a = a[:, ::-1]
+    k = int(clamp(d.get("scale", 1), 1, 4)); k = max(1, int(k * c.sc + 0.5)); a = np.repeat(np.repeat(a, k, 0), k, 1); h, w = a.shape[:2]; x0 = int(round(c.ox - w / 2)); y0 = int(round(c.oy - h / 2))
+    for yy in range(h):
+        for xx in range(w):
+            if a[yy, xx, 3] >= 128: f.put(x0 + xx, y0 + yy, tuple(int(v) for v in a[yy, xx, :3]))
+
+
+_DEPTH = [0]
+
+
+def L_include(f, d, c):
+    from . import engine
+    if _DEPTH[0] >= 2: raise ValueError("include is nested more than 2 deep")
+    mod, meta = engine.get(d["recipe"])
+    if "recipe" not in meta: raise ValueError(f"include: '{d['recipe']}' is drawn by Python code; only recipes can be included (`pixfx list`: those with the tag 'recipe')")
+    sub = dict(meta["recipe"]); sub["pivot"] = [c.ox, c.oy]; o2 = engine.options(meta, d.get("options")); o2.seed = c.seed
+    if d.get("palette") not in (None, "main"): o2.palette = d["palette"]
+    _DEPTH[0] += 1
+    try: draw_spec(sub, f, c.p, o2)
+    finally: _DEPTH[0] -= 1
+
+
+LAYERS = {"glow": L_glow, "disc": L_disc, "ring": L_ring, "star": L_star, "particles": L_particles, "blob": L_blob, "bolt": L_bolt, "rays": L_rays, "orbit": L_orbit, "funnel": L_funnel, "poly": L_poly, "stamp": L_stamp, "include": L_include, "beam": L_beam, "arc": L_arc}
 
 
 # ---- validation, drawing, loading ---------------------------------------------------------------------------------------
@@ -271,6 +329,8 @@ def validate(spec):
     for k in spec:
         if k not in ALLOWED_TOP: raise ValueError(f"recipe key '{k}' is unknown" + _near(k, ALLOWED_TOP))
     if not spec["layers"]: raise ValueError("a recipe needs at least one layer")
+    if len(spec["layers"]) > 40: raise ValueError(f"a recipe may have at most 40 layers, this has {len(spec['layers'])}")
+    if not (isinstance(spec["size"], (list, tuple)) and len(spec["size"]) == 2 and all(isinstance(v, int) and 8 <= v <= 256 for v in spec["size"])): raise ValueError(f"size must be [w, h], whole numbers 8 to 256, got {spec['size']}")
     for k in spec.get("style", {}):
         if k not in STYLE_KEYS: raise ValueError(f"style key '{k}' is unknown" + _near(k, STYLE_KEYS) + f". Keys: {', '.join(STYLE_KEYS)}")
     for i, d in enumerate(spec["layers"]):
@@ -279,6 +339,10 @@ def validate(spec):
         ok = set(SCHEMA[ty]) | set(COMMON) | {"type"}
         for k in d:
             if k not in ok: raise ValueError(f"layer {i} ({ty}): key '{k}' is unknown" + _near(k, ok) + f". Keys: {', '.join(sorted(ok))}")
+        for key, cap in (("count", 400 if ty == "particles" else 60 if ty == "blob" else 64),):
+            if isinstance(d.get(key), int) and d[key] > cap: raise ValueError(f"layer {i} ({ty}): count {d[key]} is more than the limit of {cap}")
+        if ty == "include" and "recipe" not in d: raise ValueError(f"layer {i} (include): needs a \"recipe\"")
+        if ty == "stamp" and "image" not in d: raise ValueError(f"layer {i} (stamp): needs an \"image\"")
         t = d.get("t", [0, 1])
         if not (isinstance(t, list) and len(t) == 2 and 0 <= t[0] <= t[1] <= 1): raise ValueError(f"layer {i} ({ty}): t must be [start, end] with 0 <= start <= end <= 1, got {t}")
         es = d.get("ease", "linear")
@@ -294,7 +358,7 @@ def _one(spec, g, d, i, t, px, py, main, o, sc, vs):
     if d.get("spin"): ox += d["spin"][0] * math.cos(TAU * d["spin"][1] * p); oy += d["spin"][0] * math.sin(TAU * d["spin"][1] * p)
     if wob: ox += wob[0] * math.sin(TAU * (t * wob[2])); oy += wob[1] * math.sin(TAU * (t * wob[2] + 0.25))
     vv = d.get("v")
-    c = SimpleNamespace(f=g, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main, spec.get("palettes")), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None, sc=sc,
+    c = SimpleNamespace(f=g, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main, spec.get("palettes")), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None, sc=sc, dir=spec.get("_dir"),
                         v=lambda default, vv=vv, e=e: val(default if vv is None else vv, e) + vs)
     c.rng = Rng(c.seed); LAYERS[d["type"]](g, d, c)
 
@@ -351,7 +415,9 @@ def load(src):
         with open(src, encoding="utf-8") as fh:
             try: spec = json.load(fh)
             except ValueError as e: raise ValueError(f"{src}: not valid JSON: {e}") from None
-    spec = {**DEFAULTS, **spec}; validate(spec); spec["size"] = list(spec["size"]); spec["pivot"] = list(spec.get("pivot") or [spec["size"][0] // 2, spec["size"][1] // 2])
+    spec = {**DEFAULTS, **spec}
+    if not isinstance(src, dict): spec["_dir"] = os.path.dirname(os.path.abspath(src))
+    validate(spec); spec["size"] = list(spec["size"]); spec["pivot"] = list(spec.get("pivot") or [spec["size"][0] // 2, spec["size"][1] // 2])
     base = os.path.splitext(os.path.basename(src))[0] if not isinstance(src, dict) else "custom"
     meta = {"id": spec.get("id") or f"custom/{base}", "name": spec["name"], "loop": bool(spec["loop"]), "duration": spec["duration"], "fps": spec["fps"], "size": tuple(spec["size"]),
             "pivot": tuple(spec["pivot"]), "about": spec["about"], "tags": list(spec["tags"]) + ["recipe"], "options": dict(spec["options"]),
@@ -369,3 +435,18 @@ def schema_text(ty=None):
         out.append(f"layer \"{name}\":"); out += [f"  {k:9s} {v}" for k, v in SCHEMA[name].items()]; out.append("")
     out.append("Values: 3 | [from, to] | [a, b, c, ...] (evenly spaced keys: rise, hold, fade in ONE layer) | \"$option*0.5\" | {\"wave\":[lo,hi,cycles]} | \"$option\". Loops: use `wave`, particles mode stream with whole `cycles`, orbit with whole `turns`.")
     return "\n".join(out)
+
+
+def user_dir():
+    return os.environ.get("GIZPIX_RECIPES") or os.path.join(os.path.expanduser("~"), ".gizpix", "recipes")
+
+
+def import_recipe(path):
+    """validate (key names, limits), render and report a recipe someone sent you, then keep a copy in your recipe folder under a content-hash name. Returns (dest, meta, problems, flags)"""
+    from . import engine
+    mod, meta = load(path)
+    if "stamp" in {l.get("type") for l in meta["recipe"]["layers"]}: raise ValueError("a recipe with `stamp` layers needs its image files: copy the folder by hand instead of importing")
+    problems = engine.check(path); metrics, flags = engine.report(path)
+    raw = open(path, "rb").read(); h = hashlib.sha256(raw).hexdigest()[:8]; os.makedirs(user_dir(), exist_ok=True)
+    dest = os.path.join(user_dir(), f"{os.path.splitext(os.path.basename(path))[0]}-{h}.json"); shutil.copyfile(path, dest)
+    return dest, meta, problems, flags

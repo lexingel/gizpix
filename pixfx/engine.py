@@ -31,6 +31,10 @@ def registry():
     from . import spec
     for p in sorted(glob.glob(os.path.join(os.path.dirname(__file__), "recipes", "*.json"))):    # recipes shipped with Gizpix
         m, meta = spec.load(p); reg[meta["id"]] = (m, meta)
+    for p in sorted(glob.glob(os.path.join(spec.user_dir(), "*.json"))):                          # recipes you imported (`pixfx import`)
+        try: m, meta = spec.load(p)
+        except ValueError: continue
+        reg.setdefault(meta["id"], (m, meta))                                                    # a shipped effect is never shadowed
     return reg
 
 

@@ -39,4 +39,10 @@ def run():
         try:
             m2, me2 = spec.load({"size": [32, 32], **bad_spec}); engine.render_frame(m2, me2, engine.options(me2), 0.5); raise SystemExit(f"recipe mistake not caught: {bad_spec}")
         except (ValueError, KeyError) as e: assert word in str(e), (word, str(e))
+    mod, meta = spec.load({"name": "t", "size": [64, 64], "layers": [{"type": "poly", "shape": "crystal", "scale": [0, 1, 0]}, {"type": "include", "recipe": "environment/smoke-puff", "t": [0, 0.8]}]})
+    assert engine.render_frame(mod, meta, engine.options(meta), 0.4).a.any() and not engine.check("environment/smoke-puff")
+    for bad_spec, word in (({"layers": [{"type": "particles", "count": 9999}]}, "limit"), ({"size": [999, 20], "layers": [{"type": "glow"}]}, "size"), ({"layers": [{"type": "include", "recipe": "fire/torch"}]}, "Python"), ({"layers": [{"type": "stamp", "image": "../x.png"}]}, "recipe file")):
+        try:
+            m2, me2 = spec.load({"size": [32, 32], **bad_spec}); engine.render_frame(m2, me2, engine.options(me2), 0.5); raise SystemExit(f"limit not enforced: {bad_spec}")
+        except (ValueError, KeyError) as e: assert word in str(e), (word, str(e))
     print(f"pixfx selftest ok ({len(reg)} effects)"); return 0
