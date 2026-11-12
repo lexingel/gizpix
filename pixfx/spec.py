@@ -33,7 +33,7 @@ SCHEMA = {
     "star": {"size": "px (spike length)", "arms": "4 | 6 | 8", "thin": "0.05..0.4 body width"},
     "particles": {"mode": "burst (all fly out from the window start) | stream (endless, loop-safe)", "count": "int", "area": "[w, h] spawn box", "angle": "[a0, a1] degrees, 0 = right, 90 = down, -90 = up",
                   "speed": "[lo, hi] px travelled over a particle's life", "life": "[lo, hi] fraction of the window (burst) or of the cycle (stream)", "cycles": "stream: repeats per loop (whole number)",
-                  "stagger": "burst: spread the births over this fraction of the window", "gravity": "px of downward pull at end of life (negative = rises)", "sway": "px of side wobble",
+                  "stagger": "burst: spread the births over this fraction of the window", "gravity": "px of downward pull at end of life (negative = rises)", "lob": "true = a parabola: launched along `angle` at `speed`, lands back at its spawn height at the end of its life (fountains, thrown debris)", "sway": "px of side wobble",
                   "size": "[start, end] px", "shape": "dot | streak | star | bubble (hollow, pops) | shard (sliver)", "streak": "streak length px", "shade": "flat | core", "travel": "ease of the flight: out | linear | in | expo", "cover": "[c0, c1] dither fade over life", "target": "[x, y] from the pivot: every particle travels from its spawn point to here instead of flying along `angle`", "curve": "px sideways bow of that path (with `target`), random per particle"},
     "blob": {"mode": "lump (default) | ring (puffs on the `spread` ellipse: ground dust, smoke rings; `drift` px outward, `stagger`) | flame (puffs up a swaying spine: `height`, `radius` = [base, tip-ish], `flicker`, `sway`, `cycles`, `jitter`)", "count": "int discs merged into one body", "height": "flame: px", "flicker": "flame: reshapes per window (default 5)", "sway": "flame: px", "cycles": "flame: sways per window (whole)", "jitter": "flame: px", "drift": "ring: px outward, animatable", "stagger": "0..0.9: puffs start growing at different moments", "spread": "[w, h] px", "radius": "[lo, hi] px", "scale": "0..1+ animatable: grow and shrink the whole body", "rise": "px upward, animatable",
              "depth": "band width px (bigger = bands further in)", "lit": "[dx, dy] direction of the light, e.g. [-1, -1] = top-left (sphere-like shading)", "lit_strength": "0..1, default 0.3", "bias": "dark(-)..bright(+) animatable: cool a fireball with [0.2, -0.6]", "erode": "px eaten from the edge, animatable ([0, 10] dissolves it; better than cover)", "cover": "0..1 dither"},
@@ -42,7 +42,7 @@ SCHEMA = {
     "rays": {"count": "int", "inner": "px from centre, animatable", "length": "px, animatable", "width": "px at the root", "rotate": "degrees over the window", "jitter": "0..1 random length", "squash": "0.1..1: rays lying on the floor (1 = round)"},
     "orbit": {"count": "int", "radius": "px, animatable", "squash": "1 = circle", "turns": "whole turns over the window (whole number for loops)", "size": "px, animatable", "trail": "dots behind each one", "shade": "flat | core"},
     "beam": {"from": "[x, y]", "to": "[x, y]", "width": "px, animatable", "tip": "width at the far end", "extend": "fraction of the window spent growing from `from` to `to`", "shade": "flat = one colour, no stripes", "core": "0..0.9 share of the width at the brightest step (default 0.45)"},
-    "poly": {"shape": "crystal | shard | rock | diamond | arrow (ready-made outlines)", "points": "[[x, y], ...] your own outline, px from `at` (3 to 24 points)", "rotate": "degrees, animatable", "scale": "animatable",
+    "poly": {"shape": "crystal | shard | rock | diamond | arrow (ready-made outlines)", "points": "[[x, y], ...] your own outline, px from `at` (3 to 24 points)", "rotate": "degrees, animatable (a full turn [0, 360] over a loop closes it)", "scale": "animatable", "anchor": "center (default) | base: the lowest point sits on `at`",
              "depth": "band width px (default 4)", "lit": "[dx, dy] light direction (default [-1, -1])", "lit_strength": "0..1, default 0.35", "bias": "dark(-)..bright(+)", "cover": "0..1 dither"},
     "stamp": {"image": "a PNG next to the recipe file, at most 32x32 px (your own sprite: a coin, a leaf)", "scale": "whole number 1 to 4", "flip": "true = mirror", "rotate": "0 | 90 | 180 | 270"},
     "include": {"recipe": "id of a recipe (`pixfx list`) or the path of a .json file; its time is stretched over this layer's window and it is drawn at this layer's `at`", "options": "{name: value} for that recipe's options"},
@@ -141,7 +141,8 @@ def L_particles(f, d, c):
         ang = math.radians(r.u(a0, a1)); sp = r.u(s0, s1); lf = max(r.u(l0, l1), 1e-3); ph = r.u(0, 1); bx = r.u(-0.5, 0.5) * ax; by = r.u(-0.5, 0.5) * ay; sw = r.u(0, TAU)
         age = ((c.t * cyc + (i + ph * 0.5) / n) % 1.0) / lf if stream else (c.p - ph * stag) / (lf * (1 - stag))     # (1 - stag): every burst particle is over by p = 1
         if age < 0 or age >= 1: continue
-        if tgt:                                                                        # fly from the spawn point to the target, bowing sideways by `curve`
+        if d.get("lob"): x = c.ox + bx + math.cos(ang) * sp * age; y = c.oy + by + math.sin(ang) * sp * age * (1 - age)
+        elif tgt:                                                                      # fly from the spawn point to the target, bowing sideways by `curve`
             sx0, sy0 = c.ox + bx, c.oy + by; tx, ty = c.ox + tgt[0] - (c.ox - px0), c.oy + tgt[1] - (c.oy - py0); ang = math.atan2(ty - sy0, tx - sx0); L = math.hypot(tx - sx0, ty - sy0) or 1.0; e2 = ease(age)
             bow = curve * math.sin(math.pi * age) * math.sin(sw); x = lerp(sx0, tx, e2) - (ty - sy0) / L * bow; y = lerp(sy0, ty, e2) + (tx - sx0) / L * bow
         else: dist = sp * ease(age); x = c.ox + bx + math.cos(ang) * dist + sway * math.sin(sw + age * TAU); y = c.oy + by + math.sin(ang) * dist + grav * age * age
@@ -168,6 +169,7 @@ def L_particles(f, d, c):
 def L_blob(f, d, c):
     n = int(d.get("count", 8)); mode = d.get("mode", "lump"); sx, sy = rng2(d.get("spread"), [10, 10]); lo, hi = rng2(d.get("radius"), [4, 8]); sc = val(d.get("scale", 1), c.e) * c.sc
     rise = val(d.get("rise", 0), c.e); stag = clamp(d.get("stagger", 0.3 if mode == "ring" else 0), 0, 0.9); m = f.mask(); r = c.rng
+    if c.loop: stag = 0                                                                # stagger runs on window progress: it would break a loop seam
     if mode == "flame":                                                                # puffs stacked up a swaying spine, shrinking to a tip; reshaped `flicker` times per window
         H = val(d.get("height", 30), c.e) * c.sc; fl = max(1, int(d.get("flicker", 5))); rr = Rng(c.seed * 13 + int(c.p * fl) % fl); sw = d.get("sway", 3); cyc = d.get("cycles", 1)
         for i in range(n):
@@ -277,7 +279,9 @@ def L_poly(f, d, c):
     if not 3 <= len(pts) <= 24: raise ValueError("poly needs 3 to 24 points")
     sc = val(d.get("scale", 1), c.e) * c.sc; a = math.radians(val(d.get("rotate", 0), c.e)); ca, sa = math.cos(a), math.sin(a)
     if sc <= 0.05: return
-    P = [(c.ox + (x * ca - y * sa) * sc, c.oy + (x * sa + y * ca) * sc) for x, y in pts]
+    ay = -max(y for x, y in pts) if d.get("anchor") == "base" else 0.0                  # base: the lowest point sits on `at` (things that stand on the floor)
+    P = [(round(c.ox + (x * ca - (y + ay) * sa) * sc, 2), round(c.oy + (x * sa + (y + ay) * ca) * sc, 2)) for x, y in pts]
+
     im = Image.new("L", (f.w, f.h), 0); ImageDraw.Draw(im).polygon(P, fill=255); m = np.array(im) > 0
     if not m.any(): return
     lx, ly = d.get("lit", [-1, -1]); yy, xx = np.mgrid[0:f.h, 0:f.w]; R = max(max(abs(x), abs(y)) for x, y in pts) * sc + 1
@@ -358,7 +362,7 @@ def _one(spec, g, d, i, t, px, py, main, o, sc, vs):
     if d.get("spin"): ox += d["spin"][0] * math.cos(TAU * d["spin"][1] * p); oy += d["spin"][0] * math.sin(TAU * d["spin"][1] * p)
     if wob: ox += wob[0] * math.sin(TAU * (t * wob[2])); oy += wob[1] * math.sin(TAU * (t * wob[2] + 0.25))
     vv = d.get("v")
-    c = SimpleNamespace(f=g, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main, spec.get("palettes")), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None, sc=sc, dir=spec.get("_dir"),
+    c = SimpleNamespace(f=g, t=t, p=p, e=e, px0=px, py0=py, ox=px + ox, oy=py + oy, ramp=_ramp(d, main, spec.get("palettes")), seed=int(o.seed) * 131 + int(d.get("seed", i)) * 17, rng=None, sc=sc, dir=spec.get("_dir"), loop=bool(spec.get("loop")),
                         v=lambda default, vv=vv, e=e: val(default if vv is None else vv, e) + vs)
     c.rng = Rng(c.seed); LAYERS[d["type"]](g, d, c)
 
