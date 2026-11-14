@@ -27,3 +27,13 @@ gizpix_out/
 .impeccable/build/
 build/
 *.egg-info/
+
+# local collections and notes that are not ours to publish (licences, third-party notes), and scratch images
+/refs/
+/reports/
+/research_notes/
+/*.png
+/*.gif
+pixart/exemplars/
+pixart/knowledge/*
+!pixart/knowledge/style_profiles.json

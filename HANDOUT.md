@@ -69,7 +69,7 @@ python gizpix.py ui                # the local web interface (for people; see se
 | Send a named colour group (red, skin, grey ...) to a colour | `recolor_groups STILL.png --groups` then `recolor_groups STILL.png FRAMES... --swap red=#2e8b57 --out DIR` | new files | The first file is the still that sets the mapping; frames follow it. `--out` is required. Skin never moves unless named. |
 | Snap to a fixed palette | `apply_palette PALETTE FRAMES... --out DIR [--colors N]` | changes (in place without `--out`) | PALETTE = `.hex`/`.txt` (one `#rrggbb` per line), `.png` swatches, an analysis `.json`, comma-separated hex, or `auto --colors N`. No dithering. |
 | Draw a building, a gallery, a village; no reference, no AI | `pixdraw build SPEC [--style S] --out DIR [--name N] [--frames 8] [--scale 3] [--ms 120]`, `pixdraw scene FILE.json ...`, `pixdraw gallery out.png --style S` | new files | Recipe C. |
-| Draw a pixel effect (fire, explosion, hit, lightning, ice, heal, magic circle, pickup, slash, rain, snow, or anything the user describes) | `pixfx list`, `pixfx show ID`, `pixfx render ID [-o key=value ...] [--frames N] [--scale S] [--out DIR] [--name N] [--bg #hex|none]`, `pixfx palettes`, `pixfx check [ID] [--report]`; for an effect the library does not have: `pixfx schema`, `pixfx recipe ID`, `pixfx render my.json` | new files | Recipe E (shipped effects) or Recipe F (describe a new one as a JSON recipe). Writes `NAME.gif` (on a dark background by default), `NAME_sheet.png` + `NAME_sheet.json` (transparent, frames in a grid, `meta.pixfx` has fps, loop, frame size and pivot) and `NAME_contact.png` (look at this one). |
+| Draw anything else from code (item, icon, creature, character, prop, lettering, small scene, short animation); no reference, no AI | `pixart new NAME --size 32x32 --dir DIR` writes a starter script; you edit and run it. `pixart examples --out DIR`, `pixart guide` | new files | A Python API, not a spec language: read `pixart/README.md` (API) and copy the nearest recipe in `pixart/examples.py`. The craft rules it applies are in `pixart/KNOWLEDGE.md`. Look at the `_preview.png` sheet and clear the lint flags before delivering. |
 | Move a standing layer onto walk frames; code walks | `warp_layer`, `rig_walk2`, `xform` | experimental | Motion is limited (a few px at 64 px); `warp_layer` improved a real pair by 15 px of 3250. Needs OpenCV. Prefer layers cut from real walk frames. |
 
 ## 4. Input and output conventions
@@ -162,78 +162,9 @@ python gizpix.py palette_diff robe/0.png green/0.png                            
 
 `recolor_groups` names the groups for you; `hue_shift --range` needs you to know where the colour sits on the wheel. Both leave skin and outline alone unless told otherwise.
 
-### E. Effects with `pixfx`
+### Effects (moved)
 
-```bash
-python gizpix.py pixfx list                       # id, loop or once, duration, size, one line each, then the palette names
-python gizpix.py pixfx show fire/torch            # its options and defaults
-python gizpix.py pixfx render fire/torch -o palette=ice -o seed=3 --out fx --scale 4
-python gizpix.py pixfx render ice/frost-nova -o radius=52 -o spikes=18 --bg none --out fx     # transparent GIF: glow edges are cut at 50% alpha
-python gizpix.py pixfx check                      # all effects; exit 1 on a failure
-```
-
-- Options: `palette` (a name from `pixfx list`, or hex colours dark to bright: `-o palette='#102,#215,#43a'`), `seed`, `light` (glow strength), `flip` (face left), `colors` (default 24: one shared palette for the whole animation, 0 = off; the glow otherwise makes hundreds of shades), `hard` (true = glow is dithered on/off, no half-transparent pixels; use only if the engine cannot blend alpha), plus each effect's own (`show`). An unknown option or palette is a one-line error, exit 2.
-- Loops (`loop`) are seamless: the last frame leads into the first. One-shots end on an empty frame; the GIF holds four blank frames before it restarts.
-- Always open `NAME_contact.png` (a labelled grid of frames) and judge at the given zoom, as for any art. Glow is baked into the sheet as translucent pixels: it reads as additive over dark scenes; render with another `palette` or `light=0.3` for bright ones.
-- Rain and snow are tiles that wrap on both axes (they touch the edges on purpose).
-- The effects are drawn from functions of time and a seed, so the same command gives the same frames; `pixfx check` verifies it. Python: `from pixfx import engine; frames = engine.render("fire/torch", {"palette": "ice"})` returns RGBA PIL images.
-- Quality: clean game-sprite level, not hand-painted. 13 effects drawn in Python plus the recipes in `pixfx list`. If the user wants something that is not listed, write a recipe (Recipe F): that is the normal way to get a new effect.
-
-### F. An effect nobody drew yet: describe it, write a recipe, look, fix
-
-When the user asks for an effect that is not in `pixfx list`, do not refuse and do not hand-code Python. Write a **recipe**: a small JSON file of layers. `pixfx schema` prints every layer and key; `pixfx recipe ID` prints a shipped one to copy.
-
-```bash
-python gizpix.py pixfx list meteor              # 1. nearest existing effect? (searches names, tags, one-liners)
-python gizpix.py pixfx recipe explosions/meteor-impact > my.json     # 2. copy the closest recipe, or start from scratch (below)
-python gizpix.py pixfx schema particles          # the keys of one layer (no argument: all of them)
-python gizpix.py pixfx render my.json --out fx --scale 4             # 3. draw it, then OPEN fx/my_contact.png
-python gizpix.py pixfx check my.json             # 4. deterministic, loops close, one-shots end empty, nothing cropped
-```
-
-Turn the description into layers (each line is one layer type):
-
-| The user says | Layer |
-|---|---|
-| a flash, a hit star, spikes | `star` (+ a small `disc`) |
-| a shockwave, ripple or ring on the floor | `ring` with `squash` 0.35 to 0.45 |
-| sparks, embers, debris, droplets | `particles` mode `burst`; `gravity` makes them fall; `shape: streak` for speed lines |
-| rising bubbles, smoke wisps, drifting embers (a loop) | `particles` mode `stream` with whole `cycles` |
-| a fireball, a smoke cloud, an explosion body, a gas cloud | `blob`; animate `scale` and `bias` (hot to cool) |
-| lightning, a crack, a tether | `bolt` (`grow`, `branches`, `flicker`) |
-| a laser, a jet, a spear, a column of light | `beam` (`extend`, `tip`); a flame jet is a `stream` with `angle` near 0 |
-| a glow, an aura, a pulse | `glow` with `{"wave": [lo, hi, cycles]}` |
-| orbiting motes, a magic circle | `orbit`, `ring` |
-| light rays, a spiky burst | `rays` |
-| a sword swoosh | `arc` (a circle only: no `squash`) |
-| a tornado, whirlwind, pillar of swirling stripes | `funnel` (`turns` whole for loops, `lean` to sway) |
-| wisps that fly from A to B, energy sucked into a portal | `particles` with `target` (and `curve` to bow them) |
-| crystals, rocks, shards, spikes | `poly` (`shape: crystal | shard | rock | diamond | arrow`, or `points`; animate `scale` and `rotate`) |
-| the user's own small sprite (a coin, a leaf) | `stamp` (a PNG of at most 32x32 next to the recipe file; `scale` 1 to 4) |
-| an existing effect inside a new one, at another place or time | `include` (`recipe` id or .json path, `options`, `palette`; at most 2 deep; only recipes, not the Python effects) |
-| a projectile on a curve, a spiral, a homing swoop | `at` with 3 or more points `[[x,y],[x,y],[x,y],...]` (a smooth curve), `spin: [radius, turns]` |
-| a flame silhouette, a ground dust ring, a puddle, bubbles | `blob` `mode: flame` / `mode: ring` (`drift`, `stagger`); `particles` `shape: bubble` (pops), `shard` |
-| a comet tail, a sword smear, a wisp's trail | `smear: [length, taper]` on any moving layer (a fading, shrinking trail of copies of itself) |
-| a clean outline, a lit edge, a dissolve for ring/beam/particles | `outline: "auto"`, `rim: [-1, -1]`, `erode: [0, 0, 6]` on any layer |
-| anything that snakes or sways along its path | `wobble: [ax, ay, whole_cycles]` on the layer |
-
-Rules that save rounds:
-- Coordinates are pixels from `pivot`, y down; `angle` 0 = right, 90 = down, -90 = up. Put the pivot where the effect is anchored (feet for ground effects, centre for orbs) and leave 8 px of canvas around everything, or `check` reports cropping.
-- Windows: a layer draws only inside `t: [start, end]` (fractions of the duration). A one-shot is a few overlapping windows: flash 0 to 0.25, body 0 to 0.8, aftermath to 1. **Everything must shrink or fade to nothing by t = 1** (`thick: [3, 0]`, `size: [x, 0]`, `strength: [k, 0]`, `scale: [1, 0]`), or `check` says "does not end empty".
-- When one body continues in a second layer (a blob that grows, then shrinks), give both layers the same `"seed"` or they draw different shapes.
-- Loops: use only `{"wave": [lo, hi, whole_cycles]}`, particles `stream` with whole `cycles`, orbits with whole `turns`, a `poly` `rotate` of a full turn (`[0, 360]`) and `funnel` `turns`. Things that run on window progress break the seam: `arc` `sweep`, `blob` `drift` and a `rise` that does not return, `smear` on a one-way move. (`blob` `stagger` is ignored in loops for that reason.)
-- `blob` bands: `depth` about 1.3 times the radius gives layered colour; a small depth gives a flat pale blob. `cover` below 0.3 looks like a mesh at 1x: prefer thin layers, a stepped `glow` or a `ring` to dithered fills.
-- A value can have more than two keys: `"size": [0, 20, 0]` grows then shrinks in ONE layer (no second layer needed). `"$reach*0.5"` scales an option. `blob` takes `lit: [-1, -1]` for sphere-like shading, `bolt` takes `rim: "#hex"` (cracks on dark ground), `beam` takes `shade: flat` (no stripes), `blob` takes `erode: [0, 0, 16]` (the body is eaten from its edge: the clean way to dissolve; avoid `cover`), `glow` and `rays` take `squash` (lying on the floor), `particles` take `shape: star` (twinkles).
-- Options make a recipe reusable: `"options": {"radius": 24}` and `"radius": "$radius"` inside; the user then runs `-o radius=40`. `-o palette=NAME` recolours the whole thing.
-- `python gizpix.py pixfx check my.json --report` prints numbers and FLAG lines (mesh dithering, flat colour, lone pixels, empty frames, motion pops) with the fix for each; run it after every render, then still LOOK at the contact sheet. A motion pop on a hit that lands after a flight is intended.
-- Limits (every recipe): at most 40 layers, canvas 8 to 256 px, particle `count` 400, other counts 64 (blob 60). A recipe someone sends you: `python gizpix.py pixfx import FILE.json` validates it, applies the limits, runs `check` and the report, and keeps a copy under `~/.gizpix/recipes` (it then shows in `pixfx list`); a recipe never runs code, reads outside its own folder, or fetches anything.
-- Draw order is layer order: a `glow` after a body whitens it, so put glows first. `poly` is centred on `at` unless `anchor: base` (then its lowest point sits on `at`: use it for anything standing on the floor). `poly` and `blob` on dark palettes (stone, ice, smoke) often need `bias` around -0.2, or they come out flat pale.
-- Thrown things and fountains: `particles` with `lob: true`, `angle` upward, `speed` S: each follows a parabola and lands back at its spawn height at the end of its life; the peak is about S/4 px. Aim a thrown boulder with `at` on a curve (3+ points) instead.
-- `ease` can be a list, one name per key step: `"size": [0, 20, 0], "ease": ["out", "in"]`. A recipe can say `"style": {"outline": "auto", "rim": [-1, -1], "shadow": [1, 1]}` for a consistent drawn look over the whole effect, and `"palettes": {"hot": "fire", "soot": "smoke"}` with `"palette": "@soot"` per layer.
-- `beam` is drawn as one distance field: `core: 0.6` widens the bright centre, no second thin beam needed. `funnel` takes `profile`, `bend`, `ripple` (keys bottom to top) for a curved column. `arc` uses `tail` (not `trail`).
-- Mistakes come back as one line naming the layer, the wrong key and the closest right one (exit 2).
-- Honest limit: layers draw clean, readable game-sprite effects, not hand-painted detail. Judge `_contact.png` as you would any art, change numbers (counts, sizes, windows, bias), render again; two or three rounds is normal.
-- Share a recipe by sending the JSON file. The same file renders the same frames anywhere (`pixfx render my.json`).
+Effects now live in their own tool, **GizVFX**: https://github.com/lexingel/gizvfx (`python gizvfx.py list`, and its own `HANDOUT.md`) (shipped effects, writing a recipe from a description, painted styles).
 
 ## 6. Reading the output
 

@@ -1,0 +1,1983 @@
+{
+ "_about": "look() numbers of hand-made refs per style code and per size bucket (long side of the drawn box; a bucket only with 20+ sprites), open+copyleft tiers, single frames, at most 60 sprites per pack; rebuild with: python -m pixart profiles",
+ "S01": {
+  "n": 60,
+  "mean": {
+   "colours": 1.0,
+   "orphans": 0.135,
+   "small": 0.253,
+   "busy": 0.0,
+   "run": 1.355,
+   "step": 0.0,
+   "range": 0.0,
+   "edge": 1.0
+  },
+  "sd": {
+   "colours": 0.0,
+   "orphans": 0.138,
+   "small": 0.241,
+   "busy": 0.0,
+   "run": 0.437,
+   "step": 0.0,
+   "range": 0.0,
+   "edge": 0.0
+  },
+  "median": {
+   "colours": 1.0,
+   "orphans": 0.089,
+   "small": 0.172,
+   "busy": 0.0,
+   "run": 1.293,
+   "step": 0.0,
+   "range": 0.0,
+   "edge": 1.0
+  },
+  "packs": 1,
+  "size_median": 14,
+  "size_p10_p90": [
+   12,
+   14
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/kenney/1-bit-pack"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 60,
+    "mean": {
+     "colours": 1.0,
+     "orphans": 0.135,
+     "small": 0.253,
+     "busy": 0.0,
+     "run": 1.355,
+     "step": 0.0,
+     "range": 0.0,
+     "edge": 1.0
+    },
+    "sd": {
+     "colours": 0.0,
+     "orphans": 0.138,
+     "small": 0.241,
+     "busy": 0.0,
+     "run": 0.437,
+     "step": 0.0,
+     "range": 0.0,
+     "edge": 0.0
+    },
+    "median": {
+     "colours": 1.0,
+     "orphans": 0.089,
+     "small": 0.172,
+     "busy": 0.0,
+     "run": 1.293,
+     "step": 0.0,
+     "range": 0.0,
+     "edge": 1.0
+    },
+    "packs": 1
+   }
+  }
+ },
+ "S02": {
+  "n": 74,
+  "mean": {
+   "colours": 3.838,
+   "orphans": 0.161,
+   "small": 0.309,
+   "busy": 0.803,
+   "run": 1.83,
+   "step": 80.086,
+   "range": 141.418,
+   "edge": 0.595
+  },
+  "sd": {
+   "colours": 0.616,
+   "orphans": 0.176,
+   "small": 0.222,
+   "busy": 0.221,
+   "run": 0.732,
+   "step": 20.695,
+   "range": 35.712,
+   "edge": 0.352
+  },
+  "median": {
+   "colours": 4.0,
+   "orphans": 0.109,
+   "small": 0.276,
+   "busy": 0.884,
+   "run": 1.623,
+   "step": 80.943,
+   "range": 161.097,
+   "edge": 0.414
+  },
+  "packs": 2,
+  "size_median": 24,
+  "size_p10_p90": [
+   16,
+   32
+  ],
+  "thin": false,
+  "top_packs": [
+   "copyleft/jerom/32x32-fantasy-tileset",
+   "open/kenney/monochrome-rpg"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 74,
+    "mean": {
+     "colours": 3.973,
+     "orphans": 0.196,
+     "small": 0.358,
+     "busy": 0.856,
+     "run": 1.652,
+     "step": 89.646,
+     "range": 149.196,
+     "edge": 0.54
+    },
+    "sd": {
+     "colours": 0.162,
+     "orphans": 0.157,
+     "small": 0.233,
+     "busy": 0.153,
+     "run": 0.629,
+     "step": 14.21,
+     "range": 20.275,
+     "edge": 0.347
+    },
+    "median": {
+     "colours": 4.0,
+     "orphans": 0.134,
+     "small": 0.327,
+     "busy": 0.927,
+     "run": 1.431,
+     "step": 87.066,
+     "range": 161.097,
+     "edge": 0.374
+    },
+    "packs": 2
+   },
+   "25-32": {
+    "n": 60,
+    "mean": {
+     "colours": 3.55,
+     "orphans": 0.127,
+     "small": 0.24,
+     "busy": 0.731,
+     "run": 2.129,
+     "step": 66.914,
+     "range": 129.38,
+     "edge": 0.56
+    },
+    "sd": {
+     "colours": 1.023,
+     "orphans": 0.182,
+     "small": 0.225,
+     "busy": 0.32,
+     "run": 1.036,
+     "step": 27.413,
+     "range": 54.546,
+     "edge": 0.231
+    },
+    "median": {
+     "colours": 4.0,
+     "orphans": 0.092,
+     "small": 0.223,
+     "busy": 0.889,
+     "run": 1.685,
+     "step": 75.247,
+     "range": 161.097,
+     "edge": 0.461
+    },
+    "packs": 1
+   }
+  }
+ },
+ "S03": {
+  "n": 54,
+  "mean": {
+   "colours": 10.556,
+   "orphans": 0.079,
+   "small": 0.218,
+   "busy": 0.825,
+   "run": 1.876,
+   "step": 89.597,
+   "range": 181.367,
+   "edge": 0.486
+  },
+  "sd": {
+   "colours": 8.151,
+   "orphans": 0.058,
+   "small": 0.122,
+   "busy": 0.144,
+   "run": 0.457,
+   "step": 25.18,
+   "range": 44.524,
+   "edge": 0.324
+  },
+  "median": {
+   "colours": 8.0,
+   "orphans": 0.077,
+   "small": 0.228,
+   "busy": 0.866,
+   "run": 1.686,
+   "step": 92.131,
+   "range": 179.263,
+   "edge": 0.447
+  },
+  "packs": 5,
+  "size_median": 17,
+  "size_p10_p90": [
+   14,
+   70
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/grafxkid/sprite-pack-1",
+   "open/jonathan-so/game-creators-pack",
+   "open/kenney/pixel-platformer"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 39,
+    "mean": {
+     "colours": 6.923,
+     "orphans": 0.067,
+     "small": 0.191,
+     "busy": 0.823,
+     "run": 1.873,
+     "step": 93.831,
+     "range": 186.658,
+     "edge": 0.402
+    },
+    "sd": {
+     "colours": 2.105,
+     "orphans": 0.054,
+     "small": 0.095,
+     "busy": 0.12,
+     "run": 0.389,
+     "step": 18.756,
+     "range": 38.289,
+     "edge": 0.319
+    },
+    "median": {
+     "colours": 7.0,
+     "orphans": 0.066,
+     "small": 0.222,
+     "busy": 0.863,
+     "run": 1.692,
+     "step": 96.024,
+     "range": 181.487,
+     "edge": 0.205
+    },
+    "packs": 3
+   }
+  }
+ },
+ "S04": {
+  "n": 121,
+  "mean": {
+   "colours": 4.455,
+   "orphans": 0.124,
+   "small": 0.182,
+   "busy": 0.595,
+   "run": 2.816,
+   "step": 77.119,
+   "range": 116.4,
+   "edge": 2.651
+  },
+  "sd": {
+   "colours": 2.869,
+   "orphans": 0.157,
+   "small": 0.206,
+   "busy": 0.243,
+   "run": 3.233,
+   "step": 48.93,
+   "range": 76.857,
+   "edge": 10.314
+  },
+  "median": {
+   "colours": 3.0,
+   "orphans": 0.047,
+   "small": 0.085,
+   "busy": 0.578,
+   "run": 2.431,
+   "step": 51.573,
+   "range": 85.023,
+   "edge": 0.96
+  },
+  "packs": 3,
+  "size_median": 8,
+  "size_p10_p90": [
+   8,
+   8
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/hawkbirdtree/8x8-pico-8-tile-set-1",
+   "open/kenney/pico-8-platformer",
+   "open/wikimedia-commons/celeste-classic-screenshot"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 120,
+    "mean": {
+     "colours": 4.4,
+     "orphans": 0.125,
+     "small": 0.183,
+     "busy": 0.599,
+     "run": 2.545,
+     "step": 76.858,
+     "range": 115.336,
+     "edge": 2.662
+    },
+    "sd": {
+     "colours": 2.818,
+     "orphans": 0.158,
+     "small": 0.206,
+     "busy": 0.24,
+     "run": 1.28,
+     "step": 49.049,
+     "range": 76.283,
+     "edge": 10.356
+    },
+    "median": {
+     "colours": 3.0,
+     "orphans": 0.047,
+     "small": 0.089,
+     "busy": 0.586,
+     "run": 2.431,
+     "step": 49.697,
+     "range": 84.234,
+     "edge": 0.95
+    },
+    "packs": 2
+   }
+  }
+ },
+ "S05": {
+  "n": 72,
+  "mean": {
+   "colours": 6.028,
+   "orphans": 0.28,
+   "small": 0.446,
+   "busy": 0.862,
+   "run": 1.502,
+   "step": 87.856,
+   "range": 193.061,
+   "edge": 0.771
+  },
+  "sd": {
+   "colours": 2.014,
+   "orphans": 0.203,
+   "small": 0.257,
+   "busy": 0.137,
+   "run": 0.772,
+   "step": 15.884,
+   "range": 46.685,
+   "edge": 0.395
+  },
+  "median": {
+   "colours": 5.0,
+   "orphans": 0.248,
+   "small": 0.473,
+   "busy": 0.919,
+   "run": 1.287,
+   "step": 86.268,
+   "range": 184.79,
+   "edge": 0.717
+  },
+  "packs": 2,
+  "size_median": 24,
+  "size_p10_p90": [
+   16,
+   30
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/nublet/roguelike-16-color-icons",
+   "open/cptdrunkbear/tiny-tanks-ega"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 44,
+    "mean": {
+     "colours": 5.682,
+     "orphans": 0.261,
+     "small": 0.43,
+     "busy": 0.864,
+     "run": 1.412,
+     "step": 89.413,
+     "range": 204.952,
+     "edge": 0.817
+    },
+    "sd": {
+     "colours": 1.239,
+     "orphans": 0.183,
+     "small": 0.248,
+     "busy": 0.136,
+     "run": 0.413,
+     "step": 15.27,
+     "range": 48.544,
+     "edge": 0.353
+    },
+    "median": {
+     "colours": 5.5,
+     "orphans": 0.247,
+     "small": 0.435,
+     "busy": 0.906,
+     "run": 1.298,
+     "step": 86.807,
+     "range": 204.17,
+     "edge": 0.792
+    },
+    "packs": 2
+   },
+   "25-32": {
+    "n": 31,
+    "mean": {
+     "colours": 6.323,
+     "orphans": 0.317,
+     "small": 0.483,
+     "busy": 0.87,
+     "run": 1.465,
+     "step": 88.339,
+     "range": 183.818,
+     "edge": 0.713
+    },
+    "sd": {
+     "colours": 2.249,
+     "orphans": 0.224,
+     "small": 0.262,
+     "busy": 0.12,
+     "run": 0.617,
+     "step": 17.852,
+     "range": 43.842,
+     "edge": 0.42
+    },
+    "median": {
+     "colours": 5.0,
+     "orphans": 0.257,
+     "small": 0.5,
+     "busy": 0.932,
+     "run": 1.281,
+     "step": 87.303,
+     "range": 170.0,
+     "edge": 0.587
+    },
+    "packs": 2
+   }
+  }
+ },
+ "S06": {
+  "n": 51,
+  "mean": {
+   "colours": 3.686,
+   "orphans": 0.032,
+   "small": 0.117,
+   "busy": 0.481,
+   "run": 1.875,
+   "step": 75.276,
+   "range": 110.613,
+   "edge": 0.909
+  },
+  "sd": {
+   "colours": 2.469,
+   "orphans": 0.056,
+   "small": 0.098,
+   "busy": 0.28,
+   "run": 0.303,
+   "step": 47.73,
+   "range": 66.82,
+   "edge": 0.317
+  },
+  "median": {
+   "colours": 3.0,
+   "orphans": 0.0,
+   "small": 0.082,
+   "busy": 0.514,
+   "run": 1.912,
+   "step": 81.677,
+   "range": 146.405,
+   "edge": 1.0
+  },
+  "packs": 4,
+  "size_median": 21,
+  "size_p10_p90": [
+   13,
+   41
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/master484/c64-style-knight",
+   "open/marco-giorgini/santas-rats-issue-c64",
+   "open/cfkaligula/c64-goof"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 37,
+    "mean": {
+     "colours": 3.189,
+     "orphans": 0.03,
+     "small": 0.108,
+     "busy": 0.406,
+     "run": 1.801,
+     "step": 54.547,
+     "range": 87.32,
+     "edge": 0.984
+    },
+    "sd": {
+     "colours": 1.843,
+     "orphans": 0.054,
+     "small": 0.089,
+     "busy": 0.279,
+     "run": 0.247,
+     "step": 38.387,
+     "range": 63.404,
+     "edge": 0.277
+    },
+    "median": {
+     "colours": 3.0,
+     "orphans": 0.0,
+     "small": 0.086,
+     "busy": 0.454,
+     "run": 1.912,
+     "step": 56.83,
+     "range": 84.192,
+     "edge": 1.014
+    },
+    "packs": 3
+   }
+  }
+ },
+ "S07": {
+  "n": 116,
+  "mean": {
+   "colours": 11.302,
+   "orphans": 0.309,
+   "small": 0.518,
+   "busy": 0.9,
+   "run": 1.444,
+   "step": 81.259,
+   "range": 184.677,
+   "edge": 0.386
+  },
+  "sd": {
+   "colours": 10.97,
+   "orphans": 0.222,
+   "small": 0.259,
+   "busy": 0.11,
+   "run": 0.494,
+   "step": 24.484,
+   "range": 37.348,
+   "edge": 0.349
+  },
+  "median": {
+   "colours": 8.0,
+   "orphans": 0.247,
+   "small": 0.492,
+   "busy": 0.952,
+   "run": 1.283,
+   "step": 79.941,
+   "range": 186.072,
+   "edge": 0.304
+  },
+  "packs": 5,
+  "size_median": 16,
+  "size_p10_p90": [
+   11,
+   60
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/dawnlike/dawnlike-v181-items",
+   "copyleft/tuxemon/tuxemon-monsters-sample-2",
+   "open/dawnlike/dawnlike-v181-characters-objects"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 70,
+    "mean": {
+     "colours": 7.6,
+     "orphans": 0.429,
+     "small": 0.664,
+     "busy": 0.957,
+     "run": 1.126,
+     "step": 81.289,
+     "range": 182.27,
+     "edge": 0.403
+    },
+    "sd": {
+     "colours": 1.989,
+     "orphans": 0.205,
+     "small": 0.221,
+     "busy": 0.067,
+     "run": 0.194,
+     "step": 24.204,
+     "range": 37.282,
+     "edge": 0.406
+    },
+    "median": {
+     "colours": 7.0,
+     "orphans": 0.389,
+     "small": 0.691,
+     "busy": 0.977,
+     "run": 1.094,
+     "step": 80.077,
+     "range": 186.072,
+     "edge": 0.291
+    },
+    "packs": 2
+   },
+   ">48": {
+    "n": 31,
+    "mean": {
+     "colours": 19.097,
+     "orphans": 0.125,
+     "small": 0.296,
+     "busy": 0.808,
+     "run": 1.94,
+     "step": 77.412,
+     "range": 186.419,
+     "edge": 0.376
+    },
+    "sd": {
+     "colours": 18.485,
+     "orphans": 0.071,
+     "small": 0.114,
+     "busy": 0.104,
+     "run": 0.393,
+     "step": 23.645,
+     "range": 35.298,
+     "edge": 0.255
+    },
+    "median": {
+     "colours": 15.0,
+     "orphans": 0.101,
+     "small": 0.286,
+     "busy": 0.814,
+     "run": 1.878,
+     "step": 70.175,
+     "range": 182.928,
+     "edge": 0.344
+    },
+    "packs": 3
+   }
+  }
+ },
+ "S08": {
+  "n": 57,
+  "mean": {
+   "colours": 26.246,
+   "orphans": 0.122,
+   "small": 0.229,
+   "busy": 0.728,
+   "run": 2.016,
+   "step": 53.04,
+   "range": 151.301,
+   "edge": 0.854
+  },
+  "sd": {
+   "colours": 41.261,
+   "orphans": 0.137,
+   "small": 0.199,
+   "busy": 0.18,
+   "run": 0.731,
+   "step": 20.12,
+   "range": 48.771,
+   "edge": 0.33
+  },
+  "median": {
+   "colours": 16.0,
+   "orphans": 0.085,
+   "small": 0.179,
+   "busy": 0.762,
+   "run": 1.73,
+   "step": 50.953,
+   "range": 144.819,
+   "edge": 0.934
+  },
+  "packs": 18,
+  "size_median": 47,
+  "size_p10_p90": [
+   16,
+   83
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/calciumtrice/animated-monsters-and-classes",
+   "open/luizmelo/monsters-creatures-fantasy",
+   "open/calciumtrice/animated-warrior-and-slime"
+  ],
+  "by_size": {
+   ">48": {
+    "n": 27,
+    "mean": {
+     "colours": 42.444,
+     "orphans": 0.152,
+     "small": 0.261,
+     "busy": 0.708,
+     "run": 2.218,
+     "step": 48.617,
+     "range": 158.702,
+     "edge": 0.76
+    },
+    "sd": {
+     "colours": 55.254,
+     "orphans": 0.186,
+     "small": 0.261,
+     "busy": 0.235,
+     "run": 0.918,
+     "step": 16.13,
+     "range": 48.194,
+     "edge": 0.392
+    },
+    "median": {
+     "colours": 22.0,
+     "orphans": 0.052,
+     "small": 0.112,
+     "busy": 0.683,
+     "run": 2.123,
+     "step": 49.748,
+     "range": 148.639,
+     "edge": 0.896
+    },
+    "packs": 14
+   }
+  }
+ },
+ "S09": {
+  "n": 61,
+  "mean": {
+   "colours": 7.311,
+   "orphans": 0.104,
+   "small": 0.212,
+   "busy": 0.92,
+   "run": 1.6,
+   "step": 92.666,
+   "range": 175.117,
+   "edge": 0.333
+  },
+  "sd": {
+   "colours": 3.978,
+   "orphans": 0.066,
+   "small": 0.125,
+   "busy": 0.067,
+   "run": 0.281,
+   "step": 28.793,
+   "range": 41.634,
+   "edge": 0.172
+  },
+  "median": {
+   "colours": 6.0,
+   "orphans": 0.095,
+   "small": 0.174,
+   "busy": 0.955,
+   "run": 1.613,
+   "step": 95.258,
+   "range": 169.837,
+   "edge": 0.253
+  },
+  "packs": 4,
+  "size_median": 21,
+  "size_p10_p90": [
+   11,
+   30
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/0x72/dungeontileset-ii",
+   "open/pixel-frog/kings-and-pigs",
+   "open/pixel-frog/pixel-adventure-1"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 43,
+    "mean": {
+     "colours": 6.814,
+     "orphans": 0.106,
+     "small": 0.218,
+     "busy": 0.923,
+     "run": 1.573,
+     "step": 92.2,
+     "range": 175.755,
+     "edge": 0.317
+    },
+    "sd": {
+     "colours": 2.772,
+     "orphans": 0.061,
+     "small": 0.126,
+     "busy": 0.059,
+     "run": 0.232,
+     "step": 27.679,
+     "range": 43.053,
+     "edge": 0.144
+    },
+    "median": {
+     "colours": 6.0,
+     "orphans": 0.1,
+     "small": 0.172,
+     "busy": 0.958,
+     "run": 1.588,
+     "step": 96.612,
+     "range": 213.654,
+     "edge": 0.247
+    },
+    "packs": 3
+   }
+  }
+ },
+ "S10": {
+  "n": 49,
+  "mean": {
+   "colours": 8.388,
+   "orphans": 0.064,
+   "small": 0.131,
+   "busy": 0.666,
+   "run": 2.427,
+   "step": 45.988,
+   "range": 132.122,
+   "edge": 1.03
+  },
+  "sd": {
+   "colours": 4.711,
+   "orphans": 0.065,
+   "small": 0.092,
+   "busy": 0.168,
+   "run": 0.995,
+   "step": 18.366,
+   "range": 62.065,
+   "edge": 0.365
+  },
+  "median": {
+   "colours": 7.0,
+   "orphans": 0.048,
+   "small": 0.116,
+   "busy": 0.705,
+   "run": 2.132,
+   "step": 47.077,
+   "range": 134.056,
+   "edge": 0.959
+  },
+  "packs": 5,
+  "size_median": 49,
+  "size_p10_p90": [
+   32,
+   166
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/ansimuz/legacy-collection",
+   "open/ansimuz/gothicvania-cemetery",
+   "open/chierit/boss-demon-slime"
+  ],
+  "by_size": {
+   ">48": {
+    "n": 25,
+    "mean": {
+     "colours": 9.44,
+     "orphans": 0.045,
+     "small": 0.108,
+     "busy": 0.63,
+     "run": 2.725,
+     "step": 44.238,
+     "range": 135.479,
+     "edge": 1.063
+    },
+    "sd": {
+     "colours": 5.94,
+     "orphans": 0.031,
+     "small": 0.064,
+     "busy": 0.176,
+     "run": 1.145,
+     "step": 16.245,
+     "range": 60.249,
+     "edge": 0.478
+    },
+    "median": {
+     "colours": 7.0,
+     "orphans": 0.041,
+     "small": 0.093,
+     "busy": 0.694,
+     "run": 2.211,
+     "step": 46.676,
+     "range": 133.939,
+     "edge": 0.901
+    },
+    "packs": 5
+   }
+  }
+ },
+ "S11": {
+  "n": 356,
+  "mean": {
+   "colours": 10.449,
+   "orphans": 0.308,
+   "small": 0.526,
+   "busy": 0.919,
+   "run": 1.384,
+   "step": 74.001,
+   "range": 181.849,
+   "edge": 0.111
+  },
+  "sd": {
+   "colours": 8.014,
+   "orphans": 0.181,
+   "small": 0.226,
+   "busy": 0.089,
+   "run": 0.349,
+   "step": 30.448,
+   "range": 49.658,
+   "edge": 0.249
+  },
+  "median": {
+   "colours": 9.0,
+   "orphans": 0.295,
+   "small": 0.512,
+   "busy": 0.945,
+   "run": 1.32,
+   "step": 71.7,
+   "range": 188.221,
+   "edge": 0.0
+  },
+  "packs": 8,
+  "size_median": 28,
+  "size_p10_p90": [
+   24,
+   32
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/7soul/496-rpg-icons",
+   "open/shikashi/fantasy-icons-v2",
+   "open/idylwild/arcanum"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 72,
+    "mean": {
+     "colours": 10.958,
+     "orphans": 0.301,
+     "small": 0.521,
+     "busy": 0.933,
+     "run": 1.346,
+     "step": 74.763,
+     "range": 189.399,
+     "edge": 0.217
+    },
+    "sd": {
+     "colours": 4.445,
+     "orphans": 0.169,
+     "small": 0.212,
+     "busy": 0.075,
+     "run": 0.308,
+     "step": 33.785,
+     "range": 52.871,
+     "edge": 0.332
+    },
+    "median": {
+     "colours": 11.0,
+     "orphans": 0.28,
+     "small": 0.504,
+     "busy": 0.951,
+     "run": 1.288,
+     "step": 76.443,
+     "range": 188.221,
+     "edge": 0.013
+    },
+    "packs": 7
+   },
+   "25-32": {
+    "n": 319,
+    "mean": {
+     "colours": 10.27,
+     "orphans": 0.318,
+     "small": 0.531,
+     "busy": 0.918,
+     "run": 1.382,
+     "step": 77.229,
+     "range": 184.65,
+     "edge": 0.084
+    },
+    "sd": {
+     "colours": 8.307,
+     "orphans": 0.186,
+     "small": 0.23,
+     "busy": 0.092,
+     "run": 0.376,
+     "step": 30.421,
+     "range": 48.957,
+     "edge": 0.196
+    },
+    "median": {
+     "colours": 9.0,
+     "orphans": 0.31,
+     "small": 0.52,
+     "busy": 0.947,
+     "run": 1.307,
+     "step": 74.854,
+     "range": 188.221,
+     "edge": 0.0
+    },
+    "packs": 8
+   },
+   "33-48": {
+    "n": 60,
+    "mean": {
+     "colours": 8.233,
+     "orphans": 0.15,
+     "small": 0.332,
+     "busy": 0.854,
+     "run": 1.752,
+     "step": 94.161,
+     "range": 220.909,
+     "edge": 0.014
+    },
+    "sd": {
+     "colours": 2.635,
+     "orphans": 0.104,
+     "small": 0.148,
+     "busy": 0.103,
+     "run": 0.38,
+     "step": 30.549,
+     "range": 32.974,
+     "edge": 0.058
+    },
+    "median": {
+     "colours": 8.0,
+     "orphans": 0.119,
+     "small": 0.291,
+     "busy": 0.886,
+     "run": 1.646,
+     "step": 89.999,
+     "range": 240.973,
+     "edge": 0.0
+    },
+    "packs": 1
+   }
+  }
+ },
+ "S12": {
+  "n": 178,
+  "mean": {
+   "colours": 6.556,
+   "orphans": 0.123,
+   "small": 0.272,
+   "busy": 0.843,
+   "run": 1.944,
+   "step": 94.187,
+   "range": 179.111,
+   "edge": 0.226
+  },
+  "sd": {
+   "colours": 2.733,
+   "orphans": 0.128,
+   "small": 0.217,
+   "busy": 0.18,
+   "run": 2.047,
+   "step": 24.849,
+   "range": 41.207,
+   "edge": 0.228
+  },
+  "median": {
+   "colours": 6.0,
+   "orphans": 0.083,
+   "small": 0.216,
+   "busy": 0.929,
+   "run": 1.628,
+   "step": 90.765,
+   "range": 172.65,
+   "edge": 0.157
+  },
+  "packs": 8,
+  "size_median": 16,
+  "size_p10_p90": [
+   12,
+   16
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/kyrise/free-16x16-rpg-icons",
+   "open/pixel-boy/ninja-adventure",
+   "open/kenney/tiny-dungeon"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 166,
+    "mean": {
+     "colours": 6.386,
+     "orphans": 0.129,
+     "small": 0.284,
+     "busy": 0.86,
+     "run": 1.679,
+     "step": 95.378,
+     "range": 180.73,
+     "edge": 0.211
+    },
+    "sd": {
+     "colours": 2.557,
+     "orphans": 0.13,
+     "small": 0.22,
+     "busy": 0.163,
+     "run": 0.471,
+     "step": 24.58,
+     "range": 40.0,
+     "edge": 0.213
+    },
+    "median": {
+     "colours": 5.0,
+     "orphans": 0.087,
+     "small": 0.237,
+     "busy": 0.937,
+     "run": 1.556,
+     "step": 91.282,
+     "range": 172.65,
+     "edge": 0.151
+    },
+    "packs": 6
+   }
+  }
+ },
+ "S13": {
+  "n": 131,
+  "mean": {
+   "colours": 63.794,
+   "orphans": 0.308,
+   "small": 0.488,
+   "busy": 0.834,
+   "run": 1.522,
+   "step": 56.114,
+   "range": 166.009,
+   "edge": 0.339
+  },
+  "sd": {
+   "colours": 154.366,
+   "orphans": 0.181,
+   "small": 0.206,
+   "busy": 0.12,
+   "run": 0.367,
+   "step": 27.521,
+   "range": 52.329,
+   "edge": 0.416
+  },
+  "median": {
+   "colours": 18.0,
+   "orphans": 0.279,
+   "small": 0.484,
+   "busy": 0.861,
+   "run": 1.421,
+   "step": 46.641,
+   "range": 171.171,
+   "edge": 0.024
+  },
+  "packs": 5,
+  "size_median": 32,
+  "size_p10_p90": [
+   26,
+   88
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/dcss/crawl-tiles-items-nov2015",
+   "copyleft/cdda/ultimatecataclysm-monsters-sample",
+   "open/dcss/crawl-tiles-mon-dngn-nov2015"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 51,
+    "mean": {
+     "colours": 26.216,
+     "orphans": 0.34,
+     "small": 0.528,
+     "busy": 0.844,
+     "run": 1.341,
+     "step": 62.753,
+     "range": 176.547,
+     "edge": 0.135
+    },
+    "sd": {
+     "colours": 33.975,
+     "orphans": 0.162,
+     "small": 0.162,
+     "busy": 0.116,
+     "run": 0.175,
+     "step": 24.388,
+     "range": 48.481,
+     "edge": 0.295
+    },
+    "median": {
+     "colours": 12.0,
+     "orphans": 0.338,
+     "small": 0.536,
+     "busy": 0.862,
+     "run": 1.381,
+     "step": 63.007,
+     "range": 187.721,
+     "edge": 0.0
+    },
+    "packs": 2
+   },
+   "25-32": {
+    "n": 75,
+    "mean": {
+     "colours": 54.067,
+     "orphans": 0.386,
+     "small": 0.572,
+     "busy": 0.848,
+     "run": 1.359,
+     "step": 68.864,
+     "range": 187.08,
+     "edge": 0.088
+    },
+    "sd": {
+     "colours": 75.81,
+     "orphans": 0.172,
+     "small": 0.176,
+     "busy": 0.114,
+     "run": 0.24,
+     "step": 30.66,
+     "range": 48.475,
+     "edge": 0.268
+    },
+    "median": {
+     "colours": 19.0,
+     "orphans": 0.351,
+     "small": 0.565,
+     "busy": 0.872,
+     "run": 1.328,
+     "step": 69.928,
+     "range": 191.011,
+     "edge": 0.0
+    },
+    "packs": 3
+   },
+   ">48": {
+    "n": 41,
+    "mean": {
+     "colours": 120.366,
+     "orphans": 0.201,
+     "small": 0.367,
+     "busy": 0.814,
+     "run": 1.78,
+     "step": 39.851,
+     "range": 144.042,
+     "edge": 0.662
+    },
+    "sd": {
+     "colours": 255.829,
+     "orphans": 0.125,
+     "small": 0.163,
+     "busy": 0.125,
+     "run": 0.379,
+     "step": 16.918,
+     "range": 45.954,
+     "edge": 0.36
+    },
+    "median": {
+     "colours": 21.0,
+     "orphans": 0.175,
+     "small": 0.334,
+     "busy": 0.805,
+     "run": 1.733,
+     "step": 37.581,
+     "range": 147.564,
+     "edge": 0.619
+    },
+    "packs": 2
+   }
+  }
+ },
+ "S14": {
+  "n": 70,
+  "mean": {
+   "colours": 402.686,
+   "orphans": 0.425,
+   "small": 0.556,
+   "busy": 0.768,
+   "run": 1.511,
+   "step": 57.914,
+   "range": 185.528,
+   "edge": 0.354
+  },
+  "sd": {
+   "colours": 1064.77,
+   "orphans": 0.247,
+   "small": 0.238,
+   "busy": 0.182,
+   "run": 0.42,
+   "step": 23.681,
+   "range": 33.44,
+   "edge": 0.342
+  },
+  "median": {
+   "colours": 34.5,
+   "orphans": 0.362,
+   "small": 0.557,
+   "busy": 0.809,
+   "run": 1.432,
+   "step": 61.396,
+   "range": 188.129,
+   "edge": 0.293
+  },
+  "packs": 2,
+  "size_median": 40,
+  "size_p10_p90": [
+   26,
+   56
+  ],
+  "thin": false,
+  "top_packs": [
+   "copyleft/wesnoth/core-items",
+   "copyleft/wesnoth/core-units-terrain-sample"
+  ],
+  "by_size": {
+   "25-32": {
+    "n": 24,
+    "mean": {
+     "colours": 78.708,
+     "orphans": 0.368,
+     "small": 0.49,
+     "busy": 0.688,
+     "run": 1.648,
+     "step": 64.106,
+     "range": 173.562,
+     "edge": 0.271
+    },
+    "sd": {
+     "colours": 96.761,
+     "orphans": 0.207,
+     "small": 0.26,
+     "busy": 0.237,
+     "run": 0.499,
+     "step": 20.16,
+     "range": 25.938,
+     "edge": 0.347
+    },
+    "median": {
+     "colours": 22.5,
+     "orphans": 0.277,
+     "small": 0.389,
+     "busy": 0.634,
+     "run": 1.663,
+     "step": 64.246,
+     "range": 174.376,
+     "edge": 0.004
+    },
+    "packs": 1
+   },
+   "33-48": {
+    "n": 45,
+    "mean": {
+     "colours": 161.511,
+     "orphans": 0.348,
+     "small": 0.447,
+     "busy": 0.674,
+     "run": 1.695,
+     "step": 63.682,
+     "range": 184.775,
+     "edge": 0.223
+    },
+    "sd": {
+     "colours": 273.847,
+     "orphans": 0.201,
+     "small": 0.2,
+     "busy": 0.168,
+     "run": 0.439,
+     "step": 26.682,
+     "range": 32.094,
+     "edge": 0.31
+    },
+    "median": {
+     "colours": 28.0,
+     "orphans": 0.289,
+     "small": 0.428,
+     "busy": 0.646,
+     "run": 1.574,
+     "step": 63.753,
+     "range": 187.547,
+     "edge": 0.05
+    },
+    "packs": 2
+   },
+   ">48": {
+    "n": 24,
+    "mean": {
+     "colours": 878.083,
+     "orphans": 0.457,
+     "small": 0.583,
+     "busy": 0.757,
+     "run": 1.688,
+     "step": 53.654,
+     "range": 188.978,
+     "edge": 0.601
+    },
+    "sd": {
+     "colours": 1679.396,
+     "orphans": 0.287,
+     "small": 0.261,
+     "busy": 0.238,
+     "run": 0.913,
+     "step": 20.778,
+     "range": 41.38,
+     "edge": 0.33
+    },
+    "median": {
+     "colours": 180.5,
+     "orphans": 0.351,
+     "small": 0.558,
+     "busy": 0.864,
+     "run": 1.4,
+     "step": 55.74,
+     "range": 200.416,
+     "edge": 0.616
+    },
+    "packs": 2
+   }
+  }
+ },
+ "S15": {
+  "n": 30,
+  "mean": {
+   "colours": 70.167,
+   "orphans": 0.255,
+   "small": 0.488,
+   "busy": 0.901,
+   "run": 1.445,
+   "step": 32.426,
+   "range": 92.2,
+   "edge": 0.81
+  },
+  "sd": {
+   "colours": 183.364,
+   "orphans": 0.203,
+   "small": 0.241,
+   "busy": 0.09,
+   "run": 0.363,
+   "step": 15.305,
+   "range": 34.233,
+   "edge": 0.184
+  },
+  "median": {
+   "colours": 13.0,
+   "orphans": 0.173,
+   "small": 0.516,
+   "busy": 0.913,
+   "run": 1.328,
+   "step": 30.974,
+   "range": 93.0,
+   "edge": 0.805
+  },
+  "packs": 2,
+  "size_median": 49,
+  "size_p10_p90": [
+   21,
+   256
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/pixel32/pixel-dungeon-iso-tileset",
+   "open/screaming-brain-studios/isometric-stone-soup"
+  ],
+  "by_size": {}
+ },
+ "S16": {
+  "n": 23,
+  "mean": {
+   "colours": 12.87,
+   "orphans": 0.048,
+   "small": 0.211,
+   "busy": 0.788,
+   "run": 2.188,
+   "step": 43.378,
+   "range": 113.672,
+   "edge": 0.728
+  },
+  "sd": {
+   "colours": 15.192,
+   "orphans": 0.042,
+   "small": 0.219,
+   "busy": 0.142,
+   "run": 0.695,
+   "step": 17.49,
+   "range": 66.977,
+   "edge": 0.216
+  },
+  "median": {
+   "colours": 7.0,
+   "orphans": 0.042,
+   "small": 0.141,
+   "busy": 0.773,
+   "run": 2.205,
+   "step": 43.576,
+   "range": 108.33,
+   "edge": 0.768
+  },
+  "packs": 3,
+  "size_median": 16,
+  "size_p10_p90": [
+   12,
+   380
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/kenney/roguelike-rpg-pack",
+   "open/ansimuz/legacy-collection",
+   "open/pixel-boy/ninja-adventure"
+  ],
+  "by_size": {}
+ },
+ "S17": {
+  "n": 24,
+  "mean": {
+   "colours": 5.375,
+   "orphans": 0.024,
+   "small": 0.043,
+   "busy": 0.613,
+   "run": 4.351,
+   "step": 58.188,
+   "range": 116.13,
+   "edge": 0.6
+  },
+  "sd": {
+   "colours": 2.48,
+   "orphans": 0.03,
+   "small": 0.059,
+   "busy": 0.22,
+   "run": 5.894,
+   "step": 17.821,
+   "range": 44.228,
+   "edge": 0.197
+  },
+  "median": {
+   "colours": 5.5,
+   "orphans": 0.013,
+   "small": 0.013,
+   "busy": 0.639,
+   "run": 2.753,
+   "step": 57.33,
+   "range": 133.643,
+   "edge": 0.598
+  },
+  "packs": 3,
+  "size_median": 17,
+  "size_p10_p90": [
+   14,
+   20
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/kenney/pixel-platformer",
+   "open/pixel-frog/pixel-adventure-1",
+   "open/pixel-frog/kings-and-pigs"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 22,
+    "mean": {
+     "colours": 5.227,
+     "orphans": 0.021,
+     "small": 0.041,
+     "busy": 0.633,
+     "run": 3.179,
+     "step": 61.017,
+     "range": 119.874,
+     "edge": 0.578
+    },
+    "sd": {
+     "colours": 1.782,
+     "orphans": 0.023,
+     "small": 0.057,
+     "busy": 0.185,
+     "run": 1.27,
+     "step": 13.557,
+     "range": 38.146,
+     "edge": 0.185
+    },
+    "median": {
+     "colours": 5.5,
+     "orphans": 0.013,
+     "small": 0.013,
+     "busy": 0.639,
+     "run": 2.753,
+     "step": 61.023,
+     "range": 133.643,
+     "edge": 0.597
+    },
+    "packs": 2
+   }
+  }
+ },
+ "S18": {
+  "n": 4,
+  "mean": {
+   "colours": 20.75,
+   "orphans": 0.029,
+   "small": 0.057,
+   "busy": 0.519,
+   "run": 3.588,
+   "step": 49.653,
+   "range": 162.251,
+   "edge": 0.983
+  },
+  "sd": {
+   "colours": 1.299,
+   "orphans": 0.012,
+   "small": 0.026,
+   "busy": 0.217,
+   "run": 2.104,
+   "step": 3.075,
+   "range": 30.194,
+   "edge": 0.105
+  },
+  "median": {
+   "colours": 21.0,
+   "orphans": 0.035,
+   "small": 0.068,
+   "busy": 0.62,
+   "run": 2.422,
+   "step": 47.879,
+   "range": 144.819,
+   "edge": 0.981
+  },
+  "packs": 1,
+  "size_median": 57,
+  "size_p10_p90": [
+   52,
+   93
+  ],
+  "thin": true,
+  "top_packs": [
+   "open/luizmelo/martial-hero"
+  ],
+  "by_size": {}
+ },
+ "S19": {
+  "n": 34,
+  "mean": {
+   "colours": 4.353,
+   "orphans": 0.042,
+   "small": 0.104,
+   "busy": 0.593,
+   "run": 2.287,
+   "step": 79.077,
+   "range": 127.161,
+   "edge": 0.62
+  },
+  "sd": {
+   "colours": 2.261,
+   "orphans": 0.056,
+   "small": 0.12,
+   "busy": 0.177,
+   "run": 0.419,
+   "step": 28.629,
+   "range": 58.414,
+   "edge": 0.254
+  },
+  "median": {
+   "colours": 4.5,
+   "orphans": 0.009,
+   "small": 0.043,
+   "busy": 0.644,
+   "run": 2.401,
+   "step": 72.609,
+   "range": 127.784,
+   "edge": 0.562
+  },
+  "packs": 2,
+  "size_median": 23,
+  "size_p10_p90": [
+   10,
+   32
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/kenney/pixel-shmup",
+   "open/jonathan-so/game-creators-pack"
+  ],
+  "by_size": {
+   "<=24": {
+    "n": 20,
+    "mean": {
+     "colours": 3.2,
+     "orphans": 0.052,
+     "small": 0.118,
+     "busy": 0.514,
+     "run": 2.195,
+     "step": 75.759,
+     "range": 108.969,
+     "edge": 0.654
+    },
+    "sd": {
+     "colours": 1.503,
+     "orphans": 0.062,
+     "small": 0.123,
+     "busy": 0.181,
+     "run": 0.427,
+     "step": 29.872,
+     "range": 59.409,
+     "edge": 0.308
+    },
+    "median": {
+     "colours": 3.0,
+     "orphans": 0.009,
+     "small": 0.063,
+     "busy": 0.607,
+     "run": 2.158,
+     "step": 66.393,
+     "range": 97.263,
+     "edge": 0.591
+    },
+    "packs": 2
+   }
+  }
+ },
+ "S20": {
+  "n": 9,
+  "mean": {
+   "colours": 1.667,
+   "orphans": 0.033,
+   "small": 0.048,
+   "busy": 0.141,
+   "run": 2.251,
+   "step": 33.433,
+   "range": 52.356,
+   "edge": 1.102
+  },
+  "sd": {
+   "colours": 1.247,
+   "orphans": 0.03,
+   "small": 0.052,
+   "busy": 0.263,
+   "run": 0.61,
+   "step": 62.815,
+   "range": 98.376,
+   "edge": 0.191
+  },
+  "median": {
+   "colours": 1.0,
+   "orphans": 0.024,
+   "small": 0.024,
+   "busy": 0.0,
+   "run": 2.218,
+   "step": 0.0,
+   "range": 0.0,
+   "edge": 1.0
+  },
+  "packs": 2,
+  "size_median": 14,
+  "size_p10_p90": [
+   13,
+   16
+  ],
+  "thin": true,
+  "top_packs": [
+   "open/kenney/1-bit-pack",
+   "open/kenney/monochrome-rpg"
+  ],
+  "by_size": {}
+ },
+ "S21": {
+  "n": 21,
+  "mean": {
+   "colours": 350.524,
+   "orphans": 0.603,
+   "small": 0.788,
+   "busy": 0.916,
+   "run": 1.246,
+   "step": 14.859,
+   "range": 169.546,
+   "edge": 0.898
+  },
+  "sd": {
+   "colours": 745.928,
+   "orphans": 0.094,
+   "small": 0.101,
+   "busy": 0.097,
+   "run": 0.127,
+   "step": 6.994,
+   "range": 44.383,
+   "edge": 0.2
+  },
+  "median": {
+   "colours": 160.0,
+   "orphans": 0.627,
+   "small": 0.808,
+   "busy": 0.959,
+   "run": 1.216,
+   "step": 14.845,
+   "range": 169.05,
+   "edge": 0.888
+  },
+  "packs": 2,
+  "size_median": 32,
+  "size_p10_p90": [
+   32,
+   256
+  ],
+  "thin": false,
+  "top_packs": [
+   "copyleft/flare/flare-game-sample",
+   "open/kenney/isometric-miniature-dungeon"
+  ],
+  "by_size": {}
+ },
+ "S22": {
+  "n": 15,
+  "mean": {
+   "colours": 7.733,
+   "orphans": 0.008,
+   "small": 0.021,
+   "busy": 0.459,
+   "run": 4.756,
+   "step": 81.327,
+   "range": 186.546,
+   "edge": 0.495
+  },
+  "sd": {
+   "colours": 2.175,
+   "orphans": 0.006,
+   "small": 0.013,
+   "busy": 0.055,
+   "run": 0.726,
+   "step": 18.117,
+   "range": 30.03,
+   "edge": 0.137
+  },
+  "median": {
+   "colours": 8.0,
+   "orphans": 0.006,
+   "small": 0.017,
+   "busy": 0.454,
+   "run": 4.606,
+   "step": 82.005,
+   "range": 206.131,
+   "edge": 0.487
+  },
+  "packs": 1,
+  "size_median": 38,
+  "size_p10_p90": [
+   38,
+   38
+  ],
+  "thin": true,
+  "top_packs": [
+   "open/pixel-boy/ninja-adventure"
+  ],
+  "by_size": {}
+ },
+ "S23": {
+  "n": 83,
+  "mean": {
+   "colours": 3.843,
+   "orphans": 0.028,
+   "small": 0.051,
+   "busy": 0.383,
+   "run": 5.081,
+   "step": 61.703,
+   "range": 96.596,
+   "edge": 0.643
+  },
+  "sd": {
+   "colours": 5.795,
+   "orphans": 0.077,
+   "small": 0.119,
+   "busy": 0.363,
+   "run": 3.278,
+   "step": 65.416,
+   "range": 96.207,
+   "edge": 0.41
+  },
+  "median": {
+   "colours": 3.0,
+   "orphans": 0.0,
+   "small": 0.0,
+   "busy": 0.311,
+   "run": 3.875,
+   "step": 42.676,
+   "range": 59.176,
+   "edge": 0.842
+  },
+  "packs": 8,
+  "size_median": 48,
+  "size_p10_p90": [
+   14,
+   96
+  ],
+  "thin": false,
+  "top_packs": [
+   "open/kenney/fantasy-ui-borders",
+   "open/crusenho/complete-ui-essential-pack-free",
+   "open/pixel-boy/ninja-adventure"
+  ],
+  "by_size": {
+   "33-48": {
+    "n": 32,
+    "mean": {
+     "colours": 1.844,
+     "orphans": 0.0,
+     "small": 0.0,
+     "busy": 0.086,
+     "run": 7.242,
+     "step": 12.895,
+     "range": 16.161,
+     "edge": 0.969
+    },
+    "sd": {
+     "colours": 1.277,
+     "orphans": 0.0,
+     "small": 0.0,
+     "busy": 0.128,
+     "run": 3.061,
+     "step": 21.747,
+     "range": 26.613,
+     "edge": 0.071
+    },
+    "median": {
+     "colours": 1.0,
+     "orphans": 0.0,
+     "small": 0.0,
+     "busy": 0.0,
+     "run": 8.458,
+     "step": 0.0,
+     "range": 0.0,
+     "edge": 1.0
+    },
+    "packs": 2
+   },
+   ">48": {
+    "n": 22,
+    "mean": {
+     "colours": 7.273,
+     "orphans": 0.021,
+     "small": 0.034,
+     "busy": 0.35,
+     "run": 4.758,
+     "step": 82.575,
+     "range": 138.328,
+     "edge": 0.534
+    },
+    "sd": {
+     "colours": 10.261,
+     "orphans": 0.049,
+     "small": 0.08,
+     "busy": 0.306,
+     "run": 3.103,
+     "step": 69.495,
+     "range": 100.425,
+     "edge": 0.428
+    },
+    "median": {
+     "colours": 4.0,
+     "orphans": 0.0,
+     "small": 0.0,
+     "busy": 0.327,
+     "run": 3.326,
+     "step": 71.31,
+     "range": 159.245,
+     "edge": 0.353
+    },
+    "packs": 6
+   }
+  }
+ }
+}

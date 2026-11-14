@@ -1,0 +1,169 @@
+{
+ "frames": {
+  "knight_slash_0": {
+   "frame": {
+    "x": 5,
+    "y": 5,
+    "w": 360,
+    "h": 300
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 360,
+    "h": 300
+   },
+   "sourceSize": {
+    "w": 360,
+    "h": 300
+   },
+   "duration": 80
+  },
+  "knight_slash_1": {
+   "frame": {
+    "x": 370,
+    "y": 5,
+    "w": 360,
+    "h": 300
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 360,
+    "h": 300
+   },
+   "sourceSize": {
+    "w": 360,
+    "h": 300
+   },
+   "duration": 70
+  },
+  "knight_slash_2": {
+   "frame": {
+    "x": 735,
+    "y": 5,
+    "w": 360,
+    "h": 300
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 360,
+    "h": 300
+   },
+   "sourceSize": {
+    "w": 360,
+    "h": 300
+   },
+   "duration": 140
+  },
+  "knight_slash_3": {
+   "frame": {
+    "x": 1100,
+    "y": 5,
+    "w": 360,
+    "h": 300
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 360,
+    "h": 300
+   },
+   "sourceSize": {
+    "w": 360,
+    "h": 300
+   },
+   "duration": 60
+  },
+  "knight_slash_4": {
+   "frame": {
+    "x": 1465,
+    "y": 5,
+    "w": 360,
+    "h": 300
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 360,
+    "h": 300
+   },
+   "sourceSize": {
+    "w": 360,
+    "h": 300
+   },
+   "duration": 180
+  },
+  "knight_slash_5": {
+   "frame": {
+    "x": 1830,
+    "y": 5,
+    "w": 360,
+    "h": 300
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 360,
+    "h": 300
+   },
+   "sourceSize": {
+    "w": 360,
+    "h": 300
+   },
+   "duration": 100
+  },
+  "knight_slash_6": {
+   "frame": {
+    "x": 2195,
+    "y": 5,
+    "w": 360,
+    "h": 300
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 360,
+    "h": 300
+   },
+   "sourceSize": {
+    "w": 360,
+    "h": 300
+   },
+   "duration": 100
+  }
+ },
+ "meta": {
+  "app": "pixdraw",
+  "image": "knight_slash_sheet.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 2560,
+   "h": 310
+  },
+  "scale": "1",
+  "frameTags": [
+   {
+    "name": "idle",
+    "from": 0,
+    "to": 6,
+    "direction": "forward"
+   }
+  ]
+ }
+}

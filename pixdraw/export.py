@@ -49,7 +49,7 @@ def sheet(frames, name, cols=None, pad=1, ms=120, scale=1):
     im = Image.new("RGBA", (cols * (w + pad) + pad, rows * (h + pad) + pad), (0, 0, 0, 0)); fr = {}
     for i, f in enumerate(frames):
         x, y = pad + (i % cols) * (w + pad), pad + (i // cols) * (h + pad); im.paste(f, (x + (w - f.width) // 2, y + (h - f.height)));
-        fr[f"{name}_{i}"] = {"frame": {"x": x, "y": y, "w": w, "h": h}, "rotated": False, "trimmed": False, "spriteSourceSize": {"x": 0, "y": 0, "w": w, "h": h}, "sourceSize": {"w": w, "h": h}, "duration": ms}
+        fr[f"{name}_{i}"] = {"frame": {"x": x, "y": y, "w": w, "h": h}, "rotated": False, "trimmed": False, "spriteSourceSize": {"x": 0, "y": 0, "w": w, "h": h}, "sourceSize": {"w": w, "h": h}, "duration": ms[i] if isinstance(ms, (list, tuple)) else ms}
     meta = {"app": "pixdraw", "image": f"{name}_sheet.png", "format": "RGBA8888", "size": {"w": im.width, "h": im.height}, "scale": "1",
             "frameTags": [{"name": "idle", "from": 0, "to": len(frames) - 1, "direction": "forward"}] if len(frames) > 1 else []}
     if scale != 1:

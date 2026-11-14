@@ -18,7 +18,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # name: (group, path relative to ROOT or "module:NAME", one-line purpose)
 TOOLS = {
     "pixdraw": ("draw", "module:pixdraw", "draw pixel-art buildings from parameters (3 views, 5 styles, animation, sprite sheet) and compose scenes; no reference image, no AI"),
-    "pixfx": ("draw", "module:pixfx", "draw pixel-art effects from code (fire, explosions, hits, lightning, ice, heal, magic circle, pickups, slash, rain, snow): any palette, loops or one-shots, GIF + sprite sheet + JSON; no reference image, no AI"),
+    "pixart": ("draw", "module:pixart", "draw any pixel art from code with the craft built in: shapes -> ramps, form shading, light-aware outline, lettering, animation, lint + review sheet; no reference image, no AI"),
     "pix_layer": ("layers", "layers/pix_layer.py", "cut an outfit layer out of base-vs-outfit sprites or walk frames (new-colour key, skin drop, solid, outline, bits, drop-parts)"),
     "paperdoll": ("layers", "layers/paperdoll.py", "difference-based layer extract + compose + checks (region, drift, palette key)"),
     "pix_snap": ("prep", "prep/pix_snap.py", "turn an upscaled / off-grid pixel-art image back into real pixels"),
@@ -87,7 +87,9 @@ def cmd_help(name):
     group, rel, purpose = TOOLS[name]
     print(f"{name} [{group}] - {purpose}\nrun: python {os.path.join(ROOT, 'gizpix.py')} {name} ...\n")
     if rel.startswith("module:"):
-        print(doc_of(rel[7:] + "/__init__.py")); print("\nSubcommands: python -m pixdraw -h  (build, gallery, scene, styles, materials, presets, extract-style, selftest, golden); full guide: pixdraw/README.md")
+        print(doc_of(rel[7:] + "/__init__.py"))
+        if name == "pixart": print("Subcommands: new, examples, lint, guide, selftest (python gizpix.py pixart -h); API: pixart/README.md; craft rules: pixart/KNOWLEDGE.md")
+        else: print("\nSubcommands: python -m pixdraw -h  (build, gallery, scene, styles, materials, presets, extract-style, selftest, golden); full guide: pixdraw/README.md")
     else: print(doc_of(rel))
 
 
@@ -127,7 +129,7 @@ def main(argv):
     return _run_pixdraw(cmd) if TOOLS[c][1].startswith("module:") else subprocess.run(cmd).returncode      # scripts run where the caller is, so relative paths mean what the caller thinks
 
 
-def _run_pixdraw(cmd):
+def _run_pixdraw(cmd):   # also runs pixart
     """pixdraw is a package: it must be importable (Gizpix folder on the path) while the user's own relative paths still resolve from where they are"""
     env = dict(os.environ); env["PYTHONPATH"] = ROOT + os.pathsep + env.get("PYTHONPATH", "")
     return subprocess.run(cmd, env=env).returncode

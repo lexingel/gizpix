@@ -18,9 +18,9 @@ bad += not ok; print(("ok   " if ok else "FAIL ") + "tools on real frames with i
 r = subprocess.run([sys.executable, "-m", "pixdraw", "selftest"], capture_output=True, text=True, cwd=H)         # package, run as a module
 ok = r.returncode == 0 and "ok" in r.stdout
 bad += not ok; print(("ok   " if ok else "FAIL ") + "pixdraw (python -m pixdraw selftest)")
-r = subprocess.run([sys.executable, "-m", "pixfx", "selftest"], capture_output=True, text=True, cwd=H)           # effects: deterministic, loops close, one-shots end empty, export
+r = subprocess.run([sys.executable, "-m", "pixart", "selftest"], capture_output=True, text=True, cwd=H)
 ok = r.returncode == 0 and "ok" in r.stdout
-bad += not ok; print(("ok   " if ok else "FAIL ") + "pixfx (python -m pixfx selftest)" + ("" if ok else ": " + (r.stderr or r.stdout)[-300:]))
+bad += not ok; print(("ok   " if ok else "FAIL ") + "pixart (python -m pixart selftest)" + ("" if ok else ": " + (r.stderr or r.stdout)[-300:]))
 r = subprocess.run([sys.executable, os.path.join(H, "ui", "server.py"), "selftest"], capture_output=True, text=True)                  # the local web interface: token, host check, staging then Save, image routes
 ok = r.returncode == 0 and "ui selftest ok" in r.stdout
 bad += not ok; print(("ok   " if ok else "FAIL ") + "web interface (python ui/server.py selftest)" + ("" if ok else ": " + (r.stderr or r.stdout)[-200:]))
