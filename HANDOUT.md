@@ -23,6 +23,8 @@ python gizpix.py ui                # the local web interface (for people; see se
 - Exit codes: `-h` exits 0; a missing file or bad option gives a one-line error and exit 2 (a few older tools print a Python traceback instead: read its last line). Measuring tools exit 0 even when they flag something; use `--strict` where it exists to get exit 1.
 - Windows PowerShell does not expand `*.png`. Tools that take a list of files and expand globs themselves: `despeckle`, `qa`, `hue_shift`, `make_sheet` (quote the pattern: `"frames\*.png"`). For the others pass the files explicitly or let your shell expand them (Git Bash / cmd `for`). Folder-taking tools (`fill_pinholes`, `pix_layer`, `clean_frames`, `palette_lock`, `repair_outline`) need no glob.
 
+Size limit: tools started through `gizpix.py` refuse images above 32 million pixels (8000 x 4000); set `GIZPIX_MAX_PIXELS=N` (0 = no limit) to change it.
+
 ## 2. Standing rules for agents
 
 1. **Never spend generator credits.** Gizpix needs none. If a job needs new frames (a re-roll, a contrasting outfit, a base without hair), stop and ask the user before generating anything.

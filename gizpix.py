@@ -67,6 +67,22 @@ def command(name, args):
     return [sys.executable, os.path.join(ROOT, rel), *args], ROOT
 
 
+# Pillow decodes any size by default (it only warns far above 89 million pixels). Every tool runs through this wrapper, which sets a limit first: a 13000 x 13000 image would otherwise take about 700 MB per copy.
+# GIZPIX_MAX_PIXELS overrides it (0 = no limit); the default is 32 million pixels in all (8000 x 4000; Pillow refuses above twice the value it is given, so the wrapper gives it half), far above any sprite sheet.
+_BOOT = ("import os, sys, runpy; import PIL.Image as I; n = int(os.environ.get('GIZPIX_MAX_PIXELS', '32000000')); I.MAX_IMAGE_PIXELS = (n // 2) or None;  "
+         "t, a = sys.argv[1], sys.argv[2:]; "
+         "(sys.path.insert(0, os.path.dirname(os.path.abspath(a[0]))) if t == 'file' else None); "
+         "sys.argv = a; "
+         "(runpy.run_path(a[0], run_name='__main__') if t == 'file' else runpy.run_module(a[0], run_name='__main__', alter_sys=True))")
+
+
+def guarded(cmd):
+    """[python, script, args...] or [python, -m, module, args...] -> the same run, started through _BOOT"""
+    if len(cmd) > 2 and cmd[1] == "-m": return [cmd[0], "-c", _BOOT, "module", cmd[2], *cmd[3:]]
+    if len(cmd) > 1 and cmd[1].lower().endswith(".py"): return [cmd[0], "-c", _BOOT, "file", cmd[1], *cmd[2:]]
+    return cmd
+
+
 def cmd_list():
     last = None
     for name, (group, rel, purpose) in sorted(TOOLS.items(), key=lambda kv: (kv[1][0], kv[0])):
@@ -126,13 +142,13 @@ def main(argv):
         close = list(dict.fromkeys([n for n in TOOLS if c and (c in n or n in c)] + difflib.get_close_matches(c, list(TOOLS), 3, 0.5) + difflib.get_close_matches(c.replace("-", "_"), list(TOOLS), 3, 0.5)))
         print(f"gizpix: unknown tool {c!r}" + (f"; did you mean {', '.join(close)}?" if close else "; python gizpix.py list shows the tools")); return 2
     cmd, _ = command(c, rest)
-    return _run_pixdraw(cmd) if TOOLS[c][1].startswith("module:") else subprocess.run(cmd).returncode      # scripts run where the caller is, so relative paths mean what the caller thinks
+    return _run_pixdraw(cmd) if TOOLS[c][1].startswith("module:") else subprocess.run(guarded(cmd)).returncode      # scripts run where the caller is, so relative paths mean what the caller thinks
 
 
 def _run_pixdraw(cmd):   # also runs pixart
     """pixdraw is a package: it must be importable (Gizpix folder on the path) while the user's own relative paths still resolve from where they are"""
     env = dict(os.environ); env["PYTHONPATH"] = ROOT + os.pathsep + env.get("PYTHONPATH", "")
-    return subprocess.run(cmd, env=env).returncode
+    return subprocess.run(guarded(cmd), env=env).returncode
 
 
 def cli(): sys.exit(main(sys.argv[1:]))   # the `gizpix` command made by pip install
