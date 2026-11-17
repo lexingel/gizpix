@@ -23,6 +23,7 @@ TOOLS = {
     "paperdoll": ("layers", "layers/paperdoll.py", "difference-based layer extract + compose + checks (region, drift, palette key)"),
     "pix_snap": ("prep", "prep/pix_snap.py", "turn an upscaled / off-grid pixel-art image back into real pixels"),
     "pixel_lint": ("check", "check/pixel_lint.py", "pixel-art quality numbers: specks, thick lines, stair breaks, blurry alpha, palette (measures only)"),
+    "pix_mixel": ("check", "check/pix_mixel.py", "find mixels: pixels of different sizes mixed in one picture, or no common pixel grid (measures only)"),
     "tile_check": ("check", "check/tile_check.py", "does a tile repeat without a visible seam (measures only)"),
     "check_8dir": ("check", "check/check_8dir.py", "QA of an 8-direction sprite set: poses, walk, compass, mirrors (measures only)"),
     "palette_diff": ("check", "check/palette_diff.py", "compare the colours of directions/states/frames with a reference sprite: exact, near, new colours (measures only)"),

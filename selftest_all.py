@@ -3,7 +3,7 @@
 import subprocess, sys, os
 H = os.path.dirname(os.path.abspath(__file__))
 TOOLS = ["layers/pix_layer.py", "prep/pix_snap.py", "layers/paperdoll.py", "clean/clean_frames.py", "clean/palette_lock.py",
-         "clean/repair_outline.py", "clean/fill_pinholes.py", "check/check_8dir.py", "check/apply_pixel_fixes.py", "rig/xform.py", "check/pixel_lint.py", "check/tile_check.py", "clean/speck_fix.py", "sheets/trim_frames.py", "sheets/align_frames.py", "check/palette_diff.py", "color/hue_shift.py"]
+         "clean/repair_outline.py", "clean/fill_pinholes.py", "check/check_8dir.py", "check/apply_pixel_fixes.py", "rig/xform.py", "check/pixel_lint.py", "check/pix_mixel.py", "check/tile_check.py", "clean/speck_fix.py", "sheets/trim_frames.py", "sheets/align_frames.py", "check/palette_diff.py", "color/hue_shift.py"]
 bad = 0
 for t in TOOLS:
     r = subprocess.run([sys.executable, os.path.join(H, t), "selftest"], capture_output=True, text=True)

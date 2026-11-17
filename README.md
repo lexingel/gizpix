@@ -100,7 +100,7 @@ Run `python gizpix.py list` for the live list; `python gizpix.py help TOOL` for 
 | Group | Tools |
 |---|---|
 | **layers** | `pix_layer` cut an outfit layer from base-vs-outfit sprites or walk frames; `paperdoll` difference-based extract/compose |
-| **check** (measure only) | `pixel_lint` quality numbers; `palette_diff` colour drift against a reference; `tile_check` seams; `check_8dir` direction-set QA; `qa` batch checks; `apply_pixel_fixes` auditable single-pixel edit list |
+| **check** (measure only) | `pixel_lint` quality numbers; `pix_mixel` mixed pixel sizes; `palette_diff` colour drift against a reference; `tile_check` seams; `check_8dir` direction-set QA; `qa` batch checks; `apply_pixel_fixes` auditable single-pixel edit list |
 | **clean** | `speck_fix`, `fill_pinholes`, `painterly_clean`, `scrub`, `colormatch`, `ground_snap`, `palette_lock`, `clean_frames`; `despeckle` and `repair_outline` only for noisy generator output |
 | **color** | `hue_shift` turn the hue (same colour always gives the same result across frames); `recolor_groups` variants by colour group; `apply_palette` snap to a fixed palette |
 | **sheets** | `align_frames` feet/column alignment; `trim_frames` shared crop; `make_sheet` sprite sheet + JSON; `preview_gif`; `contact_sheet`; `pad_sprite` |
