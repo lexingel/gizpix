@@ -3,7 +3,7 @@
 import subprocess, sys, os
 H = os.path.dirname(os.path.abspath(__file__))
 TOOLS = ["layers/pix_layer.py", "prep/pix_snap.py", "layers/paperdoll.py", "clean/clean_frames.py", "clean/palette_lock.py",
-         "clean/repair_outline.py", "clean/fill_pinholes.py", "check/check_8dir.py", "check/apply_pixel_fixes.py", "rig/xform.py", "check/pixel_lint.py", "check/pix_mixel.py", "check/tile_check.py", "clean/speck_fix.py", "sheets/trim_frames.py", "sheets/align_frames.py", "check/palette_diff.py", "color/hue_shift.py"]
+         "clean/repair_outline.py", "clean/fill_pinholes.py", "check/check_8dir.py", "check/apply_pixel_fixes.py", "rig/xform.py", "check/pixel_lint.py", "check/pix_mixel.py", "parallax/pix_parallax.py", "village/pix_village.py", "check/tile_check.py", "clean/speck_fix.py", "sheets/trim_frames.py", "sheets/align_frames.py", "check/palette_diff.py", "color/hue_shift.py"]
 bad = 0
 for t in TOOLS:
     r = subprocess.run([sys.executable, os.path.join(H, t), "selftest"], capture_output=True, text=True)
@@ -27,8 +27,8 @@ bad += not ok; print(("ok   " if ok else "FAIL ") + "web interface (python ui/se
 import importlib.util                                                       # the gizpix.py registry: every path exists, every docstring reads, the commands run
 spec = importlib.util.spec_from_file_location("gizpix", os.path.join(H, "gizpix.py")); pt = importlib.util.module_from_spec(spec); spec.loader.exec_module(pt)
 miss = [n for n, (g, rel, _) in pt.TOOLS.items() if not os.path.exists(os.path.join(H, rel[7:] + "/__init__.py" if rel.startswith("module:") else rel))]
-untracked = [os.path.relpath(os.path.join(r, f), H).replace(os.sep, "/") for r, d, fs in os.walk(H) for f in fs if f.endswith(".py") and r.split(os.sep)[-1] in ("layers", "prep", "check", "clean", "color", "sheets", "rig")
-             and os.path.relpath(os.path.join(r, f), H).replace(os.sep, "/") not in [v[1] for v in pt.TOOLS.values()] and f != "labelled_grid_example.py"]
+untracked = [os.path.relpath(os.path.join(r, f), H).replace(os.sep, "/") for r, d, fs in os.walk(H) for f in fs if f.endswith(".py") and r.split(os.sep)[-1] in ("layers", "prep", "check", "clean", "color", "sheets", "rig", "parallax")
+             and os.path.relpath(os.path.join(r, f), H).replace(os.sep, "/") not in [v[1] for v in pt.TOOLS.values()] and f != "labelled_grid_example.py" and not f.startswith("_")]
 r = subprocess.run([sys.executable, os.path.join(H, "gizpix.py"), "list"], capture_output=True, text=True); r2 = subprocess.run([sys.executable, os.path.join(H, "gizpix.py"), "help", "pix_layer"], capture_output=True, text=True)
 okp = not miss and not untracked and r.returncode == 0 and "pix_layer" in r.stdout and r2.returncode == 0 and "cut" in r2.stdout
 from concurrent.futures import ThreadPoolExecutor

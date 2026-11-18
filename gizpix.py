@@ -11,7 +11,7 @@
   python gizpix.py path                       print the Gizpix folder
 
 Run it from anywhere; the paths are resolved from this file. Read HANDOUT.md first for what to use when."""
-__version__ = "0.2.0"   # keep in step with pyproject.toml and CHANGELOG.md
+__version__ = "0.3.0"   # keep in step with pyproject.toml and CHANGELOG.md
 import ast, os, subprocess, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -19,10 +19,12 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 TOOLS = {
     "pixdraw": ("draw", "module:pixdraw", "draw pixel-art buildings from parameters (3 views, 5 styles, animation, sprite sheet) and compose scenes; no reference image, no AI"),
     "pixart": ("draw", "module:pixart", "draw any pixel art from code with the craft built in: shapes -> ramps, form shading, light-aware outline, lettering, animation, lint + review sheet; no reference image, no AI"),
+    "pix_village": ("draw", "village/pix_village.py", "a complete village set drawn from code: 63 sprites (17 buildings incl. church, barn, smithy; props, trees, 8 villagers with walk cycles, hen, dog) + a village parallax stack (48 s loop); no reference images (writes new files)"),
     "pix_layer": ("layers", "layers/pix_layer.py", "cut an outfit layer out of base-vs-outfit sprites or walk frames (new-colour key, skin drop, solid, outline, bits, drop-parts)"),
     "paperdoll": ("layers", "layers/paperdoll.py", "difference-based layer extract + compose + checks (region, drift, palette key)"),
     "pix_snap": ("prep", "prep/pix_snap.py", "turn an upscaled / off-grid pixel-art image back into real pixels"),
     "pixel_lint": ("check", "check/pixel_lint.py", "pixel-art quality numbers: specks, thick lines, stair breaks, blurry alpha, palette (measures only)"),
+    "pix_parallax": ("parallax", "parallax/pix_parallax.py", "parallax layer stacks: check seams, loop speeds, depth palette; preview GIF/HTML; export Godot 4 / Tiled / LDtk / Phaser / CSS; seam view and heal; draw layers from code (9 presets, time of day, animated stars and waves); review layers (check measures, other commands write new files)"),
     "pix_mixel": ("check", "check/pix_mixel.py", "find mixels: pixels of different sizes mixed in one picture, or no common pixel grid (measures only)"),
     "tile_check": ("check", "check/tile_check.py", "does a tile repeat without a visible seam (measures only)"),
     "check_8dir": ("check", "check/check_8dir.py", "QA of an 8-direction sprite set: poses, walk, compass, mirrors (measures only)"),

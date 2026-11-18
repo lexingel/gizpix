@@ -100,6 +100,8 @@ Run `python gizpix.py list` for the live list; `python gizpix.py help TOOL` for 
 | Group | Tools |
 |---|---|
 | **layers** | `pix_layer` cut an outfit layer from base-vs-outfit sprites or walk frames; `paperdoll` difference-based extract/compose |
+| **village** | `pix_village` a complete village set drawn from code (63 sprites: buildings, props, trees, villagers, animals) and a village parallax stack |
+| **parallax** | `pix_parallax` check, preview and export a parallax layer stack (wrap seams, loop speeds, depth palette, Godot 4 `Parallax2D`), and draw layers from code |
 | **check** (measure only) | `pixel_lint` quality numbers; `pix_mixel` mixed pixel sizes; `palette_diff` colour drift against a reference; `tile_check` seams; `check_8dir` direction-set QA; `qa` batch checks; `apply_pixel_fixes` auditable single-pixel edit list |
 | **clean** | `speck_fix`, `fill_pinholes`, `painterly_clean`, `scrub`, `colormatch`, `ground_snap`, `palette_lock`, `clean_frames`; `despeckle` and `repair_outline` only for noisy generator output |
 | **color** | `hue_shift` turn the hue (same colour always gives the same result across frames); `recolor_groups` variants by colour group; `apply_palette` snap to a fixed palette |
