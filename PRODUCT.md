@@ -18,7 +18,7 @@ Two audiences, confirmed by the owner:
 
 ## Product Purpose
 
-Gizpix is a local, free, offline toolkit of about 30 command-line tools for pixel-art sprites. The UI makes the four jobs the owner chose easy to start and easy to judge: cleaning and measuring frames, cutting outfit layers, drawing buildings and villages, and recolouring and packing frames. Success: someone who has never opened a terminal can load frames, see what a tool would do, check the result at pixel level and save it, without any file being changed by accident.
+Gizpix is a local, free, offline toolkit of about 30 command-line tools for pixel-art sprites. The UI makes the jobs the owner chose easy to start and easy to judge (Start detects what you drop and offers the fitting job; Backgrounds and All tools reach the parallax and village tools and the rest of the registry): cleaning and measuring frames, cutting outfit layers, drawing buildings and villages, and recolouring and packing frames. Success: someone who has never opened a terminal can load frames, see what a tool would do, check the result at pixel level and save it, without any file being changed by accident.
 
 ## Positioning
 

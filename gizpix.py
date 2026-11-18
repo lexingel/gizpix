@@ -11,7 +11,7 @@
   python gizpix.py path                       print the Gizpix folder
 
 Run it from anywhere; the paths are resolved from this file. Read HANDOUT.md first for what to use when."""
-__version__ = "0.3.0"   # keep in step with pyproject.toml and CHANGELOG.md
+__version__ = "0.4.0"   # keep in step with pyproject.toml and CHANGELOG.md
 import ast, os, subprocess, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))

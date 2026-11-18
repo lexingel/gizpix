@@ -18,7 +18,7 @@ A local, free, offline toolkit for pixel-art sprites. It cleans animation frames
 python gizpix.py ui            # opens the interface in your browser (localhost only)
 ```
 
-The interface covers four jobs: **Clean & measure**, **Cut outfit layer**, **Draw buildings**, **Recolour & pack**. Frames sit side by side as columns on an exposure sheet with their numbers; every preview is shown at a whole-number zoom, nearest-neighbour; every result shows the exact command it ran. Nothing is written until you press Save, and Save always makes a new folder, so your originals are never changed. It runs on your machine only (no network, no account).
+The interface starts from the task: drop a folder, files or a `stack.json` on **Start** and Gizpix says what it found and offers the jobs that fit (**Fix my sprite**, **Outfit layer**, **Recolour & pack**, **Draw**, **Backgrounds** for parallax stacks and the village, and **All tools**, a searchable list that runs any registered tool on copies with its exact command shown). Frames sit side by side as columns on an exposure sheet with their numbers; every preview is shown at a whole-number zoom, nearest-neighbour; every result shows the exact command it ran. Nothing is written until you press Save, and Save always makes a new folder, so your originals are never changed. It runs on your machine only (no network, no account).
 
 ![Gizpix interface](images/ui_layer.png)
 
@@ -108,7 +108,7 @@ Run `python gizpix.py list` for the live list; `python gizpix.py help TOOL` for 
 | **sheets** | `align_frames` feet/column alignment; `trim_frames` shared crop; `make_sheet` sprite sheet + JSON; `preview_gif`; `contact_sheet`; `pad_sprite` |
 | **prep** | `pix_snap` turn an upscaled or off-grid image back into real pixels |
 | **rig** | `rig_walk2`, `warp_layer`, `xform`: code-driven walks and moving a layer with the base |
-| **ui** | `python gizpix.py ui`: the local web interface for the four jobs above (not a separate tool; it runs the same commands) |
+| **ui** | `python gizpix.py ui`: the local web interface: Start (drop and detect), five job screens and All tools (not a separate tool; it runs the same commands) |
 | **draw** | `pixdraw`: buildings (house, cottage, inn, tower, round tower, keep, stall), three views (`iso`, `top`, `side`), five JSON styles, scenes with trees, fences, paths; `extract-style` makes a starting style from your own sprites |
 | **effects** | moved to its own tool, GizVFX (https://github.com/lexingel/gizvfx, `python gizvfx.py`):  38 ready effects (torch, fireball, explosions, hits, lightning, ice, heal, magic circle, shields, portals, clouds, rain, snow...) and a recipe language: describe your own effect as a JSON file of layers (glow, ring, particles, blob, bolt, beam...); 22 palettes or your own; seeds; loops that close and one-shots that end empty; GIF, sprite sheet and JSON; `pixfx check` verifies them |
 

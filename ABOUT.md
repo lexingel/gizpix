@@ -103,7 +103,7 @@ pixart can also build a figure from a skeleton and pose it: 14 key-pose actions 
 
 ## Two ways to use it
 
-**In your browser.** Type `gizpix ui` and a page opens with four jobs: Clean and measure, Cut outfit layer, Draw buildings, and Recolour and pack. You pick a folder, press a button and see the pictures before and after, enlarged by whole numbers so the dots stay sharp. Frames are laid out as columns with their numbers underneath. A frame that needs a second look gets a red circle. Nothing is saved until you press Save, and Save always copies into a new folder. Every result also shows the exact command it ran, so you can repeat it later in a script.
+**In your browser.** Type `gizpix ui` and a page opens where you drop a folder of frames, a sprite sheet or a background stack and Gizpix tells you what it found and offers the jobs that fit: fix a sprite, cut an outfit layer, recolour and pack, draw, watch and export a parallax background, or run any tool from a searchable list. You pick a folder, press a button and see the pictures before and after, enlarged by whole numbers so the dots stay sharp. Frames are laid out as columns with their numbers underneath. A frame that needs a second look gets a red circle. Nothing is saved until you press Save, and Save always copies into a new folder. Every result also shows the exact command it ran, so you can repeat it later in a script.
 
 ![The Gizpix web page on the Cut outfit layer job](images/ui_layer.png)
 

@@ -2,8 +2,8 @@
 // Gizpix UI. Plain JavaScript, no build step. Every request goes to this machine's own server; nothing leaves it.
 (() => {
   const T = window.T, TOKEN = document.querySelector('meta[name="gizpix-token"]').content;
-  const JOBS = ["clean", "layer", "draw", "recolor"];
-  const S = { job: "layer", info: null, drawers: {} };
+  const JOBS = ["start", "clean", "layer", "recolor", "draw", "bg", "tools"];
+  const S = { job: "start", info: null, drawers: {} };
 
   // ---- small helpers --------------------------------------------------------------------------------------------------
   function h(tag, attrs, ...kids) {
@@ -18,11 +18,35 @@
   const $ = (s, r = document) => r.querySelector(s);
   const join = (a, b) => a.replace(/[\\/]+$/, "") + "/" + b;
   const say = msg => { $("#live").textContent = ""; setTimeout(() => { $("#live").textContent = msg; }, 30); };
-  async function api(path, body) {
-    const r = await fetch(path, { method: body === undefined ? "GET" : "POST", headers: { "X-Gizpix-Token": TOKEN, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
-    const j = await r.json().catch(() => ({ error: "The server sent a reply this page cannot read." }));
-    if (!r.ok) throw new Error(j.error || r.statusText);
-    return j;
+  // a job run has an id: the server reports what it is doing (progress) and the Stop button ends it
+  let tick = null;
+  function runTicker(on) {
+    clearInterval(tick); tick = null; const rr0 = document.getElementById("rail-run"); if (rr0) rr0.hidden = !on; if (!on) return;
+    let polls = 0;
+    const paint = () => { const a = S.active; if (!a) return; const rr = document.getElementById("rail-run"); if (rr) { rr.hidden = false; rr.querySelector(".rr-t").textContent = T.runningNow(a.cmd || "…"); } const sec = Math.floor((Date.now() - a.t) / 1000); document.querySelectorAll(".busy .progress").forEach(e => { e.textContent = T.elapsed(sec) + (a.cmd ? " · " + a.cmd : ""); }); };
+    tick = setInterval(async () => {
+      paint(); if (++polls % 3) return;
+      const a = S.active; if (!a) return;
+      try { const r = await fetch("/api/progress?" + q({ run: a.id })); const j = await r.json(); if (j.cmd) a.cmd = j.cmd.replace("python gizpix.py ", "").split(" ").slice(0, 2).join(" "); } catch {}
+    }, 500);
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    const rr = document.getElementById("rail-run"); if (rr) rr.append(h("span", { class: "rr-t" }), h("button", { type: "button", class: "btn small stopbtn", onclick: () => stopRun() }, T.stop));
+    const sk = document.querySelector(".skip"); if (sk) sk.textContent = T.skip; const fl = document.getElementById("flow"); if (fl) fl.setAttribute("aria-label", T.stepsLabel); const nav = document.querySelector("nav.rail"); if (nav) nav.setAttribute("aria-label", T.railLabel);
+  });
+  async function stopRun() {
+    const a = S.active; if (!a) return; document.querySelectorAll(".busy .stopbtn").forEach(b => { b.disabled = true; b.textContent = T.stopping; });
+    try { await fetch("/api/stop", { method: "POST", headers: { "X-Gizpix-Token": TOKEN, "Content-Type": "application/json" }, body: JSON.stringify({ run: a.id }) }); } catch {}
+  }
+  async function api(path, body, opts) {
+    const job = body !== undefined && path.startsWith("/api/job/") && !(opts && opts.run === false); let run = null;
+    if (job) { run = { id: "r" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36), t: Date.now(), cmd: "" }; body = { ...body, _run: run.id }; S.active = run; runTicker(true); document.querySelectorAll(".busy .progress, .busy .stopbtn").forEach(e => { e.hidden = false; }); }
+    try {
+      const r = await fetch(path, { method: body === undefined ? "GET" : "POST", headers: { "X-Gizpix-Token": TOKEN, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+      const j = await r.json().catch(() => ({ error: T.badReply }));
+      if (!r.ok) throw new Error(j.error || r.statusText);
+      return j;
+    } finally { if (job && S.active === run) { S.active = null; runTicker(false); } }
   }
   const q = p => new URLSearchParams({ t: TOKEN, ...p }).toString();
   const png = (path, scale = 1) => "/api/png?" + q({ path, scale });
@@ -63,14 +87,16 @@
     } }, T.pickFolder); pick.title = T.pickTip;
     return h("div", { class: "field" }, h("label", { for: id }, label), h("div", { class: "row" }, input, pick, h("button", { type: "button", class: "btn fit", title: T.browseTip, onclick: () => open() }, T.browse)), box);
   }
+  function markStale(st) { if (st.result && !st.stale) { st.stale = true; render(); } }      // options or input changed after a run: the old result cannot be saved and its command is hidden
+  const staleBox = st => (st.result && st.stale ? h("p", { class: "hint", role: "status" }, T.staleNote) : null);
   function copyButton(getText) {
     const b = h("button", { type: "button", class: "btn small" }, T.copy);
-    b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(getText()); b.textContent = T.copied; say(T.copied); setTimeout(() => (b.textContent = T.copy), 1500); } catch { b.textContent = "Select the text above"; } });
+    b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(getText()); b.textContent = T.copied; say(T.copied); setTimeout(() => (b.textContent = T.copy), 1500); } catch { b.textContent = T.selectAbove; } });
     return b;
   }
-  function commandBox(cmds, outPath, savedPath, planned) {
+  function commandBox(cmds, outPath, savedPath, planned, note) {
     const text = cmds.map(c => c.split(outPath).join(savedPath || planned || T.resultFolder).split("\\").join("/")).join("\n");
-    return h("section", { class: "panel" }, h("h2", {}, T.command), h("pre", { class: "cmd", tabindex: "0" }, text), h("div", { class: "row" }, copyButton(() => text)), h("p", { class: "hint", style: "margin:8px 0 0" }, T.commandHint));
+    return h("section", { class: "panel" }, h("h2", {}, T.command), h("pre", { class: "cmd", tabindex: "0" }, text), h("div", { class: "row" }, copyButton(() => text)), h("p", { class: "hint", style: "margin:8px 0 0" }, T.commandHint), note ? h("p", { class: "hint", style: "margin:4px 0 0" }, note) : null);
   }
   function savePanel(st, { ready, defaultName, extra }) {
     const nameId = "save-name", name = h("input", { type: "text", id: nameId, value: st.name || defaultName, spellcheck: "false" });
@@ -91,9 +117,9 @@
     return h("section", { class: "panel", style: "display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap" }, h("div", { style: "min-width:0" }, h("h2", { style: "margin:0 0 4px" }, T.load), h("span", { class: "hint", style: "overflow-wrap:anywhere" }, summary)),
       h("button", { type: "button", class: "btn small", onclick: () => { st.editLoad = true; render(); } }, T.change));
   }
-  const errorBox = st => st.error ? h("div", { class: "notice", role: "alert" }, h("h3", {}, T.errorTitle), h("p", {}, st.error), h("p", {}, T.errorTry)) : null;
+  const errorBox = st => st.error ? (st.error.startsWith("Stopped") ? h("div", { class: "notice", role: "status" }, h("h3", {}, T.stoppedTitle), h("p", {}, st.error)) : h("div", { class: "notice", role: "alert" }, h("h3", {}, T.errorTitle), h("p", {}, st.error), /no such|no PNG|not a PNG|not an image/i.test(st.error) ? h("p", {}, T.errorTry) : null)) : null;
   const empty = (title, text) => h("div", { class: "empty" }, h("b", {}, title), text);
-  const busy = text => h("div", { class: "busy", role: "status" }, text);
+  const busy = text => { const on = !!S.active; return h("div", { class: "busy", role: "status", tabindex: "-1" }, h("span", { class: "msg" }, text), h("span", { class: "progress", hidden: !on }, on ? T.elapsed(Math.floor((Date.now() - S.active.t) / 1000)) : ""), h("button", { type: "button", class: "btn small stopbtn", hidden: !on, onclick: stopRun }, T.stop)); };
 
   function zoomFor(st, frameW, n, avail) {
     let fit = 1; for (let k = 4; k >= 1; k--) if (n * (frameW * k + 2) + 8 * (n - 1) <= avail - 4) { fit = k; break; }
@@ -136,15 +162,15 @@
     const loadSample = () => { const s = T.layerSamples[+sel.value]; L.base = join(root, s.base); L.outfit = join(root, s.outfit); L.result = null; L.saved = null; L.checked = new Set(); L.name = s.outfit.split("/")[0].replace("drobe", "dark_robe"); say(T.useSample); render(); };
     const load = h("section", {}, h("h2", {}, T.load),
       root ? h("div", { class: "field" }, h("label", { for: sampleId }, T.sample), h("div", { class: "row" }, sel, h("button", { type: "button", class: "btn fit", onclick: loadSample }, T.useSample))) : null,
-      pathField(T.baseFolder, () => L.base, v => (L.base = v), flowOnly), pathField(T.outfitFolder, () => L.outfit, v => (L.outfit = v), flowOnly), h("p", { class: "hint" }, T.sameNames));
+      pathField(T.baseFolder, () => L.base, v => { L.base = v; markStale(L); }, flowOnly), pathField(T.outfitFolder, () => L.outfit, v => { L.outfit = v; markStale(L); }, flowOnly), h("p", { class: "hint" }, T.sameNames));
     const run = async () => {
       if (!L.base || !L.outfit) { L.error = T.chooseBoth; return render(); }
       L.editLoad = false; L.busy = true; L.error = null; L.saved = null; L.checked = new Set(); L.frame = 0; render();
-      try { L.result = await api("/api/job/layer", { base: L.base, outfit: L.outfit, name: L.name || "layer", options: L.opt }); say(L.result.summary); } catch (e) { L.error = e.message; L.result = null; }
+      try { L.result = await api("/api/job/layer", { base: L.base, outfit: L.outfit, name: L.name || "layer", options: L.opt }); L.stale = false; say(L.result.summary); } catch (e) { L.error = e.message; L.result = null; }
       L.busy = false; render();
     };
-    const o = L.opt, chk = (label, key, hint) => h("label", { class: "check" }, h("input", { type: "checkbox", checked: o[key], onchange: e => (o[key] = e.target.checked) }), h("span", {}, label, hint ? h("small", {}, hint) : null));
-    const skin = h("select", { id: "skin", onchange: e => (o.drop_skin = e.target.value) }, [["auto", T.skinAuto], ["near", T.skinNear], ["none", T.skinOff]].map(([v, t]) => h("option", { value: v, selected: o.drop_skin === v }, t)));
+    const o = L.opt, chk = (label, key, hint) => h("label", { class: "check" }, h("input", { type: "checkbox", checked: o[key], onchange: e => { o[key] = e.target.checked; markStale(o === C.opt ? C : L); } }), h("span", {}, label, hint ? h("small", {}, hint) : null));
+    const skin = h("select", { id: "skin", onchange: e => { o.drop_skin = e.target.value; markStale(L); } }, [["auto", T.skinAuto], ["near", T.skinNear], ["none", T.skinOff]].map(([v, t]) => h("option", { value: v, selected: o.drop_skin === v }, t)));
     const options = h("section", { class: "panel" }, h("h2", {}, T.options), chk(T.optSolid, "solid", T.optSolidHint), h("div", { class: "field" }, h("label", { for: "skin" }, T.optSkin), skin), chk(T.optBits, "bits"), chk(T.optParts, "drop_parts"), chk(T.optOutline, "outline"),
       h("button", { type: "button", class: "btn block" + (L.result ? "" : " primary"), disabled: L.busy, onclick: run }, L.busy ? T.cutting : T.cutLayer));
     let review;
@@ -170,23 +196,23 @@
         L.result.summary ? h("p", { class: "hint", style: "margin:8px 0 0" }, L.result.summary) : null));
     }
     const flaggedL = L.result ? L.result.files.map((x, i) => i).filter(i => { const px = L.result.files.map(y => y.opaque), m = median(px); return m && Math.abs(px[i] - m) > 0.25 * m && !L.checked.has(i); }) : [];
-    side.push(savePanel(L, { ready: !!L.result, defaultName: "robe", extra: flaggedL.length ? h("p", { class: "flag" }, T.unchecked(flaggedL.length)) : null }));
-    if (L.result) side.push(commandBox(L.result.commands, L.result.out, L.saved, outName() + "/" + (safe(L.name) || "robe")));
-    return { work: [loadOrSummary(L, load, short(L.base) + "  +  " + short(L.outfit)), errorBox(L), review], side, step: L.saved ? 3 : L.result ? 2 : (L.base && L.outfit) ? 1 : 0, done: [!!(L.base && L.outfit), !!L.result, !!L.result, !!L.saved] };
+    side.push(savePanel(L, { ready: !!L.result && !L.stale, defaultName: "robe", extra: flaggedL.length ? h("p", { class: "flag" }, T.unchecked(flaggedL.length)) : null }));
+    if (L.result && !L.stale) side.push(commandBox(L.result.commands, L.result.out, L.saved, outName() + "/" + (safe(L.name) || "robe")));
+    return { work: [loadOrSummary(L, load, short(L.base) + "  +  " + short(L.outfit)), errorBox(L), staleBox(L), review], side, step: L.saved ? 3 : L.result ? 2 : (L.base && L.outfit) ? 1 : 0, done: [!!(L.base && L.outfit), !!L.result, !!L.result, !!L.saved] };
   };
 
   // ---- job: clean & measure --------------------------------------------------------------------------------------------
   const C = { input: "", opt: { speck_fix: true, fill_pinholes: true }, result: null, busy: false, error: null, frame: 0, zoom: 0, checked: new Set(), name: "cleaned", saved: null, sampleMsg: "" };
   S.drawers.clean = function () {
     const sample = async () => { C.busy = true; C.error = null; render(); try { const r = await api("/api/job/sample/damaged", {}); C.input = r.out; C.result = null; C.saved = null; C.sampleMsg = T.cleanSampleDone; } catch (e) { C.error = e.message; } C.busy = false; render(); };
-    const load = h("section", {}, h("h2", {}, T.load), pathField(T.inputFolder, () => C.input, v => (C.input = v), flowOnly), h("div", { class: "row" }, h("button", { type: "button", class: "btn fit", onclick: sample }, T.cleanSample)), C.sampleMsg ? h("p", { class: "hint" }, C.sampleMsg) : null);
+    const load = h("section", {}, h("h2", {}, T.load), pathField(T.inputFolder, () => C.input, v => { C.input = v; markStale(C); }, flowOnly), h("div", { class: "row" }, h("button", { type: "button", class: "btn fit", onclick: sample }, T.cleanSample)), C.sampleMsg ? h("p", { class: "hint" }, C.sampleMsg) : null);
     const run = async () => {
       if (!C.input) { C.error = T.chooseOne; return render(); }
       C.editLoad = false; C.busy = true; C.error = null; C.saved = null; C.checked = new Set(); C.frame = 0; render();
-      try { C.result = await api("/api/job/clean", { input: C.input, ...C.opt }); say(T.review); } catch (e) { C.error = e.message; C.result = null; }
+      try { C.result = await api("/api/job/clean", { input: C.input, ...C.opt }); C.stale = false; say(T.review); } catch (e) { C.error = e.message; C.result = null; }
       C.busy = false; render();
     };
-    const o = C.opt, chk = (label, key) => h("label", { class: "check" }, h("input", { type: "checkbox", checked: o[key], onchange: e => (o[key] = e.target.checked) }), h("span", {}, label));
+    const o = C.opt, chk = (label, key) => h("label", { class: "check" }, h("input", { type: "checkbox", checked: o[key], onchange: e => { o[key] = e.target.checked; markStale(o === C.opt ? C : L); } }), h("span", {}, label));
     const options = h("section", { class: "panel" }, h("h2", {}, T.options), chk(T.optSpeck, "speck_fix"), chk(T.optPinholes, "fill_pinholes"), h("button", { type: "button", class: "btn block" + (C.result ? "" : " primary"), disabled: C.busy, onclick: run }, C.busy ? T.repairing : T.runClean));
     let review;
     if (C.busy) review = busy(T.repairing); else if (!C.result) review = empty(T.nothingYet, T.emptyClean);
@@ -207,9 +233,9 @@
     const side = [options];
     if (C.result) { const t = C.result.totals; side.push(h("section", { class: "panel" }, h("h2", {}, T.results), h("dl", { class: "stats" }, h("dt", {}, T.totalChanged), h("dd", {}, fmt(t.changed)), h("dt", {}, T.totalOdd), h("dd", {}, fmt(t.odd_px.before) + " → " + fmt(t.odd_px.after)), h("dt", {}, T.totalPinholes), h("dd", {}, fmt(t.pinholes.before) + " → " + fmt(t.pinholes.after))))); }
     const flaggedC = C.result ? C.result.rows.map((x, i) => i).filter(i => { const x = C.result.rows[i]; return ((x.odd_px.after || 0) > 9 || (x.pinholes.after || 0) > 0) && !C.checked.has(i); }) : [];
-    side.push(savePanel(C, { ready: !!C.result, defaultName: "cleaned", extra: flaggedC.length ? h("p", { class: "flag" }, T.unchecked(flaggedC.length)) : null }));
-    if (C.result) side.push(commandBox(C.result.commands, C.result.out, C.saved, outName() + "/" + (safe(C.name) || "cleaned")));
-    return { work: [loadOrSummary(C, load, short(C.input)), errorBox(C), review], side, step: C.saved ? 3 : C.result ? 2 : C.input ? 1 : 0, done: [!!C.input, !!C.result, !!C.result, !!C.saved] };
+    side.push(savePanel(C, { ready: !!C.result && !C.stale, defaultName: "cleaned", extra: flaggedC.length ? h("p", { class: "flag" }, T.unchecked(flaggedC.length)) : null }));
+    if (C.result && !C.stale) side.push(commandBox(C.result.commands, C.result.out, C.saved, outName() + "/" + (safe(C.name) || "cleaned"), T.cleanCommandNote));
+    return { work: [loadOrSummary(C, load, short(C.input)), errorBox(C), staleBox(C), review], side, step: C.saved ? 3 : C.result ? 2 : C.input ? 1 : 0, done: [!!C.input, !!C.result, !!C.result, !!C.saved] };
   };
 
   // ---- job: draw buildings ---------------------------------------------------------------------------------------------
@@ -218,8 +244,8 @@
     const seq = ++D.seq, base = { type: D.type, proj: D.proj, floors: D.floors, wing: D.wing, dormers: D.dormers, lantern: D.lantern };
     D.busy = true; D.error = null; render();
     try {
-      const main = await api("/api/job/draw/preview", { ...base, style: D.style, scale: 4 }); if (seq !== D.seq) return; D.preview = main;
-      const others = await Promise.all(S.info.styles.map(s => api("/api/job/draw/preview", { ...base, style: s, scale: 2 }).then(r => [s, r]))); if (seq !== D.seq) return; D.styles = Object.fromEntries(others);
+      const main = await api("/api/job/draw/preview", { ...base, style: D.style, scale: 4 }, { run: false }); if (seq !== D.seq) return; D.preview = main;
+      const others = await Promise.all(S.info.styles.map(s => api("/api/job/draw/preview", { ...base, style: s, scale: 2 }, { run: false }).then(r => [s, r]))); if (seq !== D.seq) return; D.styles = Object.fromEntries(others);
     } catch (e) { if (seq === D.seq) { D.error = e.message; D.preview = null; D.styles = {}; } }
     if (seq === D.seq) { D.busy = false; render(); }
   }
@@ -302,32 +328,222 @@
     return { work: [loadOrSummary(R, load, (R.mode === "pack" ? T.rcPack : T.rcRecolor) + " · " + short(R.input)), errorBox(R), review], side, step: R.saved ? 3 : R.result ? 2 : R.input ? 1 : 0, done: [!!R.input, !!R.result, !!R.result, !!R.saved] };
   };
 
+  // ---- start: drop something, see what it is, pick the job -----------------------------------------------------------------
+  const A = { path: "", typed: "", found: null, busy: "", error: null };
+  async function look(path) {
+    A.busy = T.looking; A.error = null; A.found = null; render();
+    try { A.found = await api("/api/job/detect", { path }); A.path = A.found.path; A.typed = A.found.path; say(A.found.facts.join(", ")); } catch (e) { A.error = e.message; }
+    A.busy = ""; render();
+  }
+  const UPLOAD_OK = /\.(png|gif|json)$/i;
+  async function dropped(dt) {
+    const files = [], walk = async (entry, depth) => {
+      if (entry.isFile) files.push(await new Promise(res => entry.file(res)));
+      else if (entry.isDirectory && depth === 0) { const rd = entry.createReader(); let batch; do { batch = await new Promise(res => rd.readEntries(res)); for (const e of batch) await walk(e, 1); } while (batch.length); }
+    };
+    const entries = [...(dt.items || [])].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    if (entries.length) for (const e of entries) await walk(e, 0); else files.push(...dt.files);
+    return upload(files);
+  }
+  async function upload(all) {
+    const files = [...all].filter(f => UPLOAD_OK.test(f.name));
+    if (!files.length) { A.error = T.dropNothing; A.found = null; return render(); }
+    A.busy = T.uploading; A.error = null; A.found = null; render();
+    try {
+      const up = await api("/api/job/upload/new", {});
+      for (let i = 0; i < files.length; i += 4) await Promise.all(files.slice(i, i + 4).map(async f => {
+        const r = await fetch("/api/upload?" + q({ id: up.id, name: f.name }), { method: "POST", headers: { "X-Gizpix-Token": TOKEN }, body: f });
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+      }));
+      return look(up.path);
+    } catch (e) { A.error = e.message; A.busy = ""; render(); }
+  }
+  function openTool(name, input, args) { const t = RT.list.find(x => x.name === name) || {}; RT.tool = name; RT.input = input || ""; RT.args = args != null ? args : (t.manual ? "" : t.args || "{in}"); RT.result = null; RT.error = null; RT.saved = null; RT.help = null; RT.showHelp = !!t.manual; RT.name = name; S.job = "tools"; }
+  const card = (title, why, onclick, best) => h("button", { type: "button", class: "card" + (best ? " best" : ""), onclick }, h("span", { class: "ct" }, title, best ? h("span", { class: "sug" }, " " + T.suggested) : null), h("span", { class: "cw" }, why));
+  function cardsFor(f) {
+    const p = f.path, n = f.n, go = fn => () => { fn(); render(); $("#main").focus(); }, tool = (name, args) => () => { ensureTools().then(() => { openTool(name, p, args); render(); $("#main").focus(); }); };
+    if (f.kind === "stack") return [card(T.cardStackOpen, T.cardStackOpenWhy, () => { B.path = f.json || p; B.typed = f.json || p; S.job = "bg"; openStack(B.path); }, true), card(T.cardStackCheck, T.cardStackCheckWhy, tool("pix_parallax", "check {json} --strict"))];
+    if (f.kind === "folders") return f.subs.slice(0, 8).map(s => card(T.cardFolder(s), T.cardFolderWhy, () => look(join(p, s))));
+    const out = [];
+    out.push(f.defects ? card(T.cardClean, T.cardCleanWhy(f.odd_px, f.pinholes), go(() => { C.input = p; C.result = null; C.saved = null; C.sampleMsg = ""; S.job = "clean"; }), true) : card(T.cardCleanNone, f.measured === false ? T.cardCleanLargeWhy : T.cardCleanNoneWhy, go(() => { C.input = p; C.result = null; C.saved = null; C.sampleMsg = ""; S.job = "clean"; })));
+    out.push(card(T.cardRecolor, T.cardRecolorWhy, go(() => { R.input = p; R.mode = "recolor"; R.result = null; R.saved = null; S.job = "recolor"; })));
+    if (n > 1) out.push(card(T.cardPack, T.cardPackWhy(n), go(() => { R.input = p; R.mode = "pack"; R.result = null; R.saved = null; S.job = "recolor"; })));
+    out.push(card(T.cardLayer, T.cardLayerWhy, go(() => { L.outfit = p; L.result = null; L.saved = null; S.job = "layer"; })));
+    out.push(card(T.cardMeasure, T.cardMeasureWhy, tool("pixel_lint", "{in}")));
+    return out;
+  }
+  let toolsLoading = null;
+  function ensureTools() { if (RT.list) return Promise.resolve(); return (toolsLoading = toolsLoading || api("/api/tools").then(l => { RT.list = l; }).catch(e => { RT.list = []; RT.error = e.message; })); }
+  S.drawers.start = function () {
+    const f = A.found, fileIn = h("input", { type: "file", multiple: true, accept: ".png,.gif,.json", style: "display:none", id: "file-input", onchange: e => upload(e.target.files) });
+    const pick = h("button", { type: "button", class: "btn primary fit", onclick: async e => { const b = e.currentTarget; b.disabled = true; b.textContent = T.picking; try { const d = await api("/api/pick-folder", { path: A.typed }); if (d.path) { A.typed = d.path; await look(d.path); return; } } catch (err) { A.error = err.message; } render(); } }, T.pickFolder);
+    const typed = h("input", { type: "text", id: "start-path", value: A.typed, spellcheck: "false", autocomplete: "off", "aria-label": T.pastePath }); typed.addEventListener("input", () => { A.typed = typed.value; }); typed.addEventListener("keydown", e => { if (e.key === "Enter" && A.typed.trim()) look(A.typed.trim()); });
+    const damaged = async () => { A.busy = T.uploading; A.error = null; render(); try { const r = await api("/api/job/sample/damaged", {}); await look(r.out); return; } catch (e) { A.error = e.message; } A.busy = ""; render(); };
+    const zone = h("div", { class: "drop", id: "drop" }, h("strong", {}, T.dropTitle), h("p", { class: "hint" }, T.dropHint),
+      h("div", { class: "row" }, pick, h("button", { type: "button", class: "btn fit", onclick: () => fileIn.click() }, T.chooseFiles), h("button", { type: "button", class: "btn fit", onclick: damaged }, T.tryDamaged)),
+      h("div", { class: "field", style: "margin:0" }, h("label", { for: "start-path" }, T.pastePath), h("div", { class: "row" }, typed, h("button", { type: "button", class: "btn fit", disabled: !!A.busy, onclick: () => A.typed.trim() && look(A.typed.trim()) }, T.look))), fileIn);
+    zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("over"); }); zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+    zone.addEventListener("drop", e => { e.preventDefault(); zone.classList.remove("over"); dropped(e.dataTransfer); });
+    let found = null;
+    if (A.busy) found = busy(A.busy);
+    else if (f) found = h("section", { class: "found" }, h("h2", {}, T.found),
+      f.thumbs.length ? h("div", { class: "strip", "aria-hidden": "true" }, f.thumbs.map(t => h("img", { src: "/api/png?" + q({ path: t, scale: 2, crop: 1 }), alt: "" }))) : null,
+      h("p", { class: "facts" }, f.facts.map((x, i) => h("span", {}, x, i < f.facts.length - 1 ? " · " : ""))),
+      h("h2", { style: "margin-top:20px" }, T.jobsFit), h("div", { class: "cards" }, cardsFor(f)));
+    const recent = (S.info.recent || []).slice(0, 6).map(x => [x.name, x.path]);
+    const lanes = h("div", { class: "lanes" },
+      h("div", {}, h("h2", {}, T.continueTitle), h("p", { class: "hint" }, recent.length ? T.continueHint : T.nothingToContinue), recent.map(([l, pth]) => h("button", { type: "button", class: "btn small", style: "margin:0 8px 8px 0", onclick: () => look(pth) }, l + " · " + short(pth)))),
+      h("div", {}, h("h2", {}, T.drawNew), h("p", { class: "hint" }, T.drawNewHint), h("div", { class: "row" }, h("button", { type: "button", class: "btn fit", onclick: () => { S.job = "draw"; render(); $("#main").focus(); } }, T.drawBuilding), h("button", { type: "button", class: "btn fit", onclick: () => ensureTools().then(() => { openTool("pix_village", "", "kit {out}"); render(); $("#main").focus(); }) }, T.drawVillage), h("button", { type: "button", class: "btn fit", onclick: () => { S.job = "bg"; render(); $("#main").focus(); } }, T.drawBackground))),
+      h("div", {}, h("h2", {}, T.notSure), h("p", { class: "hint" }, T.browseHint), h("button", { type: "button", class: "btn", onclick: () => { S.job = "tools"; render(); $("#main").focus(); } }, T.browseAll)));
+    return { full: true, flow: false, work: [zone, A.error ? errorBox(A) : null, found, lanes], side: [] };
+  };
+
+  // ---- backgrounds: a parallax stack, watched moving, checked per layer, exported ---------------------------------------------------
+  const HS = { name: "", result: null, saved: null, saving: false, error: null };
+  const B = { heal: {}, healed: null, path: "", typed: "", data: null, busy: "", error: null, preset: "", hour: "", pace: "walk", seed: 1, seam: {}, target: "godot", mode: "camera", zoom: "", result: null, name: "", saved: null, saving: false, exporting: false, drawnOut: "" };
+  async function openStack(path) {
+    B.busy = T.bgOpening; B.error = null; B.data = null; B.result = null; B.saved = null; B.seam = {}; B.healed = null; render();
+    try { B.data = await api("/api/job/bg/open", { path }); B.name = B.data.name; say(B.data.name); } catch (e) { B.error = e.message; }
+    B.busy = ""; render();
+  }
+  async function drawStack(village) {
+    B.busy = T.bgDrawing; B.error = null; B.data = null; B.result = null; B.saved = null; B.seam = {}; B.healed = null; render();
+    try { B.data = await api("/api/job/bg/draw", village ? { village: true, seed: B.seed } : { preset: B.preset, hour: B.hour, pace: B.pace, seed: B.seed }); B.name = B.data.name; B.drawnOut = B.data.drawn; say(B.data.name); } catch (e) { B.error = e.message; }
+    B.busy = ""; render();
+  }
+  S.drawers.bg = function () {
+    const presets = (S.info.presets || []), field = (label, id, control) => h("div", { class: "field" }, h("label", { for: id }, label), control);
+    if (!B.preset && presets.length) B.preset = presets[0];
+    const typed = h("input", { type: "text", id: "bg-path", value: B.typed, spellcheck: "false", autocomplete: "off" }); typed.addEventListener("input", () => { B.typed = typed.value; }); typed.addEventListener("keydown", e => { if (e.key === "Enter" && B.typed.trim()) openStack(B.typed.trim()); });
+    const opts = (list, cur, key, lab) => list.map(v => h("option", { value: v, selected: v === cur }, lab ? lab(v) : v)), sel = (id, cur, list, key, lab) => { const s = h("select", { id }, opts(list, cur, key, lab)); s.addEventListener("change", () => { B[key] = s.value; }); return s; };
+    const seed = h("input", { type: "number", id: "bg-seed", min: 1, value: B.seed }); seed.addEventListener("input", () => { B.seed = Math.max(1, parseInt(seed.value, 10) || 1); });
+    const open = h("section", { class: "panel" }, field(T.bgOpenField, "bg-path", h("div", { class: "row" }, typed, h("button", { type: "button", class: "btn fit", disabled: !!B.busy, onclick: () => B.typed.trim() && openStack(B.typed.trim()) }, T.bgOpen))),
+      h("h2", { style: "margin-top:16px" }, T.bgDrawTitle),
+      h("div", { class: "row bgdraw" }, field(T.bgPreset, "bg-preset", sel("bg-preset", B.preset, presets, "preset")), field(T.bgHour, "bg-hour", sel("bg-hour", B.hour, ["", ...(S.info.hours || [])], "hour", v => v || T.bgHourAny)), field(T.bgPace, "bg-pace", sel("bg-pace", B.pace, ["walk", "run"], "pace", v => (v === "walk" ? T.bgPaceWalk : T.bgPaceRun))), field(T.bgSeed, "bg-seed", seed)),
+      h("div", { class: "row" }, h("button", { type: "button", class: "btn fit", disabled: !!B.busy, onclick: () => drawStack(false) }, T.bgDraw), h("button", { type: "button", class: "btn fit", disabled: !!B.busy, onclick: () => drawStack(true) }, T.bgVillage)),
+      h("p", { class: "hint", style: "margin:8px 0 0" }, T.bgVillageHint2));
+    const work = [open], side = [];
+    if (B.error) work.push(errorBox(B));
+    if (B.busy) work.push(busy(B.busy));
+    else if (B.data) {
+      const d = B.data, bad = d.layers.filter(l => l.flags.length).length;
+      if (B.healed) work.push(h("section", { class: "panel", role: "status" }, h("h2", {}, T.bgHealedTitle), h("p", { style: "margin:0" }, T.bgHealedText(B.healed.layer, B.healed.method, B.healed.band))));
+      if (B.exporting) work.push(busy(T.bgExporting));
+      work.push(h("section", {}, h("h2", {}, T.bgPreview), (() => { const fr = h("iframe", { class: "bgprev", "data-src": d.preview, sandbox: "allow-scripts", title: T.bgPreview }); fetch("/api/raw?" + q({ path: d.preview })).then(r => r.text()).then(t => { fr.srcdoc = t; }).catch(() => {}); return fr; })(), h("p", { class: "hint", style: "margin:6px 0 0" }, T.bgPreviewHint)));
+      const rows = d.layers.slice().reverse().map(l => {
+        const key = l.file, open_ = B.seam[key];
+        const seamBtn = h("button", { type: "button", id: "seam-" + key.replace(/[^A-Za-z0-9_-]/g, "_"), class: "btn small", "aria-expanded": open_ ? "true" : "false", onclick: async () => {
+          if (open_) { delete B.seam[key]; return render(); }
+          B.seam[key] = { loading: true }; render();
+          try { B.seam[key] = await api("/api/job/bg/seam", { path: l.path }); } catch (e) { B.seam[key] = { error: e.message }; } render();
+        } }, open_ ? T.bgSeamHide : T.bgSeamView);
+        const hp = B.heal[key] || (B.heal[key] = { method: "profile", band: 24 }), animated = l.frames > 1;
+        const healBox = !open_ || open_.loading || open_.error || animated || (l.repeat !== "x" && l.repeat !== "xy") ? null : h("div", { class: "healbox" }, h("h3", {}, T.bgHealTitle),
+          h("div", { class: "field" }, h("label", { for: "heal-m-" + key }, T.bgHealMethod), (() => { const s = h("select", { id: "heal-m-" + key }, [["profile", T.bgHealProfile], ["mincut", T.bgHealMincut]].map(([k, v]) => h("option", { value: k, selected: k === hp.method }, v))); s.addEventListener("change", () => { hp.method = s.value; }); return s; })()),
+          h("div", { class: "field" }, h("label", { for: "heal-b-" + key }, T.bgHealBand), (() => { const n = h("input", { type: "number", id: "heal-b-" + key, min: 1, max: 400, value: hp.band }); n.addEventListener("input", () => { hp.band = Math.max(1, parseInt(n.value, 10) || 24); }); return n; })()),
+          h("button", { type: "button", class: "btn small", disabled: !!B.busy || B.exporting, onclick: async () => {
+            B.busy = T.bgHealing; B.error = null; render();
+            try { const d2 = await api("/api/job/bg/heal", { json: d.json, layer: l.file, method: hp.method, band: hp.band }); B.data = d2; B.healed = d2.healed; B.seam = {}; B.result = null; B.saved = null; HS.result = { out: d2.drawn }; HS.saved = null; HS.name = HS.name || T.bgHealSaveName; say(T.bgHealedTitle); } catch (e) { B.error = e.message; }
+            B.busy = ""; render();
+          } }, T.bgHealBtn));
+        const sv = open_ ? (open_.loading ? h("p", { class: "hint" }, T.bgSeamLoading) : open_.error ? h("p", { class: "hint" }, open_.error) : [(() => { const im = h("img", { src: "/api/png?" + q({ path: open_.png, scale: 1 }), alt: T.bgSeamView + ": " + l.file }), box = h("div", { class: "seamview" }, im); im.addEventListener("load", () => { box.scrollLeft = Math.max(0, (im.naturalWidth - box.clientWidth) / 2); }); return box; })(), healBox]) : null;
+        const seamNotes = l.notes.filter(n => /seam/i.test(n)), otherNotes = l.notes.filter(n => !/seam/i.test(n));
+        return h("tr", {}, h("th", { scope: "row" }, h("div", { class: "lname" }, h("span", { class: "tn" }, l.file), h("span", { class: "hint" }, l.w + "×" + l.h + (l.frames > 1 ? " · " + l.frames + " frames" : "")), h("div", { class: "lstrip" }, h("img", { src: "/api/png?" + q({ path: l.path, scale: 1 }), alt: "" })))),
+          h("td", {}, h("div", { class: "moves" }, h("span", { class: "facts" }, T.bgMoves(l.scroll[0], l.scroll[1], l.px)), otherNotes.map(n => h("span", { class: "hint" }, n)))),
+          h("td", {}, l.flags.length ? [h("span", { class: "pencil" }, T.needsLook), l.flags.map(f => h("span", { class: "hint flagtext" }, f))] : [T.bgFine, seamNotes.map(n => h("span", { class: "hint flagtext soft" }, n))], h("div", { style: "margin-top:8px" }, seamBtn), sv));
+      });
+      work.push(h("section", {}, h("h2", {}, T.bgLayers), h("div", { class: "sheetwrap" }, h("table", { class: "ttable layers" }, h("thead", {}, h("tr", {}, h("th", { scope: "col" }, T.bgLayerCol), h("th", { scope: "col" }, T.bgMovesCol), h("th", { scope: "col" }, T.bgCheckCol))), h("tbody", {}, rows))),
+        h("p", { class: "hint", style: "margin:8px 0 0" }, d.loop_frames ? T.bgLoop(d.loop_frames, d.loop_seconds) : T.bgNoLoop)));
+      work.push(d.general.length ? h("div", { class: "notice", role: "note" }, h("h3", {}, T.warningTitle), d.general.map(g => h("p", {}, g)), h("p", {}, T.bgLimit)) : h("p", { class: "hint" }, T.bgLimit));
+      const tsel = h("select", { id: "bg-target" }, Object.entries(T.bgTargets).map(([k, v]) => h("option", { value: k, selected: k === B.target }, v))); tsel.addEventListener("change", () => { B.target = tsel.value; B.result = null; render(); });
+      const msel = h("select", { id: "bg-mode" }, [["camera", T.bgModeCamera], ["loop", T.bgModeLoop]].map(([k, v]) => h("option", { value: k, selected: k === B.mode }, v))); msel.addEventListener("change", () => { B.mode = msel.value; });
+      const zoom = h("input", { type: "text", id: "bg-zoom", value: B.zoom, spellcheck: "false", placeholder: "0.5" }); zoom.addEventListener("input", () => { B.zoom = zoom.value; });
+      const exportNow = async () => { B.exporting = true; B.error = null; B.result = null; B.saved = null; render(); try { const rx = await api("/api/job/bg/export", { json: d.json, target: B.target, mode: B.mode, min_zoom: B.zoom }); if (B.data && B.data.json === d.json) { B.result = rx; say(T.bgExported); } } catch (e) { B.error = e.message; } B.exporting = false; render(); };
+      side.push(h("section", { class: "panel" }, h("h2", {}, T.bgExport), field(T.bgTarget, "bg-target", tsel), B.target === "godot" ? [field(T.bgMode, "bg-mode", msel), field(T.bgZoom, "bg-zoom", zoom)] : null,
+        h("button", { type: "button", class: "btn primary block", disabled: B.exporting, onclick: exportNow }, B.exporting ? T.bgExporting : T.bgExportBtn)));
+      if (B.healed && HS.result) side.push(savePanel(HS, { ready: true, defaultName: T.bgHealSaveName }));
+      if (B.result) {
+        side.push(h("section", { class: "panel" }, h("h2", {}, T.bgExported), h("p", { class: "facts", style: "overflow-wrap:anywhere" }, B.result.files.join(", ")), B.result.files.includes("preview.gif") ? h("figure", { class: "gifbox" }, h("img", { src: "/api/raw?" + q({ path: B.result.out + "/preview.gif" }), alt: T.bgGifMade }), h("figcaption", {}, T.bgGifMade)) : null, B.result.text.trim() ? h("pre", { class: "cmd", tabindex: "0" }, B.result.text.trim()) : null, h("p", { class: "hint", style: "margin:8px 0 0" }, T.bgExportNote)));
+        side.push(savePanel(B, { ready: !!B.result.files.length, defaultName: (B.name || "stack") + "_" + B.target }));
+        side.push(commandBox(B.result.commands, B.result.out, B.saved, outName() + "/" + (safe(B.name) || "stack")));
+      }
+    }
+    return { full: !side.length, flow: false, work, side };
+  };
+
+  // ---- all tools: every registered tool, run on copies ---------------------------------------------------------------------
+  const RT = { list: null, filter: "", tool: null, input: "", args: "{in}", help: null, showHelp: false, result: null, busy: false, error: null, name: "", saved: null, saving: false };
+  S.drawers.tools = function () {
+    if (!RT.list) { ensureTools().then(render); return { full: true, flow: false, work: [busy(T.looking)], side: [] }; }
+    const needle = RT.filter.trim().toLowerCase(), list = RT.list.filter(t => !needle || (t.name + " " + t.group + " " + (T.groups[t.group] || "") + " " + t.description).toLowerCase().includes(needle));
+    const search = h("div", { class: "field" }, h("label", { for: "tool-q" }, T.toolSearch), h("input", { type: "text", id: "tool-q", value: RT.filter, spellcheck: "false", autocomplete: "off" }));
+    search.querySelector("input").addEventListener("input", e => { RT.filter = e.target.value; render(); });
+    const rows = list.map(t => h("tr", {}, h("td", { class: "grp" }, T.groups[t.group] || t.group), h("th", { scope: "row", class: "tn" }, t.name), h("td", {}, t.description),
+      h("td", { class: "act" }, t.screen ? h("button", { type: "button", class: "btn small", onclick: () => { S.job = t.screen; render(); $("#main").focus(); } }, T.openTool) : h("button", { type: "button", class: "btn small", onclick: () => { openTool(t.name, RT.tool === t.name ? RT.input : "", null); render(); } }, T.runTool))));
+    const table = list.length ? h("div", { class: "sheetwrap" }, h("table", { class: "ttable" }, h("thead", {}, h("tr", {}, h("th", { scope: "col" }, T.colTask), h("th", { scope: "col" }, T.colTool), h("th", { scope: "col" }, T.colWhat), h("th", { scope: "col" }))), h("tbody", {}, rows))) : empty(T.noMatch, "");
+    const side = [], work = [search];
+    if (RT.tool) {
+      const t = RT.list.find(x => x.name === RT.tool) || { name: RT.tool, description: "" };
+      const run = async () => {
+        RT.busy = true; RT.error = null; RT.saved = null; RT.result = null; render();
+        try { RT.result = await api("/api/job/tool/run", { tool: RT.tool, input: RT.input, args: RT.args }); say(RT.result.code ? T.runnerExit(RT.result.code) : T.review); } catch (e) { RT.error = e.message; }
+        RT.busy = false; render();
+      };
+      const usage = async () => { RT.showHelp = !RT.showHelp; if (RT.showHelp && RT.help == null) { render(); try { RT.help = (await api("/api/tool-help?" + q({ name: RT.tool }))).text || ""; } catch (e) { RT.help = e.message; } } render(); };
+      const argsIn = h("input", { type: "text", id: "tool-args", value: RT.args, spellcheck: "false", autocomplete: "off" }); argsIn.addEventListener("input", () => { RT.args = argsIn.value; }); argsIn.addEventListener("keydown", e => { if (e.key === "Enter" && !RT.busy) run(); });
+      if (RT.showHelp && RT.help == null && !RT.helpLoading) { RT.helpLoading = true; api("/api/tool-help?" + q({ name: RT.tool })).then(x => { RT.help = x.text || ""; }).catch(e => { RT.help = e.message; }).then(() => { RT.helpLoading = false; render(); }); }
+      let out = null;
+      if (RT.busy) out = busy(T.running);
+      else if (RT.result) {
+        const r = RT.result;
+        out = h("section", {}, r.code ? h("div", { class: "notice", role: "status" }, h("h3", {}, T.warningTitle), h("p", {}, T.runnerExit(r.code))) : null,
+          h("h2", {}, T.runnerOut), r.text.trim() ? h("pre", { class: "cmd", tabindex: "0" }, r.text.trim()) : h("p", { class: "hint" }, r.files.length ? "" : T.runnerNone),
+          r.images.length ? h("div", {}, h("h2", { style: "margin-top:16px" }, T.runnerPictures), h("div", { class: "plates" }, r.images.map(i => plate(i.name, png(i.path, i.w <= 160 ? 2 : 1), i.w, i.h, i.w <= 160 ? 2 : 1)))) : null,
+          r.files.length ? h("p", { class: "hint", style: "margin-top:12px" }, h("b", {}, T.runnerFiles + ": "), r.files.join(", ")) : null);
+      }
+      work.push(h("section", { class: "panel runner" }, h("div", { class: "row", style: "align-items:baseline;justify-content:space-between" }, h("h2", { style: "margin:0" }, t.name), h("button", { type: "button", class: "btn small fit", onclick: () => { RT.tool = null; render(); } }, T.closeRunner)),
+        h("p", { class: "hint", style: "margin:4px 0 12px" }, t.description),
+        pathField(T.runnerInput, () => RT.input, v => (RT.input = v)), h("div", { class: "field" }, h("label", { for: "tool-args" }, T.runnerArgs), argsIn, h("small", {}, t.manual ? T.runnerManual : T.runnerHint)),
+        h("div", { class: "row" }, h("button", { type: "button", class: "btn primary fit", id: "tool-run", disabled: RT.busy, onclick: run }, RT.busy ? T.running : T.runBtn), h("button", { type: "button", class: "btn fit", "aria-expanded": RT.showHelp ? "true" : "false", onclick: usage }, RT.showHelp ? T.hideUsage : T.showUsage)),
+        RT.showHelp ? h("pre", { class: "cmd usage", tabindex: "0" }, RT.help == null ? T.looking : RT.help) : null), errorBox(RT), out);
+      if (RT.result) { side.push(savePanel(RT, { ready: !!RT.result.files.length, defaultName: RT.tool })); side.push(commandBox(RT.result.commands, RT.result.out, RT.saved, outName() + "/" + (safe(RT.name) || RT.tool))); }
+    }
+    work.push(table);
+    return { full: !side.length, flow: false, work, side };
+  };
+
   // ---- frame ------------------------------------------------------------------------------------------------------------
   const flowOnly = () => { const v = S.drawers[S.job](); drawFlow(v); };
   function drawFlow(v) {
     $("#flow").replaceChildren(...T.steps.map((s, i) => h("li", { "data-state": v.done[i] && i !== v.step ? "done" : "todo", "aria-current": i === v.step ? "step" : null }, h("b", {}, String(i + 1), v.done[i] && i !== v.step ? icon("check") : null), s)));
   }
   function render() {
-    const active = document.activeElement, keep = active && active.id, pos = active && active.selectionStart;
-    $("#title").textContent = T.jobs[S.job].title; $("#intro").textContent = T.jobs[S.job].intro; document.title = T.jobs[S.job].title + " · Gizpix";
-    $("#jobs").replaceChildren(...JOBS.map((j, i) => h("li", {}, h("button", { type: "button", class: "job", "aria-current": j === S.job ? "page" : null, onclick: () => { S.job = j; render(); $("#main").focus(); } }, h("span", { class: "n", title: "Key " + (i + 1) }, String(i + 1)), T.jobs[j].name))));
+    const active = document.activeElement, keep = active && active.id, pos = active && active.selectionStart, foc = () => [...document.querySelectorAll("#view button, #view input, #view select, #view summary, #jobs button")], keepSig = active && !active.id && active !== document.body && active.closest("#view, #jobs") ? { tag: active.tagName, text: (active.textContent || "").trim(), idx: foc().filter(e => e.tagName === active.tagName && (e.textContent || "").trim() === (active.textContent || "").trim()).indexOf(active) } : null;
+    $("#title").textContent = T.jobs[S.job].title; $("#intro").textContent = T.jobs[S.job].intro; document.title = T.jobs[S.job].title + " · " + T.appName;
+    $("#jobs").replaceChildren(...JOBS.map((j, i) => h("li", {}, h("button", { type: "button", class: "job", "aria-current": j === S.job ? "page" : null, onclick: () => { S.job = j; if (j === "start") api("/api/state").then(i => { S.info.recent = i.recent; render(); }).catch(() => {}); render(); $("#main").focus(); } }, h("span", { class: "jn" }, T.jobs[j].name), h("small", {}, T.jobs[j].sub)))));
     const v = S.drawers[S.job]();
-    drawFlow(v);
-    $("#view").replaceChildren(h("div", { class: "cols" }, h("div", { class: "work" }, v.work), h("div", { class: "side" }, v.side)));
-    if (keep) { const e = document.getElementById(keep); if (e) { e.focus(); if (pos != null && e.setSelectionRange) try { e.setSelectionRange(pos, pos); } catch {} } }
+    if (v.flow === false) $("#flow").replaceChildren(); else drawFlow(v);
+    $("#keys").textContent = ["clean", "layer", "recolor"].includes(S.job) ? T.shortcuts : "";
+    const nv = v.full ? h("div", { class: "full" }, v.work) : h("div", { class: "cols" }, h("div", { class: "work" }, v.work), h("div", { class: "side" }, v.side)), oldWork = $("#view .work"), oi = oldWork && oldWork.querySelector("iframe.bgprev"), ni = nv.querySelector && nv.querySelector("iframe.bgprev");
+    if (oi && ni && oi.getAttribute("data-src") === ni.getAttribute("data-src") && !v.full && $("#view .cols")) {      // the live preview keeps running: everything around it is swapped, the iframe itself is never detached
+      const osec = oi.closest("section"), nsec = ni.closest("section"), kids = [...nv.querySelector(".work").children], at = kids.indexOf(nsec);
+      [...oldWork.children].forEach(c => { if (c !== osec) c.remove(); });
+      kids.slice(0, at).forEach(c => oldWork.insertBefore(c, osec)); kids.slice(at + 1).forEach(c => oldWork.append(c));
+      $("#view .side").replaceChildren(...nv.querySelector(".side").children);
+    } else $("#view").replaceChildren(nv);
+    let restored = null;
+    if (keep) restored = document.getElementById(keep);
+    else if (keepSig) { const same = foc().filter(e => e.tagName === keepSig.tag && (e.textContent || "").trim() === keepSig.text); restored = same[keepSig.idx] || same[0] || null; }
+    if (restored && restored.disabled) restored = null;
+    if (restored) { restored.focus(); if (keep && pos != null && restored.setSelectionRange) try { restored.setSelectionRange(pos, pos); } catch {} }
+    else if (active && active !== document.body && !document.contains(active)) { const bz = $("#view .busy"), rv = [...document.querySelectorAll("#view h2")].find(x => x.textContent === T.review); if (rv && !bz) rv.setAttribute("tabindex", "-1"); (bz || rv || $("#main")).focus({ preventScroll: true }); }
   }
   document.addEventListener("keydown", e => {
-    const t = e.target, typing = t && (t.tagName === "INPUT" && t.type !== "checkbox" && t.type !== "range" || t.tagName === "SELECT" || t.tagName === "TEXTAREA");
+    const t = e.target, typing = t && (t.tagName === "INPUT" && t.type !== "checkbox" || t.tagName === "SELECT" || t.tagName === "TEXTAREA");
     if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.key >= "1" && e.key <= "4") { S.job = JOBS[+e.key - 1]; render(); }
-    else if (e.key === "ArrowLeft" || e.key === "ArrowRight") { const st = { layer: L, clean: C, recolor: R }[S.job]; if (st && st.result) { st.frame = Math.max(0, st.frame + (e.key === "ArrowRight" ? 1 : -1)); render(); } }
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { const st = { layer: L, clean: C, recolor: R }[S.job]; if (st && st.result) { const n = (st.result.rows || st.result.files || []).length; if (n > 1) { st.frame = Math.min(n - 1, Math.max(0, st.frame + (e.key === "ArrowRight" ? 1 : -1))); render(); } } }
   });
   let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ({ layer: L, clean: C, recolor: R }[S.job]?.result) render(); }, 150); });
-  api("/api/state").then(info => { S.info = info; $("#railFoot").replaceChildren(h("b", {}, T.railFoot.split(".")[0] + "."), T.railFoot.split(". ")[1] || ""); $("#keys").textContent = T.shortcuts; render();
-    const demo = location.hash.replace("#", ""), click = t => [...document.querySelectorAll("button")].find(b => b.textContent.trim() === t)?.click();      // #demo, #demo-dark, #demo-clean, #demo-draw: load a sample and run it (screenshots, quick checks)
-    if (demo === "demo" || demo === "demo-dark") { const sel = document.querySelector("#ls"); if (demo === "demo-dark") { sel.value = "3"; } click(T.useSample); setTimeout(() => click(T.cutLayer), 200); }
-    else if (demo === "demo-clean") { S.job = "clean"; render(); click(T.cleanSample); setTimeout(() => click(T.runClean), 2500); }
-    else if (demo === "demo-draw") { S.job = "draw"; render(); }
-    else if (demo === "demo-recolor" || demo === "demo-pack") { S.job = "recolor"; R.mode = demo === "demo-pack" ? "pack" : "recolor"; R.input = S.info.sample_root + "/base/east"; R.hue = 120; render(); setTimeout(() => click(R.mode === "pack" ? T.packBtn : T.recolorBtn), 200); }
+  api("/api/state").then(info => { S.info = info; $("#railFoot").replaceChildren(h("b", {}, T.railFoot.split(".")[0] + "."), T.railFoot.split(". ")[1] || ""); render();
   }).catch(e => { $("#view").replaceChildren(h("div", { class: "notice", role: "alert" }, h("h3", {}, T.errorTitle), h("p", {}, e.message))); });
 })();

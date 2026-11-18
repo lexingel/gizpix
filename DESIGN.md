@@ -117,7 +117,7 @@ components:
 
 **Creative North Star: "The Exposure Sheet"**
 
-Gizpix looks like the timing sheet an animator keeps beside the light table. Frames are columns with their numbers above them. A checker's pencil does the marking: blue for the frame you are on, red for the frame that needs a look. The screen sits on pale green sheet stock, with a deep green-grey rail down the left edge for the four jobs. Everything else is hairline ruling, plain type and the user's own pixels.
+Gizpix looks like the timing sheet an animator keeps beside the light table. Frames are columns with their numbers above them. A checker's pencil does the marking: blue for the frame you are on, red for the frame that needs a look. The screen sits on pale green sheet stock, with a deep green-grey rail down the left edge for the tasks (Start, Fix my sprite, Outfit layer, Recolour & pack, Draw, All tools). Everything else is hairline ruling, plain type and the user's own pixels.
 
 The mood is calm, exact and a little stationery-like. It is dense enough to show eight frames and their numbers without scrolling, and quiet enough that the 3x sprite previews carry the page. The build rejects the category-default tool shell (grey sidebar, floating cards, a single blue accent on white). The only ornament is the sheet tint itself.
 
@@ -182,7 +182,7 @@ A green-tinted paper palette with ink, one blue pencil and one red pencil. No ne
 
 ## Layout
 
-A two-column app shell: a 168px sticky rail and a fluid main area. Main carries a header (title, intro, four-step flow) over a hairline, then a work column and a 296px side column (Options, Result, Save, Command), 20px apart. The work column holds the load line, the three previews, the scrubber and zoom tools, and the exposure sheet. Once a result exists, the Load form folds into one line so previews and sheet fit the first viewport, and Save sits above Command so the primary action stays visible.
+A two-column app shell: a 168px sticky rail and a fluid main area. Main carries a header (title, intro, and the four-step flow on the job screens; Start, Backgrounds and All tools have no flow strip) over a hairline, then a work column and a 296px side column (Options, Result, Save, Command), 20px apart. The work column holds the load line, the three previews, the scrubber and zoom tools, and the exposure sheet. Once a result exists, the Load form folds into one line so previews and sheet fit the first viewport, and Save sits above Command so the primary action stays visible.
 
 Spacing is a 4px-based scale (4, 8, 12, 16, 24, 32), used for gaps and panel padding; panels pad 12px by 16px and sections stack at 24px. Density is moderate and table-tight: sheet cells pad 8px by 10px.
 
@@ -220,11 +220,16 @@ Nearly square. Controls, panels, inputs, notices and the sprite ground use a 3px
 - **Focus:** the global 2px blue outline.
 
 ### Navigation (Rail)
-- Dark green rail with the uppercase condensed wordmark, four numbered jobs (mono number in Rail Dim plus condensed 500-weight label), and a footer line "Runs offline" with the originals-untouched promise above a Soft Ink rule.
+- Dark green rail with the uppercase condensed wordmark, seven tasks (Start, Fix my sprite, Outfit layer, Recolour & pack, Draw, Backgrounds, All tools; a condensed label with a small plain description under it, no numbers), and a footer line "Runs offline" with the originals-untouched promise above a Soft Ink rule.
 - **Current job:** inverted to a Sheet Stock block with Ink text and a Blue Pencil Deep number. Hover is Rail Hover. On narrow screens the rail is a top bar with a two-column job grid.
 
 ### Exposure Sheet (signature)
 - A bordered table in Raised Sheet: frames are columns (condensed 700 numeral heads on Sheet Stock), rows are named in sticky left row heads (uppercase condensed, Soft Ink). Cell lines are Ink at 22%, numbers are mono with tabular figures, thumbnails are true-size crops. The selected frame column is Blue Wash with a 2px Blue Pencil top edge. A frame to inspect gets the red oval and the words "Needs a look"; a checked-by-eye checkbox row closes the sheet. A legend line explains the marks. The sheet scrolls horizontally inside its own border rather than shrinking.
+
+### Start and All tools
+- **Start:** a dashed drop zone (blue wash and solid blue border while a drag is over it) with Choose folder, Choose files, a damaged sample and a path field; below it the Found line (true-size thumbnails on Plate Green, mono facts) and job cards. The suggested card gets the blue top edge, not a pill. Continue, Draw something new and Not sure close the page in three columns. The flow strip is hidden here.
+- **Backgrounds:** open or draw a stack, then the live preview (an embedded real-time canvas), the layer sheet (front to back; each row a true-size strip, the scroll and loop numbers in mono, a red oval and words where `check` flagged it, a seam view on demand), the red-wash notice only when the stack has a general flag (otherwise a plain hint), and Export, Save and Command in the side column.
+- **All tools:** a search field, an inline runner panel (input path, arguments, Run, Show usage) and a ruled table of every tool. The runner reuses Save and Command in the side column.
 
 ### Flow Strip
 - Four condensed steps: Load, Options, Review, Save, each with a large numeral. Done steps get a blue check, the current step is Blue Pencil Deep bold with a 2px underlined numeral.
