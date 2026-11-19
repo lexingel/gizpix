@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 (2026-11-19)
+
+- Web UI: opening a seam view no longer squeezes the Moves column of the Backgrounds layer table (the seam image now scrolls inside its cell); the live preview frame is taller so its speed readout is no longer clipped.
+
 ## 0.4.1 (2026-11-19)
 
 - Web UI: the Draw preview command now shows the save arguments (`--out`, `--name`, `--scale`, `--frames`), so it runs as shown; staging folders of one kind (`run_*`, `bg_seam`, ...) are pruned to the newest 8 within a session.
