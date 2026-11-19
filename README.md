@@ -24,6 +24,24 @@ The interface starts from the task: drop a folder, files or a `stack.json` on **
 
 *The "Cut outfit layer" job on the bundled dark-skin sample. Previews are whole-number zoom, the sheet shows each frame as a column (a frame is circled in red when it needs a look), and Save is in view.*
 
+### New in 0.4
+
+**Start looks at what you drop and offers the jobs that fit.** A sprite folder gets the numbers (frames, size, colours, odd-colour pixels, pinholes) and a suggested repair; a `stack.json` gets Backgrounds.
+
+![Start: a damaged sample detected, with the jobs that fit](images/ui/start_detect_sprite.png)
+
+![Start: a background stack detected](images/ui/start_detect_stack.png)
+
+**Backgrounds** opens or draws a parallax stack (here the 10-layer village from `pix_village stack`, with walking villagers). The live preview runs in a sandboxed frame; below it every layer shows its speed, loop length and check result, with a per-layer seam view, and the panel on the right exports for Godot 4, Tiled, Phaser, CSS, LDtk or GIF.
+
+![Backgrounds: open or draw a stack, live preview, per-layer speeds, export](images/ui/backgrounds.png)
+
+**All tools** is a searchable list of every registered tool. Pick one, give it an input, and it runs on copies; the exact command is shown so you can repeat it in a terminal.
+
+![All tools: pixel_lint run on the bundled walk frames, with the command and a Save panel](images/ui/all_tools_runner.png)
+
+*The village kit and stack come from `pix_village` (63 sprites, 8 villagers with walk cycles, a 48-second looping stack). See [CHANGELOG.md](CHANGELOG.md) for everything in 0.4.0 and 0.4.1.*
+
 ## Who it is for
 
 Indie game developers, and their coding agents, who generate or hand-draw sprites and then need the dull, exact parts done reliably: fix specks and pinholes, keep frames on one palette and one ground line, split an outfit into a layer, check a set of directions for drift, build placeholder or final architecture without a reference image.
