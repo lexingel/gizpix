@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 (2026-11-19)
+
+- Web UI: the Draw preview command now shows the save arguments (`--out`, `--name`, `--scale`, `--frames`), so it runs as shown; staging folders of one kind (`run_*`, `bg_seam`, ...) are pruned to the newest 8 within a session.
+
 ## 0.4.0 (2026-11-18)
 
 - Web UI review round (two independent reviews): the All tools runner now runs with the result folder as its working directory, rejects drive-relative and `.`/`..` tokens and collects new files; clean and layer results go stale when options or inputs change (Save disabled, command hidden); shown commands stay runnable for paths with spaces; arrow keys no longer hijack sliders and stop at the last frame; focus survives re-renders; the live preview is a sandboxed frame (no same-origin) that keeps running across renders; detection caps its work, runs as a stoppable job and looks two folders down; long runs show progress everywhere including a rail indicator; error messages no longer leak paths or tracebacks; hardened Origin, Content-Length, upload names and out-root; tools with unguessable arguments open their usage; default arguments exist for the output-first tools and are tested.

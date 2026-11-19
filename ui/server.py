@@ -37,13 +37,21 @@ def pngs(path):
     return fs
 
 
+def prune_stage(new, name, keep=8):
+    """staging folders of one kind (run_x, bg_seam, ...) pile up within a session: keep the newest `keep`, delete older ones. Only folders this server made inside its own staging folder are touched."""
+    if os.path.dirname(new) != STATE["stage"]: return
+    kind = [d for d in STATE["made"] if os.path.dirname(d) == STATE["stage"] and re.sub(r"_\d+$", "", os.path.basename(d)) == name and os.path.isdir(d)]
+    for d in sorted(kind, key=os.path.getmtime, reverse=True)[keep:]:
+        shutil.rmtree(d, ignore_errors=True); STATE["made"].discard(d)
+
+
 def new_dir(root, name):
     """a fresh folder that did not exist before: results never land in or over anything already there"""
     root = clean_path(root or STATE["out_root"]); os.makedirs(root, exist_ok=True); name = re.sub(r"[^\w.-]+", "_", name or "result").strip("._") or "result"
     if name.lower() in RESERVED: name = "_" + name
     for i in range(1, 1000):
         d = os.path.join(root, name if i == 1 else f"{name}_{i}")
-        try: os.mkdir(d); STATE["made"].add(d); return d
+        try: os.mkdir(d); STATE["made"].add(d); prune_stage(d, name); return d
         except FileExistsError: continue
     raise Bad("could not make an output folder")
 
@@ -161,7 +169,7 @@ def job_draw_preview(p):
     from pixdraw.cli import parse_spec as _ps  # noqa: the same spec parser the command line uses
     spec = _ps(spec_string(p)); img = pixdraw.render(spec, p.get("style", "dark_fantasy"))[0].convert("RGBA"); k = max(1, min(int(p.get("scale", 3)), 8))
     big = img.resize((img.width * k, img.height * k), Image.NEAREST); buf = io.BytesIO(); big.save(buf, "PNG")
-    return {"png": base64.b64encode(buf.getvalue()).decode(), "w": img.width, "h": img.height, "spec": spec_string(p), "command": shown(["pixdraw", "build", spec_string(p), "--style", p.get("style", "dark_fantasy")])}
+    return {"png": base64.b64encode(buf.getvalue()).decode(), "w": img.width, "h": img.height, "spec": spec_string(p), "command": shown(["pixdraw", "build", spec_string(p), "--style", p.get("style", "dark_fantasy"), "--out", "draw_out", "--name", re.sub(r"[^\w-]+", "_", p.get("name") or p.get("type", "building")) or "building", "--scale", str(k), *(["--frames", str(int(p["frames"]))] if int(p.get("frames", 1)) > 1 else [])])}
 
 
 def job_draw_save(p):
